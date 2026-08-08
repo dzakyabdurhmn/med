@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  DOCTOR
+  PATIENT
+  RADIOLOGIST
+  ADMIN
+}
+
+enum ReportStatus {
+  DRAFT
+  PENDING_VERIFICATION
+  VERIFIED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SeverityLevel {
+  NORMAL
+  MILD
+  MODERATE
+  SEVERE
+  CRITICAL
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+model User {
+  id            String          @id @default(cuid())
+  email         String          @unique
+  name          String
+  role          Role            @default(PATIENT)
+  licenseNumber String?         // SIP / STR for Doctor or Radiologist
+  specialization String?        // e.g. "Sp.JP (Kardiologi)", "Sp.Rad (Radiologi)"
+  avatarUrl     String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  patientProfile PatientProfile?
+  authoredReports MedicalReport[] @relation("DoctorReports")
+  patientReports  MedicalReport[] @relation("PatientReports")
+  auditLogs      AuditLog[]
+  verifications  VerificationRecord[]
+}
+
+model PatientProfile {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mrn              String    @unique // Medical Record Number
+  nik              String?   @unique // National ID
+  dateOfBirth      DateTime
+  gender           Gender
+  bloodType        String?   // A+, B+, AB+, O+, etc.
+  allergies        String[]  @default([])
+  chronicHistory   String[]  @default([])
+  emergencyContact String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model MedicalReport {
+  id                     String                 @id @default(cuid())
+  reportNumber           String                 @unique // e.g. "RPT-2026-0089"
+  title                  String
+  status                 ReportStatus           @default(DRAFT)
+  
+  // Relations
+  patientId              String
+  patient                User                   @relation("PatientReports", fields: [patientId], references: [id], onDelete: Cascade)
+  
+  doctorId               String?
+  doctor                 User?                  @relation("DoctorReports", fields: [doctorId], references: [id], onDelete: SetNull)
+
+  // Clinical Raw & AI Generated Content
+  rawMedicalNotes        String                 @db.Text
+  radiologyModality      String?                // "CT Scan", "MRI", "X-Ray", "EKG", "Echocardiogram"
+  clinicalFindings       String                 @db.Text
+  aiDiagnosis            String                 @db.Text
+  clinicalRecommendations String                @db.Text
+  patientFriendlySummary String                 @db.Text
+  aiConfidenceScore      Float?                 @default(0.95)
+  disclaimerAccepted     Boolean                @default(false)
+
+  // 3D Visual Highlights
+  primaryOrgan           String?                // "heart", "brain", "lungs", etc.
+  organHighlights        ReportOrganHighlight[]
+
+  // Doctor Verification & Timestamps
+  verifiedAt             DateTime?
+  verificationRecord     VerificationRecord?
+  auditLogs              AuditLog[]
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+}
+
+model ReportOrganHighlight {
+  id                 String        @id @default(cuid())
+  reportId           String
+  report             MedicalReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  organId            String        // "heart", "brain", "lungs", "liver", "kidneys", "eyeball", "intestine", "pancreas", "skin"
+  hotspotId          String?       // e.g. "aorta", "left-ventricle", "trachea"
+  meshName           String?       // 3D mesh identifier
+  label              String        // e.g. "Ventrikel Kiri Hipertrofi"
+  severity           SeverityLevel @default(NORMAL)
+  clinicalFinding    String        @db.Text
+  laymanExplanation  String?       @db.Text
+  
+  // 3D Coordinate Overrides
+  positionX          Float?
+  positionY          Float?
+  positionZ          Float?
+  colorHex           String?
+  isHighlighted      Boolean       @default(true)
+
+  createdAt          DateTime      @default(now())
+}
+
+model VerificationRecord {
+  id                   String        @id @default(cuid())
+  reportId             String        @unique
+  report               MedicalReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  
+  doctorId             String
+  doctor               User          @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  
+  doctorNotes          String?       @db.Text
+  digitalSignatureHash String        // Cryptographic hash for doctor's approval
+  isApproved           Boolean       @default(true)
+  signedAt             DateTime      @default(now())
+}
+
+model MedicalGlossary {
+  id                String   @id @default(cuid())
+  term              String   @unique
+  latinTerm         String?
+  category          String   // "Cardiovascular", "Neurology", "Pulmonology", "General"
+  laymanDefinition  String   @db.Text
+  clinicalDefinition String? @db.Text
+  pronunciation     String?
+  createdAt         DateTime @default(now())
+}
+
+model AuditLog {
+  id         String         @id @default(cuid())
+  userId     String?
+  user       User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  reportId   String?
+  report     MedicalReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  
+  action     String         // e.g. "REPORT_CREATED", "AI_EXTRACTED", "DOCTOR_VERIFIED", "VIEWED_PATIENT"
+  details    String?        @db.Text
+  ipAddress  String?
+  userAgent  String?
+  timestamp  DateTime       @default(now())
+}
