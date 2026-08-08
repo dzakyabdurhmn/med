@@ -121,21 +121,94 @@ const SPECIALTY_OPTIONS: {
   },
 ];
 
+const DOCTOR_PRESETS: {
+  name: string;
+  specialtyKey: DoctorSpecialtyKey;
+  specialization: string;
+  licenseNumber: string;
+  institution: string;
+  email: string;
+  phone: string;
+  badge: string;
+}[] = [
+  {
+    name: "dr. Adrian Santoso, Sp.JP, FIHA",
+    specialtyKey: "cardio",
+    specialization: "Spesialis Jantung (Sp.JP / FIHA) — Kardiologi & Kedokteran Vaskular",
+    licenseNumber: "503/482/SIP.D/2026",
+    institution: "RS Pusat Jantung & Vaskular Harapan Kita",
+    email: "adrian.santoso@harapkita.go.id",
+    phone: "0812-3456-7890",
+    badge: "Sp.JP (Jantung)",
+  },
+  {
+    name: "dr. Budi Hartono, Sp.P, FAPSR",
+    specialtyKey: "pulmo",
+    specialization: "Spesialis Paru (Sp.P / FAPSR) — Pulmonologi & Kedokteran Respirasi",
+    licenseNumber: "503/129/SIP.P/2026",
+    institution: "RSUP Persahabatan Jakarta",
+    email: "budi.hartono@rsuppersahabatan.go.id",
+    phone: "0813-8822-1100",
+    badge: "Sp.P (Paru)",
+  },
+  {
+    name: "dr. Sarah Wijaya, Sp.N",
+    specialtyKey: "neuro",
+    specialization: "Spesialis Saraf (Sp.N) — Neurologi & Kedokteran Otak",
+    licenseNumber: "503/992/SIP.N/2026",
+    institution: "RS Pusat Otak Nasional (RS PON)",
+    email: "sarah.wijaya@rspon.co.id",
+    phone: "0811-9922-3344",
+    badge: "Sp.N (Saraf)",
+  },
+  {
+    name: "dr. Hendra Pratama, Sp.PD, FINASIM",
+    specialtyKey: "internal",
+    specialization: "Spesialis Penyakit Dalam (Sp.PD) — Ilmu Penyakit Dalam",
+    licenseNumber: "503/771/SIP.PD/2026",
+    institution: "RSUP Nasional Dr. Cipto Mangunkusumo",
+    email: "hendra.pratama@rscm.co.id",
+    phone: "0812-5566-7788",
+    badge: "Sp.PD (Internist)",
+  },
+  {
+    name: "dr. Dimas Surya, Sp.B, Subsp.BD",
+    specialtyKey: "surgery",
+    specialization: "Spesialis Bedah Digestif (Sp.B) — Bedah Umum & Subspesialis",
+    licenseNumber: "503/332/SIP.B/2026",
+    institution: "RSUP Fatmawati",
+    email: "dimas.surya@rsfatmawati.go.id",
+    phone: "0813-1122-3344",
+    badge: "Sp.B (Bedah)",
+  },
+  {
+    name: "dr. Maya Anggraini, Sp.A",
+    specialtyKey: "pediatrics",
+    specialization: "Spesialis Anak (Sp.A) — Ilmu Kesehatan Anak",
+    licenseNumber: "503/612/SIP.A/2026",
+    institution: "RSIA Bunda Jakarta",
+    email: "maya.anggraini@rsiabunda.co.id",
+    phone: "0815-9988-7766",
+    badge: "Sp.A (Anak)",
+  },
+];
+
 function DoctorRegistrationPage() {
   const { doctorProfile, setDoctorProfile, saveNowToDb } = useMedicalStore();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [formData, setFormData] = useState<DoctorProfile>(() => {
-    if (doctorProfile) return doctorProfile;
+    if (doctorProfile && doctorProfile.name) return doctorProfile;
+    const defaultPreset = DOCTOR_PRESETS[0];
     return {
       id: "doc-main",
-      name: "",
-      specialization: "Spesialis Jantung & Pembuluh Darah (Sp.JP)",
-      specialtyKey: "cardio",
-      licenseNumber: "",
-      institution: "RS Jantung & Pembuluh Darah Harapan Kita",
-      email: "",
-      phone: "",
+      name: defaultPreset.name,
+      specialization: defaultPreset.specialization,
+      specialtyKey: defaultPreset.specialtyKey,
+      licenseNumber: defaultPreset.licenseNumber,
+      institution: defaultPreset.institution,
+      email: defaultPreset.email,
+      phone: defaultPreset.phone,
       signaturePin: "123456",
       isRegistered: false,
       registeredAt: new Date().toISOString(),
@@ -144,6 +217,39 @@ function DoctorRegistrationPage() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+
+  const handleApplyPreset = (preset: typeof DOCTOR_PRESETS[0]) => {
+    setFormData((prev) => ({
+      ...prev,
+      name: preset.name,
+      specialtyKey: preset.specialtyKey,
+      specialization: preset.specialization,
+      licenseNumber: preset.licenseNumber,
+      institution: preset.institution,
+      email: preset.email,
+      phone: preset.phone,
+    }));
+  };
+
+  const handleQuickLoginAsPreset = async (preset: typeof DOCTOR_PRESETS[0]) => {
+    const updatedProfile: DoctorProfile = {
+      id: "doc-main",
+      name: preset.name,
+      specialtyKey: preset.specialtyKey,
+      specialization: preset.specialization,
+      licenseNumber: preset.licenseNumber,
+      institution: preset.institution,
+      email: preset.email,
+      phone: preset.phone,
+      signaturePin: "123456",
+      isRegistered: true,
+      registeredAt: new Date().toISOString(),
+    };
+    setFormData(updatedProfile);
+    setDoctorProfile(updatedProfile);
+    await saveNowToDb();
+    setStep(4);
+  };
 
   // Drawing canvas logic
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -302,8 +408,46 @@ function DoctorRegistrationPage() {
             <div>
               <h2 className="text-xl font-serif font-bold text-[var(--ink)]">Langkah 1: Identitas & Lisensi Dokter</h2>
               <p className="text-xs text-[var(--ink-soft)] font-serif">
-                Masukkan nama lengkap beserta gelar, nomor izin praktik SIP/STR, dan institusi rumah sakit.
+                Pilih profil dokter spesialis siap pakai (1-klik) atau isi formulir identitas kustom di bawah.
               </p>
+            </div>
+          </div>
+
+          {/* Quick Specialist Presets Selector */}
+          <div className="p-4 rounded-2xl bg-[var(--paper-soft)] border border-[var(--line)] space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--terracotta)] flex items-center gap-1.5">
+                <Stethoscope size={14} />
+                Pilih Cepat Profil Dokter Spesialis (1-Klik):
+              </span>
+              <span className="text-[10px] text-[var(--ink-muted)]">Otomatis isi SIP & RS</span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {DOCTOR_PRESETS.map((preset) => {
+                const isSelected = formData.name === preset.name;
+                return (
+                  <button
+                    key={preset.specialtyKey}
+                    type="button"
+                    onClick={() => handleApplyPreset(preset)}
+                    className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between ${
+                      isSelected
+                        ? "bg-white border-[var(--terracotta)] ring-2 ring-[var(--terracotta)]/20 shadow-xs font-bold"
+                        : "bg-white/80 border-[var(--line)] hover:bg-white text-[var(--ink-soft)]"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-neutral-100 text-neutral-800">
+                        {preset.badge}
+                      </span>
+                      {isSelected && <span className="text-[10px] text-[var(--terracotta)] font-bold">✓ Aktif</span>}
+                    </div>
+                    <div className="text-xs font-serif font-bold text-[var(--ink)] line-clamp-1">{preset.name}</div>
+                    <div className="text-[10px] text-[var(--ink-muted)] line-clamp-1">{preset.institution}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

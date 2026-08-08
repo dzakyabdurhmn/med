@@ -11,6 +11,11 @@ import {
   Sparkles,
   PenTool,
   RotateCcw,
+  Lock,
+  Mic,
+  UserCheck,
+  AlertCircle,
+  FilePlus2,
 } from "lucide-react";
 import { useMedicalStore } from "../store/medical-store";
 import { inferOrganFromClinicalData } from "../lib/anatomy-ai-triage";
@@ -22,6 +27,7 @@ export const Route = createFileRoute("/report")({
 
 function ReportPage() {
   const {
+    cases,
     activeCase,
     medicalFormData,
     updateMedicalFormData,
@@ -31,7 +37,11 @@ function ReportPage() {
     clearDoctorSignature,
     dbSyncStatus,
     saveNowToDb,
+    isDoctorRegistered,
+    doctorProfile,
   } = useMedicalStore();
+
+  const hasPatientCases = cases.length > 0;
 
   const aiTriage = inferOrganFromClinicalData({
     chiefComplaint: medicalFormData.otherMedicalIssues || activeCase.patientSummary,
@@ -41,7 +51,9 @@ function ReportPage() {
   });
 
   const [showSignatureModal, setShowSignatureModal] = useState(false);
-  const [signatureName, setSignatureName] = useState(medicalFormData.doctorName || "dr. Adrian Santoso, Sp.JP");
+  const [signatureName, setSignatureName] = useState(
+    medicalFormData.doctorName || doctorProfile?.name || "dr. DPJP Spesialis"
+  );
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
 
@@ -100,6 +112,84 @@ function ReportPage() {
   const handlePrint = () => {
     window.print();
   };
+
+  // 🔒 ACCESS CONTROL GATE 1: Require Registered DPJP Doctor
+  if (!isDoctorRegistered) {
+    return (
+      <main className="max-w-[850px] mx-auto px-4 py-16 space-y-8 text-center font-serif">
+        <div className="bg-[var(--paper)] border border-[var(--line)] rounded-[32px] p-10 shadow-[var(--shadow)] space-y-6">
+          <div className="w-16 h-16 rounded-3xl bg-amber-500/15 border border-amber-500/30 text-amber-700 flex items-center justify-center mx-auto shadow-inner">
+            <Lock size={32} />
+          </div>
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+              Akses Terkunci • Diperlukan Kredensial Dokter
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--ink)]">
+              Login / Registrasi Dokter Diperlukan
+            </h1>
+            <p className="text-xs sm:text-sm text-[var(--ink-soft)] max-w-lg mx-auto leading-relaxed">
+              Lembar Rekam Medis Elektronik (EHR) dan formulir riwayat kesehatan pasien hanya dapat diakses serta ditandatangani oleh Dokter Penanggung Jawab Pelayanan (DPJP) yang terverifikasi.
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              to="/register"
+              className="px-6 py-3 rounded-xl bg-[var(--terracotta)] text-white text-xs font-bold hover:bg-[#d95d4b] transition flex items-center gap-2 shadow-md"
+            >
+              <UserCheck size={16} />
+              <span>Login / Registrasi Dokter DPJP</span>
+            </Link>
+            <Link
+              to="/"
+              className="px-5 py-3 rounded-xl bg-white border border-[var(--line)] text-xs text-[var(--ink)] font-bold hover:bg-[var(--paper-soft)] transition"
+            >
+              Kembali ke Dashboard
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // 🔒 ACCESS CONTROL GATE 2: Require Patient Clinical Indication
+  if (!hasPatientCases) {
+    return (
+      <main className="max-w-[850px] mx-auto px-4 py-16 space-y-8 text-center font-serif">
+        <div className="bg-[var(--paper)] border border-[var(--line)] rounded-[32px] p-10 shadow-[var(--shadow)] space-y-6">
+          <div className="w-16 h-16 rounded-3xl bg-blue-500/15 border border-blue-500/30 text-blue-700 flex items-center justify-center mx-auto shadow-inner">
+            <FilePlus2 size={32} />
+          </div>
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
+              Belum Ada Pasien / Indikasi Klinis
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--ink)]">
+              Mulai Sesi Konsultasi Terlebih Dahulu
+            </h1>
+            <p className="text-xs sm:text-sm text-[var(--ink-soft)] max-w-lg mx-auto leading-relaxed">
+              Formulir Rekam Medis (Medical History Form) dan riwayat klinis dihasilkan secara terintegrasi dari sesi anamnesis & konsultasi suara pasien. Daftarkan pasien baru dan mulai rekaman konsultasi untuk mengisi formulir ini.
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              to="/consultation"
+              className="px-6 py-3 rounded-xl bg-[var(--terracotta)] text-white text-xs font-bold hover:bg-[#d95d4b] transition flex items-center gap-2 shadow-md"
+            >
+              <Mic size={16} />
+              <span>Mulai Konsultasi Pasien Baru</span>
+            </Link>
+            <Link
+              to="/"
+              className="px-5 py-3 rounded-xl bg-white border border-[var(--line)] text-xs text-[var(--ink)] font-bold hover:bg-[var(--paper-soft)] transition"
+            >
+              Kembali ke Dashboard
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 py-8 space-y-6">

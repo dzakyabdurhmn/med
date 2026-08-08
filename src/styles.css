@@ -56,6 +56,72 @@ button, input, select, textarea {
   color: inherit;
 }
 
+button {
+  cursor: pointer;
+}
+
+/* Universal high-contrast protection: Ensure dark buttons always render crisp white text and icons */
+button[class*="bg-black"],
+button[class*="bg-neutral-950"],
+button[class*="bg-neutral-900"],
+button[class*="bg-neutral-800"],
+button[class*="bg-zinc-950"],
+button[class*="bg-zinc-900"],
+button[class*="bg-zinc-800"],
+button[class*="bg-gray-950"],
+button[class*="bg-gray-900"],
+button[class*="bg-gray-800"],
+button[class*="bg-slate-950"],
+button[class*="bg-slate-900"],
+button[class*="bg-slate-800"],
+button[class*="bg-stone-900"],
+button[class*="bg-stone-800"],
+button[class*="bg-[var(--ink)]"],
+button[class*="from-amber-600"],
+button[class*="from-[var(--terracotta)]"],
+button[class*="bg-red-600"],
+button[class*="bg-red-700"],
+button[class*="bg-[#3b6b39]"],
+a[class*="bg-black"],
+a[class*="bg-neutral-950"],
+a[class*="bg-neutral-900"],
+a[class*="bg-neutral-800"],
+a[class*="bg-zinc-950"],
+a[class*="bg-zinc-900"],
+a[class*="bg-zinc-800"],
+a[class*="bg-gray-950"],
+a[class*="bg-gray-900"],
+a[class*="bg-gray-800"],
+a[class*="bg-slate-950"],
+a[class*="bg-slate-900"],
+a[class*="bg-slate-800"],
+a[class*="bg-[var(--ink)]"],
+a[class*="from-[var(--terracotta)]"],
+a[class*="bg-[var(--terracotta)]"] {
+  color: #ffffff !important;
+}
+
+button[class*="bg-black"] *,
+button[class*="bg-neutral-950"] *,
+button[class*="bg-neutral-900"] *,
+button[class*="bg-neutral-800"] *,
+button[class*="bg-zinc-900"] *,
+button[class*="bg-gray-900"] *,
+button[class*="bg-[var(--ink)]"] *,
+a[class*="bg-black"] *,
+a[class*="bg-neutral-900"] *,
+a[class*="bg-[var(--ink)]"] * {
+  color: inherit;
+}
+
+/* Light button text clarity */
+button[class*="bg-white"],
+a[class*="bg-white"],
+button[class*="bg-[var(--paper)]"],
+a[class*="bg-[var(--paper)]"] {
+  color: var(--ink);
+}
+
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, canvas:focus-visible {
   outline: 2px solid var(--lavender);
   outline-offset: 3px;

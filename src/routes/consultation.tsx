@@ -15,6 +15,8 @@ import {
   Plus,
   Trash2,
   Check,
+  Lock,
+  AlertCircle,
 } from "lucide-react";
 import { useMedicalStore } from "../store/medical-store";
 import type { OrganId } from "../lib/anatomy-data";
@@ -35,6 +37,7 @@ function ConsultationPage() {
     dbSyncStatus,
     saveNowToDb,
     doctorProfile,
+    isDoctorRegistered,
   } = useMedicalStore();
 
   const [isRecording, setIsRecording] = useState(false);
@@ -222,6 +225,45 @@ function ConsultationPage() {
     const secs = totalSeconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
+
+  // 🔒 ACCESS CONTROL GUARD: Require Registered DPJP Doctor
+  if (!isDoctorRegistered) {
+    return (
+      <main className="max-w-[850px] mx-auto px-4 py-16 space-y-8 text-center font-serif">
+        <div className="bg-[var(--paper)] border border-[var(--line)] rounded-[32px] p-10 shadow-[var(--shadow)] space-y-6">
+          <div className="w-16 h-16 rounded-3xl bg-amber-500/15 border border-amber-500/30 text-amber-700 flex items-center justify-center mx-auto shadow-inner">
+            <Lock size={32} />
+          </div>
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+              Akses Terkunci • Diperlukan Identitas Dokter DPJP
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--ink)]">
+              Login / Registrasi Dokter Diperlukan
+            </h1>
+            <p className="text-xs sm:text-sm text-[var(--ink-soft)] max-w-lg mx-auto leading-relaxed">
+              Untuk membuka modul konsultasi klinis, merekam anamnesis, dan melakukan ekstraksi medis AI, Anda harus masuk atau mendaftarkan identitas Dokter Penanggung Jawab Pelayanan (DPJP) dengan SIP/STR resmi.
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              to="/register"
+              className="px-6 py-3 rounded-xl bg-[var(--terracotta)] text-white text-xs font-bold hover:bg-[#d95d4b] transition flex items-center gap-2 shadow-md"
+            >
+              <Stethoscope size={16} />
+              <span>Login / Registrasi Dokter DPJP Sekarang</span>
+            </Link>
+            <Link
+              to="/"
+              className="px-5 py-3 rounded-xl bg-white border border-[var(--line)] text-xs text-[var(--ink)] font-bold hover:bg-[var(--paper-soft)] transition"
+            >
+              Kembali ke Dashboard
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-[1400px] mx-auto px-4 py-8 space-y-8">

@@ -17,6 +17,10 @@ import {
   Terminal,
   Cpu,
   Wand2,
+  Lock,
+  Box,
+  Mic,
+  UserCheck,
 } from "lucide-react";
 import { useMedicalStore } from "../store/medical-store";
 import { organs, type OrganId } from "../lib/anatomy-data";
@@ -108,6 +112,8 @@ const QUICK_PATHOLOGY_PRESETS: {
 
 function AnatomyPage() {
   const {
+    cases,
+    isDoctorRegistered,
     selectedOrganId,
     selectedHotspotId,
     symptomMode,
@@ -116,6 +122,8 @@ function AnatomyPage() {
     medicalFormData,
     activeCase,
   } = useMedicalStore();
+
+  const hasPatientCases = cases.length > 0;
 
   const [customAiPrompt, setCustomAiPrompt] = useState("");
   const [showAllOrgans, setShowAllOrgans] = useState(false);
@@ -265,6 +273,84 @@ function AnatomyPage() {
   }, [relevantOrganIds]);
 
   const currentPathologyConfig = PATHOLOGY_PRESETS[activePathology] || PATHOLOGY_PRESETS.normal;
+
+  // 🔒 ACCESS CONTROL GATE 1: Require Registered DPJP Doctor
+  if (!isDoctorRegistered) {
+    return (
+      <main className="max-w-[850px] mx-auto px-4 py-16 space-y-8 text-center font-serif">
+        <div className="bg-[var(--paper)] border border-[var(--line)] rounded-[32px] p-10 shadow-[var(--shadow)] space-y-6">
+          <div className="w-16 h-16 rounded-3xl bg-amber-500/15 border border-amber-500/30 text-amber-700 flex items-center justify-center mx-auto shadow-inner">
+            <Lock size={32} />
+          </div>
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+              Akses Terkunci • Diperlukan Identitas Dokter DPJP
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--ink)]">
+              Login / Registrasi Dokter Diperlukan
+            </h1>
+            <p className="text-xs sm:text-sm text-[var(--ink-soft)] max-w-lg mx-auto leading-relaxed">
+              Stasiun Rekonstruksi Anatomi 3D dan simulasi mutasi patologi biomekanikal hanya dapat diakses oleh Dokter Penanggung Jawab Pelayanan (DPJP) yang terverifikasi.
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              to="/register"
+              className="px-6 py-3 rounded-xl bg-[var(--terracotta)] text-white text-xs font-bold hover:bg-[#d95d4b] transition flex items-center gap-2 shadow-md"
+            >
+              <UserCheck size={16} />
+              <span>Login / Registrasi Dokter DPJP</span>
+            </Link>
+            <Link
+              to="/"
+              className="px-5 py-3 rounded-xl bg-white border border-[var(--line)] text-xs text-[var(--ink)] font-bold hover:bg-[var(--paper-soft)] transition"
+            >
+              Kembali ke Dashboard
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // 🔒 ACCESS CONTROL GATE 2: Require Patient Clinical Indication
+  if (!hasPatientCases) {
+    return (
+      <main className="max-w-[850px] mx-auto px-4 py-16 space-y-8 text-center font-serif">
+        <div className="bg-[var(--paper)] border border-[var(--line)] rounded-[32px] p-10 shadow-[var(--shadow)] space-y-6">
+          <div className="w-16 h-16 rounded-3xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 flex items-center justify-center mx-auto shadow-inner">
+            <Box size={32} />
+          </div>
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">
+              Belum Ada Indikasi Klinis / Patologi Pasien
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--ink)]">
+              Mulai Konsultasi & Input Keluhan Pasien
+            </h1>
+            <p className="text-xs sm:text-sm text-[var(--ink-soft)] max-w-lg mx-auto leading-relaxed">
+              Model Anatomi 3D dan mutasi patologi AI (seperti lesi smoker, trauma, nekrosis, hipertrofi, infark) dimodelkan secara spesifik berdasarkan hasil anamnesis dan keluhan pasien. Silakan rekam atau buat sesi konsultasi terlebih dahulu.
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              to="/consultation"
+              className="px-6 py-3 rounded-xl bg-[var(--terracotta)] text-white text-xs font-bold hover:bg-[#d95d4b] transition flex items-center gap-2 shadow-md"
+            >
+              <Mic size={16} />
+              <span>Mulai Sesi Konsultasi Pasien</span>
+            </Link>
+            <Link
+              to="/"
+              className="px-5 py-3 rounded-xl bg-white border border-[var(--line)] text-xs text-[var(--ink)] font-bold hover:bg-[var(--paper-soft)] transition"
+            >
+              Kembali ke Dashboard
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-[1440px] mx-auto px-4 py-6 space-y-6">
