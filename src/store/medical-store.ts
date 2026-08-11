@@ -46,6 +46,30 @@ export type CasePreset = {
   patientSummary: string;
   affectedHotspots: string[];
   createdAt: string;
+
+  // EHR Form Checklists & Details
+  personalHistory?: Record<string, boolean>;
+  personalHistoryCancerSpecify?: string;
+  otherMedicalIssues?: string;
+  medications?: MedicationItem[];
+  surgeries?: Record<string, boolean>;
+  surgeriesOtherSpecify?: string;
+  allergies?: string;
+  familyHistory?: Record<string, boolean>;
+  familyHistoryOtherSpecify?: string;
+  tobaccoUse?: "Cigarettes" | "Vaping" | "Tobacco" | "Non-smoker";
+  tobaccoRecentDate?: string;
+  alcoholUse?: "None" | "Occasional" | "Moderate" | "Heavy";
+  recreationalDrugs?: "No" | "Yes";
+  caffeineWeekly?: string;
+  exerciseWeekly?: string;
+  sleepHours?: string;
+  socialDetriments?: "No" | "Yes";
+  occupation?: string;
+  livingSituation?: "With roommates" | "With S/O" | "With family" | "Other";
+  reviewOfSystems?: Record<string, boolean>;
+  aiCheckedKeys?: string[];
+  isAiGenerated?: boolean;
 };
 
 export type DoctorSpecialtyKey =
@@ -270,18 +294,23 @@ type Listener = () => void;
 const listeners = new Set<Listener>();
 
 let dbSaveDebounceTimer: number | null = null;
+let isDbSyncing = false;
 
 function triggerDbSync() {
   if (typeof window === "undefined") return;
-  globalState.dbSyncStatus = "saving";
-  notify(false);
 
   if (dbSaveDebounceTimer) {
     window.clearTimeout(dbSaveDebounceTimer);
   }
 
   dbSaveDebounceTimer = window.setTimeout(async () => {
+    if (isDbSyncing) return;
+    isDbSyncing = true;
+
     try {
+      globalState.dbSyncStatus = "saving";
+      listeners.forEach((l) => l());
+
       const res = await saveReportToDb({
         data: {
           formData: globalState.medicalFormData,
@@ -304,9 +333,10 @@ function triggerDbSync() {
     } catch (e) {
       globalState.dbSyncStatus = "saved";
     } finally {
-      notify(false);
+      isDbSyncing = false;
+      listeners.forEach((l) => l());
     }
-  }, 600);
+  }, 1500);
 }
 
 function notify(persist = true) {
@@ -314,7 +344,7 @@ function notify(persist = true) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(globalState));
     } catch (e) {
-      console.error("Failed to persist store to localStorage", e);
+      console.warn("Failed to persist store to localStorage", e);
     }
     triggerDbSync();
   }
@@ -412,6 +442,26 @@ export function useMedicalStore() {
       doctorSpecialty: found.doctorSpecialty,
       doctorSip: found.doctorSip,
       modality: found.modality,
+      personalHistory: found.personalHistory || {},
+      personalHistoryCancerSpecify: found.personalHistoryCancerSpecify || "",
+      otherMedicalIssues: found.otherMedicalIssues || "",
+      medications: found.medications || [],
+      surgeries: found.surgeries || {},
+      surgeriesOtherSpecify: found.surgeriesOtherSpecify || "",
+      allergies: found.allergies || "Tidak ada riwayat alergi obat / makanan yang diketahui.",
+      familyHistory: found.familyHistory || {},
+      familyHistoryOtherSpecify: found.familyHistoryOtherSpecify || "",
+      tobaccoUse: found.tobaccoUse || "Non-smoker",
+      tobaccoRecentDate: found.tobaccoRecentDate || "-",
+      alcoholUse: found.alcoholUse || "None",
+      recreationalDrugs: found.recreationalDrugs || "No",
+      caffeineWeekly: found.caffeineWeekly || "0",
+      exerciseWeekly: found.exerciseWeekly || "0",
+      sleepHours: found.sleepHours || "7-8",
+      socialDetriments: found.socialDetriments || "No",
+      occupation: found.occupation || "Wiraswasta",
+      livingSituation: found.livingSituation || "With family",
+      reviewOfSystems: found.reviewOfSystems || {},
     };
 
     notify(true);
@@ -419,7 +469,6 @@ export function useMedicalStore() {
 
   const updateActiveCase = (updates: Partial<CasePreset>) => {
     if (!globalState.activeCaseId) {
-      // If no active case, create one
       createNewPatientCase({
         patientName: updates.patientName || "Pasien Baru",
         ...updates,
@@ -446,6 +495,39 @@ export function useMedicalStore() {
       ...globalState.medicalFormData,
       ...updates,
     };
+
+    // Also sync to active case in cases array
+    if (globalState.activeCaseId) {
+      globalState.cases = globalState.cases.map((c) => {
+        if (c.id === globalState.activeCaseId) {
+          return {
+            ...c,
+            patientName: updates.patientName ?? c.patientName,
+            patientDob: updates.patientDob ?? c.patientDob,
+            diagnosis: updates.diagnosis ?? c.diagnosis,
+            diagnosisIcd: updates.diagnosisIcd ?? c.diagnosisIcd,
+            severity: updates.severity ?? c.severity,
+            vitalSigns: updates.vitalSigns ?? c.vitalSigns,
+            recommendations: updates.recommendations ?? c.recommendations,
+            patientSummary: updates.patientSummary ?? c.patientSummary,
+            findings: updates.findings ?? c.findings,
+            personalHistory: updates.personalHistory ?? c.personalHistory,
+            otherMedicalIssues: updates.otherMedicalIssues ?? c.otherMedicalIssues,
+            medications: updates.medications ?? c.medications,
+            surgeries: updates.surgeries ?? c.surgeries,
+            allergies: updates.allergies ?? c.allergies,
+            familyHistory: updates.familyHistory ?? c.familyHistory,
+            tobaccoUse: updates.tobaccoUse ?? c.tobaccoUse,
+            alcoholUse: updates.alcoholUse ?? c.alcoholUse,
+            occupation: updates.occupation ?? c.occupation,
+            livingSituation: updates.livingSituation ?? c.livingSituation,
+            reviewOfSystems: updates.reviewOfSystems ?? c.reviewOfSystems,
+          };
+        }
+        return c;
+      });
+    }
+
     notify(true);
   };
 
@@ -521,6 +603,11 @@ export function useMedicalStore() {
     surgeries?: Record<string, boolean>;
     reviewOfSystems?: Record<string, boolean>;
     otherMedicalIssues?: string;
+    tobaccoUse?: "Cigarettes" | "Vaping" | "Tobacco" | "Non-smoker";
+    alcoholUse?: "None" | "Occasional" | "Moderate" | "Heavy";
+    occupation?: string;
+    livingSituation?: "With roommates" | "With S/O" | "With family" | "Other";
+    aiCheckedKeys?: string[];
     vitalSigns?: {
       bloodPressure: string;
       heartRate: string;
@@ -547,6 +634,10 @@ export function useMedicalStore() {
       surgeries: aiData.surgeries || globalState.medicalFormData.surgeries,
       reviewOfSystems: aiData.reviewOfSystems || globalState.medicalFormData.reviewOfSystems,
       otherMedicalIssues: aiData.otherMedicalIssues || globalState.medicalFormData.otherMedicalIssues,
+      tobaccoUse: aiData.tobaccoUse || globalState.medicalFormData.tobaccoUse,
+      alcoholUse: aiData.alcoholUse || globalState.medicalFormData.alcoholUse,
+      occupation: aiData.occupation || globalState.medicalFormData.occupation,
+      livingSituation: aiData.livingSituation || globalState.medicalFormData.livingSituation,
       vitalSigns: aiData.vitalSigns || globalState.medicalFormData.vitalSigns,
     };
 
@@ -564,6 +655,19 @@ export function useMedicalStore() {
             patientSummary: aiData.patientSummary,
             rxPrescriptions: aiData.rxPrescriptions || c.rxPrescriptions,
             vitalSigns: aiData.vitalSigns || c.vitalSigns,
+            personalHistory: aiData.personalHistory || c.personalHistory,
+            familyHistory: aiData.familyHistory || c.familyHistory,
+            surgeries: aiData.surgeries || c.surgeries,
+            reviewOfSystems: aiData.reviewOfSystems || c.reviewOfSystems,
+            medications: aiData.medications || c.medications,
+            allergies: aiData.allergies || c.allergies,
+            otherMedicalIssues: aiData.otherMedicalIssues || c.otherMedicalIssues,
+            tobaccoUse: aiData.tobaccoUse || c.tobaccoUse,
+            alcoholUse: aiData.alcoholUse || c.alcoholUse,
+            occupation: aiData.occupation || c.occupation,
+            livingSituation: aiData.livingSituation || c.livingSituation,
+            aiCheckedKeys: aiData.aiCheckedKeys || c.aiCheckedKeys,
+            isAiGenerated: true,
           };
         }
         return c;

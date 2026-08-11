@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { prisma } from "../db";
 import type { MedicalFormData } from "../components/medical/MedicalHistoryFormDocument";
 import type { OrganId } from "../lib/anatomy-data";
 
@@ -25,6 +24,7 @@ export const registerDoctorUser = createServerFn({
     }) => input
   )
   .handler(async ({ data }) => {
+    const { prisma } = await import("../db");
     const {
       name,
       email,
@@ -119,6 +119,7 @@ export const loginDoctorUser = createServerFn({
 })
   .validator((input: { identifier: string; password: string }) => input)
   .handler(async ({ data }) => {
+    const { prisma } = await import("../db");
     const { identifier, password } = data;
     const cleanId = identifier.trim().toLowerCase();
 
@@ -162,6 +163,7 @@ export const getActiveReportFromDb = createServerFn({
   method: "GET",
 }).handler(async () => {
   try {
+    const { prisma } = await import("../db");
     const report = await prisma.medicalReport.findFirst({
       orderBy: { updatedAt: "desc" },
       include: {
@@ -198,6 +200,7 @@ export const saveReportToDb = createServerFn({
     }) => input
   )
   .handler(async ({ data }) => {
+    const { prisma } = await import("../db");
     const { formData, organId, isSigned, signatureDataUrl } = data;
 
     try {
@@ -312,7 +315,114 @@ export const saveReportToDb = createServerFn({
         timestamp: report.updatedAt.toISOString(),
       };
     } catch (error: any) {
-      console.error("Database save error in saveReportToDb:", error);
+      console.warn("Database save status:", error?.message || error);
       return { success: false, error: error.message };
     }
   });
+
+/**
+ * Server Function: Search ICD-10 Codes from PostgreSQL Database
+ */
+export const searchIcd10Codes = createServerFn({
+  method: "POST",
+})
+  .validator((input: { query: string; limit?: number }) => input)
+  .handler(async ({ data }) => {
+    const { query, limit = 15 } = data;
+    const q = (query || "").trim();
+    if (!q) return [];
+
+    try {
+      const { prisma } = await import("../db");
+      const results = await prisma.medicalCode.findMany({
+        where: {
+          system: "ICD10",
+          OR: [
+            { code: { contains: q, mode: "insensitive" } },
+            { display: { contains: q, mode: "insensitive" } },
+            { groupName: { contains: q, mode: "insensitive" } },
+          ],
+        },
+        take: limit,
+        orderBy: { code: "asc" },
+      });
+      return results;
+    } catch (error: any) {
+      console.warn("Error in searchIcd10Codes DB lookup:", error);
+      return [];
+    }
+  });
+
+/**
+ * Server Function / Helper: Find best matching ICD-10 Code from DB or Dictionary
+ */
+export async function lookupIcd10CodeByKeyword(keyword: string): Promise<{ code: string; display: string }> {
+  const cleanKey = (keyword || "").trim();
+  if (!cleanKey) return { code: "Z00.0", display: "Encounter for general health examination" };
+
+  try {
+    const { prisma } = await import("../db");
+    const dbMatch = await prisma.medicalCode.findFirst({
+      where: {
+        system: "ICD10",
+        OR: [
+          { code: { equals: cleanKey, mode: "insensitive" } },
+          { display: { contains: cleanKey, mode: "insensitive" } },
+          { groupName: { contains: cleanKey, mode: "insensitive" } },
+        ],
+      },
+      orderBy: { code: "asc" },
+    });
+
+    if (dbMatch) {
+      return { code: dbMatch.code, display: dbMatch.display };
+    }
+  } catch (e) {
+    console.warn("DB lookupIcd10CodeByKeyword fallback to dictionary");
+  }
+
+  // Dictionary Fallback for common conditions
+  const textLower = cleanKey.toLowerCase();
+
+  if (textLower.includes("jantung") || textLower.includes("ska") || textLower.includes("koroner") || textLower.includes("angina")) {
+    return { code: "I20.9", display: "Angina pectoris, unspecified (Sindrom Koroner Akut)" };
+  }
+  if (textLower.includes("hipertensi") || textLower.includes("tensi") || textLower.includes("darah tinggi")) {
+    return { code: "I10", display: "Essential (primary) hypertension" };
+  }
+  if (textLower.includes("ispa") || textLower.includes("saluran pernapasan") || textLower.includes("respirasi")) {
+    return { code: "J06.9", display: "Acute upper respiratory infection, unspecified" };
+  }
+  if (textLower.includes("pneumonia") || textLower.includes("paru")) {
+    return { code: "J18.9", display: "Pneumonia, unspecified" };
+  }
+  if (textLower.includes("asma") || textLower.includes("mengi")) {
+    return { code: "J45.9", display: "Asthma, unspecified" };
+  }
+  if (textLower.includes("gastritis") || textLower.includes("maag") || textLower.includes("dispepsia") || textLower.includes("lambung")) {
+    return { code: "K29.7", display: "Gastritis, unspecified" };
+  }
+  if (textLower.includes("gerd") || textLower.includes("asam lambung")) {
+    return { code: "K21.9", display: "Gastro-esophageal reflux disease without esophagitis" };
+  }
+  if (textLower.includes("diabetes") || textLower.includes("gula") || textLower.includes("kencing manis")) {
+    return { code: "E11.9", display: "Type 2 diabetes mellitus without complications" };
+  }
+  if (textLower.includes("cephalgia") || textLower.includes("pusing") || textLower.includes("sakit kepala") || textLower.includes("headache")) {
+    return { code: "R51", display: "Headache (Cephalgia Akut)" };
+  }
+  if (textLower.includes("stroke")) {
+    return { code: "I63.9", display: "Cerebral infarction, unspecified" };
+  }
+  if (textLower.includes("ginjal")) {
+    return { code: "N18.9", display: "Chronic kidney disease, unspecified" };
+  }
+  if (textLower.includes("diare")) {
+    return { code: "A09", display: "Infectious gastroenteritis and colitis, unspecified" };
+  }
+  if (textLower.includes("demam") || textLower.includes("fever")) {
+    return { code: "R50.9", display: "Fever, unspecified" };
+  }
+
+  return { code: "Z00.0", display: "Encounter for general health examination" };
+}

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import {
   UserCheck,
@@ -12,16 +12,8 @@ import {
   Search,
   AlertCircle,
   Check,
-  Building2,
   FileText,
   Activity,
-  Heart,
-  Wind,
-  Brain,
-  Layers,
-  Scissors,
-  Baby,
-  Eye,
 } from "lucide-react";
 import {
   useMedicalStore,
@@ -101,7 +93,6 @@ const SPECIALTY_OPTIONS: {
 ];
 
 function DoctorRegistrationPage() {
-  const navigate = useNavigate();
   const { doctorProfile, setDoctorProfile, saveNowToDb } = useMedicalStore();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);

@@ -4,10 +4,8 @@ import {
   Printer,
   Database,
   Save,
-  CheckCircle2,
   ArrowLeft,
   PenTool,
-  RotateCcw,
   Lock,
   Mic,
   ShieldCheck,
@@ -43,11 +41,54 @@ function ReportPage() {
   const hasPatientCases = cases.length > 0;
 
   const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [signatureName, setSignatureName] = useState(
     medicalFormData.doctorName || doctorProfile?.name || "dr. DPJP Spesialis"
   );
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+
+  const handleAutoGenerate = async () => {
+    if (!activeCase) return;
+    setIsGeneratingAi(true);
+    try {
+      const res = await runNarasiAiExtraction({
+        data: {
+          dialogueLines: activeCase.dialogue,
+          rawNotes: activeCase.rawNotes,
+          patientName: activeCase.patientName,
+        },
+      });
+      if (res && res.success) {
+        applyAiExtractionResult({
+          diagnosis: res.diagnosis,
+          diagnosisIcd: res.diagnosisIcd,
+          severity: res.severity,
+          findings: res.findings,
+          recommendations: res.recommendations,
+          patientSummary: res.patientSummary,
+          vitalSigns: res.vitalSigns,
+          allergies: res.allergies,
+          medications: res.medications,
+          personalHistory: res.personalHistory,
+          familyHistory: res.familyHistory,
+          surgeries: res.surgeries,
+          reviewOfSystems: res.reviewOfSystems,
+          otherMedicalIssues: res.otherMedicalIssues,
+          tobaccoUse: res.tobaccoUse,
+          alcoholUse: res.alcoholUse,
+          occupation: res.occupation,
+          livingSituation: res.livingSituation,
+          aiCheckedKeys: res.aiCheckedKeys,
+          organId: res.primaryOrgan,
+        });
+      }
+    } catch (e) {
+      console.warn("AI generation error:", e);
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
 
   // Drawing canvas logic
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -178,6 +219,28 @@ function ReportPage() {
 
   return (
     <main className="max-w-[1280px] mx-auto px-4 py-8 space-y-6 font-sans">
+      {/* AI Not Generated Warning Banner */}
+      {activeCase && !activeCase.isAiGenerated && (
+        <div className="no-print bg-amber-50 border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-xs">
+          <div className="flex items-center gap-3">
+            <Sparkles size={20} className="text-amber-600 animate-pulse shrink-0" />
+            <div>
+              <span className="font-extrabold uppercase text-amber-950 block">Resume Medis Belum Di-generate AI</span>
+              <span className="text-amber-900 font-sans">Dokumen rekam medis belum diekstraksi dari hasil konsultasi suara & catatan klinis pasien.</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleAutoGenerate}
+            disabled={isGeneratingAi}
+            className="px-5 py-2.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-bold uppercase transition flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] shrink-0 cursor-pointer"
+          >
+            <Sparkles size={14} className={isGeneratingAi ? "animate-spin text-emerald-400" : "text-emerald-400"} />
+            <span>{isGeneratingAi ? "Memproses AI..." : "Generate AI Sekarang"}</span>
+          </button>
+        </div>
+      )}
+
       {/* Top Action Toolbar (No-Print) */}
       <section className="no-print bg-white border-2 border-black p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -208,42 +271,12 @@ function ReportPage() {
 
           <button
             type="button"
-            onClick={async () => {
-              try {
-                const res = await runNarasiAiExtraction({
-                  data: {
-                    dialogueLines: activeCase.dialogue,
-                    rawNotes: activeCase.rawNotes,
-                    patientName: activeCase.patientName,
-                  },
-                });
-                if (res && res.success) {
-                  applyAiExtractionResult({
-                    diagnosis: res.diagnosis,
-                    diagnosisIcd: res.diagnosisIcd,
-                    severity: res.severity,
-                    findings: res.findings,
-                    recommendations: res.recommendations,
-                    patientSummary: res.patientSummary,
-                    vitalSigns: res.vitalSigns,
-                    allergies: res.allergies,
-                    medications: res.medications,
-                    personalHistory: res.personalHistory,
-                    familyHistory: res.familyHistory,
-                    surgeries: res.surgeries,
-                    reviewOfSystems: res.reviewOfSystems,
-                    otherMedicalIssues: res.otherMedicalIssues,
-                    organId: res.primaryOrgan,
-                  });
-                }
-              } catch (e) {
-                console.warn("AI generation error:", e);
-              }
-            }}
-            className="px-4 py-2 border-2 border-black bg-black text-white hover:bg-neutral-800 uppercase transition shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] flex items-center gap-1.5"
+            onClick={handleAutoGenerate}
+            disabled={isGeneratingAi}
+            className="px-4 py-2 border-2 border-black bg-black text-white hover:bg-neutral-800 uppercase transition shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] flex items-center gap-1.5 cursor-pointer"
           >
-            <Sparkles size={14} className="animate-spin" />
-            <span>Auto-Generate Formulir AI</span>
+            <Sparkles size={14} className={isGeneratingAi ? "animate-spin text-emerald-400" : "text-emerald-400"} />
+            <span>{isGeneratingAi ? "Menyusun AI..." : "Ekstraksi Ulang AI"}</span>
           </button>
 
           <button

@@ -2,19 +2,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   Stethoscope,
-  Mic,
-  FileText,
   Sparkles,
   ArrowRight,
   UserCheck,
   Plus,
-  Trash2,
-  Activity,
-  Database,
-  ShieldCheck,
-  PenTool,
-  CheckCircle2,
-  Lock,
 } from "lucide-react";
 import { useMedicalStore } from "../store/medical-store";
 import type { OrganId } from "../lib/anatomy-data";
@@ -41,7 +32,7 @@ function MedicalDashboardPage() {
   const [newPatientDob, setNewPatientDob] = useState("14 Mei 1978");
   const [newPatientGender, setNewPatientGender] = useState<"Laki-laki" | "Perempuan">("Laki-laki");
 
-  const [newPatientOrgan, setNewPatientOrgan] = useState<OrganId>("lungs");
+  const [newPatientOrgan] = useState<OrganId>("lungs");
   const [newPatientComplaint, setNewPatientComplaint] = useState("");
 
   const handleCreatePatient = () => {

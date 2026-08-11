@@ -665,7 +665,7 @@ function AnatomyPage() {
                   <span className="text-[10px] uppercase font-bold text-[var(--terracotta)] tracking-wider block">
                     Inspeksi Spasial 3D Landmark Terpilih
                   </span>
-                  <h3 className="font-bold text-lg text-[var(--ink)]">{activeHotspot.label}</h3>
+                  <h3 className="font-bold text-lg text-[var(--ink)]">{activeHotspot?.label}</h3>
                 </div>
                 <button
                   type="button"
@@ -676,7 +676,7 @@ function AnatomyPage() {
                 </button>
               </div>
 
-              {symptomHotspotIds.includes(activeHotspot.id) ? (
+              {symptomHotspotIds.includes(activeHotspot?.id || "") ? (
                 <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2">
                   <Zap size={14} className="shrink-0 mt-0.5 text-red-600 animate-pulse" />
                   <div>
@@ -698,7 +698,7 @@ function AnatomyPage() {
                 </div>
               )}
 
-              <p className="text-xs text-[var(--ink-soft)] leading-relaxed">{activeHotspot.detail}</p>
+              <p className="text-xs text-[var(--ink-soft)] leading-relaxed">{activeHotspot?.detail}</p>
             </div>
           ) : (
             /* Organ Biological Fact Card */

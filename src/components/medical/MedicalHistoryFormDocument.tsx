@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   Printer,
-  CheckCircle2,
   Sparkles,
   RotateCcw,
   QrCode,
@@ -14,8 +13,15 @@ import {
   ChevronRight,
   AlertTriangle,
   Save,
+  Stethoscope,
+  BadgeCheck,
+  User,
+  Search,
+  Database,
+  X,
 } from "lucide-react";
 import type { OrganId } from "../../lib/anatomy-data";
+import { searchIcd10Codes } from "../../server/medical-db";
 
 export type ClinicalFindingItem = {
   id: string;
@@ -105,6 +111,9 @@ export type MedicalFormData = {
   doctorSpecialty: string;
   doctorSip: string;
   modality: string;
+
+  // AI Extracted Keys metadata
+  aiCheckedKeys?: string[];
 };
 
 export const DEFAULT_FORM_DATA: MedicalFormData = {
@@ -161,6 +170,7 @@ export const DEFAULT_FORM_DATA: MedicalFormData = {
   doctorSpecialty: "DPJP Spesialis",
   doctorSip: "SIP: 503/SIP.D/2026",
   modality: "Pemeriksaan Fisik & Rekonstruksi 3D",
+  aiCheckedKeys: [],
 };
 
 interface MedicalHistoryFormDocumentProps {
@@ -182,8 +192,6 @@ export function MedicalHistoryFormDocument({
   initialData,
   onChange,
   onOpen3DStation = () => {},
-  onOpen3DHotspot: _onOpen3DHotspot,
-  onSelectFinding: _onSelectFinding,
   onNewRecording = () => {},
   isDoctorSigned: externalIsDoctorSigned,
   signedAtTimestamp: externalSignedAtTimestamp,
@@ -193,16 +201,47 @@ export function MedicalHistoryFormDocument({
   const activeIncomingData = data || initialData || DEFAULT_FORM_DATA;
   const [formData, setFormData] = useState<MedicalFormData>(activeIncomingData);
   const [isEditing, setIsEditing] = useState(false);
-  const [patientSignatureConfirmed, setPatientSignatureConfirmed] = useState(true);
 
-  // Internal signature state fallback if not managed externally
+  // Internal signature state fallback
   const [internalSigned, setInternalSigned] = useState(false);
   const [internalTimestamp, setInternalTimestamp] = useState<string | null>(null);
 
   const isDoctorSigned = externalIsDoctorSigned ?? internalSigned;
   const signedAtTimestamp = externalSignedAtTimestamp ?? internalTimestamp;
 
-  // Sync with preset / prop changes safely
+  // ICD-10 Search & Selection Modal State
+  const [showIcdModal, setShowIcdModal] = useState(false);
+  const [icdSearchQuery, setIcdSearchQuery] = useState("");
+  const [icdSearchResults, setIcdSearchResults] = useState<Array<{ code: string; display: string; system: string; groupName?: string | null }>>([]);
+  const [isSearchingIcd, setIsSearchingIcd] = useState(false);
+
+  const handleSearchIcd = async (queryStr: string) => {
+    setIcdSearchQuery(queryStr);
+    if (!queryStr.trim()) {
+      setIcdSearchResults([]);
+      return;
+    }
+
+    setIsSearchingIcd(true);
+    try {
+      const results = await searchIcd10Codes({ data: { query: queryStr, limit: 25 } });
+      setIcdSearchResults(results || []);
+    } catch (e) {
+      console.warn("ICD search error:", e);
+    } finally {
+      setIsSearchingIcd(false);
+    }
+  };
+
+  const selectIcdCodeItem = (code: string, display: string) => {
+    updateField("diagnosisIcd", code);
+    if (!formData.diagnosis || formData.diagnosis === "Evaluasi Klinis Terstruktur") {
+      updateField("diagnosis", display);
+    }
+    setShowIcdModal(false);
+  };
+
+  // Sync with prop changes safely
   useEffect(() => {
     if (data || initialData) {
       setFormData(data || initialData || DEFAULT_FORM_DATA);
@@ -312,7 +351,7 @@ export function MedicalHistoryFormDocument({
     ctx.moveTo(x, y);
     ctx.lineWidth = 2.5;
     ctx.lineCap = "round";
-    ctx.strokeStyle = "#1e3a8a";
+    ctx.strokeStyle = "#000000";
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -362,7 +401,7 @@ export function MedicalHistoryFormDocument({
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
     ctx.lineWidth = 2.5;
-    ctx.strokeStyle = "#1e3a8a";
+    ctx.strokeStyle = "#000000";
     ctx.moveTo(25, 45);
     ctx.bezierCurveTo(45, 10, 80, 15, 95, 48);
     ctx.bezierCurveTo(110, 65, 140, 18, 175, 38);
@@ -382,439 +421,455 @@ export function MedicalHistoryFormDocument({
     externalOnClearSignature?.();
   };
 
+  // Calculate total checked items
+  const personalCheckedCount = Object.values(formData.personalHistory || {}).filter(Boolean).length;
+  const rosCheckedCount = Object.values(formData.reviewOfSystems || {}).filter(Boolean).length;
+  const familyCheckedCount = Object.values(formData.familyHistory || {}).filter(Boolean).length;
+  const surgCheckedCount = Object.values(formData.surgeries || {}).filter(Boolean).length;
+
+  const totalCheckedCount = personalCheckedCount + rosCheckedCount + familyCheckedCount + surgCheckedCount;
+
+  // Custom Checkbox Component with AI indication badge
+  const CustomCheckbox = ({
+    isChecked,
+    label,
+    onToggle,
+    isAiKey = false,
+  }: {
+    isChecked: boolean;
+    label: string;
+    onToggle: () => void;
+    isAiKey?: boolean;
+  }) => (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`group flex items-center justify-between p-2 rounded-xl border text-xs font-sans text-left transition-all duration-150 select-none ${
+        isChecked
+          ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+          : "bg-white text-slate-700 border-slate-200 hover:border-slate-400 hover:bg-slate-50"
+      }`}
+    >
+      <div className="flex items-center gap-2.5 min-w-0">
+        <div
+          className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-all ${
+            isChecked
+              ? "bg-emerald-400 border-emerald-400 text-slate-950 font-bold"
+              : "bg-white border-slate-300 group-hover:border-slate-500"
+          }`}
+        >
+          {isChecked && <Check size={12} strokeWidth={3} />}
+        </div>
+        <span className={`truncate ${isChecked ? "font-semibold text-white" : "font-medium"}`}>
+          {label}
+        </span>
+      </div>
+
+      {isChecked && isAiKey && (
+        <span className="shrink-0 ml-1.5 px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase rounded bg-emerald-400 text-slate-950 flex items-center gap-0.5">
+          <Sparkles size={8} /> AI
+        </span>
+      )}
+    </button>
+  );
+
   return (
-    <main className="max-w-4xl mx-auto space-y-6 pb-12">
-      {/* Top Action Bar (No-Print) */}
-      <div className="flow-stepper-bar no-print flex flex-wrap items-center justify-between gap-3 bg-[var(--paper)] p-4 rounded-2xl border border-[var(--line)] shadow-xs">
+    <main className="max-w-4xl mx-auto space-y-6 pb-12 font-sans">
+      {/* Top Toolbar (No-Print) */}
+      <div className="flow-stepper-bar no-print flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onNewRecording}
-            className="px-3.5 py-1.5 rounded-full border border-[var(--line)] bg-white text-xs font-serif font-semibold text-[var(--ink-soft)] hover:text-[var(--terracotta)] flex items-center gap-1.5 transition shadow-xs"
+            className="px-3.5 py-1.5 rounded-lg border-2 border-black bg-white text-xs font-mono font-bold text-black hover:bg-neutral-100 flex items-center gap-1.5 transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
           >
             <RotateCcw size={13} />
             <span>Mulai Kasus Baru</span>
           </button>
 
-          <span className="step-chip completed text-xs flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-            <Check size={12} /> Percakapan Klinis
+          <span className="step-chip completed text-xs font-mono font-bold flex items-center gap-1 text-emerald-800 bg-emerald-100 px-3 py-1 rounded-lg border border-emerald-300">
+            <Check size={12} /> Konsultasi Suara
           </span>
-          <ChevronRight size={14} className="text-[var(--ink-muted)]" />
-          <span className="step-chip active text-xs font-bold text-[var(--terracotta)] bg-[rgba(235,124,107,0.12)] px-3 py-1 rounded-full border border-[rgba(235,124,107,0.3)]">
-            ★ Medical Report (EHR Form)
+          <ChevronRight size={14} className="text-neutral-400" />
+          <span className="step-chip active text-xs font-mono font-bold text-black bg-black text-white px-3 py-1 rounded-lg">
+            ★ Medical History Form (EHR)
           </span>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* 3D Station Callout Button */}
+        <div className="flex items-center gap-2 flex-wrap font-mono font-bold text-xs">
           <button
             type="button"
             onClick={onOpen3DStation}
-            className="px-4 py-1.5 rounded-full bg-[rgba(235,124,107,0.15)] text-[var(--terracotta-deep)] hover:bg-[var(--terracotta)] hover:text-white border border-[rgba(235,124,107,0.35)] text-xs font-serif font-bold flex items-center gap-1.5 shadow-xs transition"
+            className="px-3.5 py-1.5 rounded-lg bg-neutral-100 text-black hover:bg-neutral-200 border-2 border-black flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition"
           >
-            <Sparkles size={14} className="text-[var(--terracotta)]" />
+            <Sparkles size={14} />
             <span>🧬 Inspeksi 3D Anatomy</span>
           </button>
 
-          {/* Toggle Interactive Edit Mode */}
           <button
             type="button"
             onClick={() => setIsEditing(!isEditing)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-serif font-bold border flex items-center gap-1.5 transition shadow-xs ${
+            className={`px-3.5 py-1.5 rounded-lg border-2 border-black flex items-center gap-1.5 transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
               isEditing
-                ? "bg-emerald-600 text-white border-emerald-700 ring-2 ring-emerald-300"
-                : "bg-white text-[var(--ink)] border-[var(--line)] hover:border-[var(--terracotta)]"
+                ? "bg-emerald-600 text-white border-emerald-800"
+                : "bg-white text-black hover:bg-neutral-100"
             }`}
           >
             {isEditing ? <Save size={13} /> : <Edit3 size={13} />}
-            <span>{isEditing ? "Mode Edit Aktif (Simpan)" : "Mode Edit Semua Kolom"}</span>
+            <span>{isEditing ? "Simpan Edit" : "Mode Edit Kolom"}</span>
           </button>
 
-          {/* Print / Download PDF */}
           <button
             type="button"
             onClick={() => window.print()}
-            className="px-4 py-1.5 rounded-full bg-[var(--ink)] text-white hover:bg-black text-xs font-serif font-bold flex items-center gap-1.5 shadow-xs transition"
+            className="px-4 py-1.5 rounded-lg bg-black text-white hover:bg-neutral-800 flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] transition uppercase tracking-wider"
           >
             <Printer size={14} />
-            <span>Cetak / Cetak PDF</span>
+            <span>Cetak PDF</span>
           </button>
         </div>
       </div>
 
-      {isEditing && (
-        <div className="no-print bg-emerald-50 border border-emerald-300 rounded-2xl p-3.5 flex items-center gap-3 text-xs text-emerald-900 font-serif">
-          <Sparkles size={18} className="text-emerald-700 shrink-0" />
-          <div>
-            <b>Mode Edit Dokumen Terbuka:</b> Anda dapat mengedit Nama Pasien, Tanggal Lahir, Riwayat Alergi, Obat-obatan, ICD-10, Catatan Anamnesis, dan Tanda-Tanda Vital secara langsung. Setiap perubahan pada rekam medis otomatis tersimpan secara aman.
+      {/* AI Extraction Banner (No-Print) */}
+      <div className="no-print bg-slate-900 text-white rounded-2xl p-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 font-mono text-xs font-bold text-emerald-400 uppercase tracking-wider">
+            <Sparkles size={16} className="animate-pulse" />
+            <span>AI Clinical Intelligence Auto-Checklist</span>
           </div>
+          <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">
+            {totalCheckedCount} Indikasi Klinis Aktif
+          </span>
         </div>
-      )}
+        <p className="text-xs text-slate-300 leading-relaxed font-sans">
+          Sistem AI NARASI mengekstraksi percakapan konsultasi secara real-time dan mengidentifikasi keluhan fisik pasien menjadi ceklist medis terstruktur di bawah ini. Anda dapat mengklik atau mengedit setiap kolom secara langsung.
+        </p>
+      </div>
 
       {/* =========================================================================
-          THE OFFICIAL MEDICAL HISTORY & CLINICAL ASSESSMENT FORM (FILLABLE EHR PDF)
+          THE OFFICIAL MEDICAL HISTORY & CLINICAL ASSESSMENT FORM (PREMIUM EHR)
           ========================================================================= */}
-      <article className="clinical-report-doc pdf-form-document bg-white text-black p-8 sm:p-10 border border-black shadow-2xl font-sans text-[13px] leading-normal relative">
+      <article className="clinical-report-doc pdf-form-document bg-white text-slate-900 p-8 sm:p-10 border-2 border-slate-900 shadow-2xl rounded-2xl font-sans text-[13px] leading-normal relative">
         
-        {/* Document Header with Medical Emblem */}
-        <header className="flex items-start justify-between border-b-2 border-black pb-4 mb-5">
+        {/* Document Header */}
+        <header className="flex items-start justify-between border-b-2 border-slate-900 pb-5 mb-6">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-black text-white flex items-center justify-center font-bold text-xl tracking-tighter">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
-                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
-              </svg>
+            <div className="w-14 h-14 rounded-xl bg-slate-950 text-white flex items-center justify-center font-bold text-2xl shadow-md shrink-0">
+              <Stethoscope size={30} className="text-emerald-400" />
             </div>
             <div>
-              <h1 className="text-xl font-extrabold tracking-tight uppercase text-black font-serif">
-                MEDICAL HISTORY FORM
-              </h1>
-              <p className="text-[11px] font-medium text-neutral-700 tracking-wide">
-                LEMBAR REKAM MEDIS & FORMULIR EVALUASI KLINIS TERPADU (EHR)
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-extrabold tracking-tight uppercase text-slate-950 font-serif">
+                  MEDICAL HISTORY FORM
+                </h1>
+                <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-slate-900 text-white rounded">
+                  EHR-2026-NRS
+                </span>
+              </div>
+              <p className="text-xs font-medium text-slate-600 tracking-wide mt-0.5">
+                LEMBAR REKAM MEDIS & FORMULIR EVALUASI KLINIS TERPADU (SATUSEHAT FHIR READY)
               </p>
             </div>
           </div>
 
-          <div className="text-right text-[10px] font-mono text-neutral-600">
-            <span className="inline-block px-2 py-0.5 border border-black font-bold uppercase bg-neutral-100 mb-1">
-              STANDARD FORM EHR-01
-            </span>
+          <div className="text-right text-[11px] font-mono text-slate-600 space-y-0.5">
+            <div className="inline-block px-2.5 py-0.5 border-2 border-slate-900 font-bold uppercase bg-slate-100 text-slate-900 mb-1 rounded">
+              FORMULIR EHR RESMI
+            </div>
             <div>Faskes ID: 3171092-KARS</div>
             <div>Tgl: {new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</div>
           </div>
         </header>
 
         {/* =====================================================================
-            SECTION 1: PATIENT INFORMATION (BORDERED GRID)
+            SECTION 1: PATIENT INFORMATION
             ===================================================================== */}
-        <div className="mb-5 border border-black">
-          <div className="bg-neutral-200 px-3 py-1 font-bold text-xs uppercase border-b border-black tracking-wider flex items-center justify-between">
-            <span>Patient Information</span>
-            <span className="text-[10px] font-mono text-neutral-800">
-              No. RM: {formData.insurancePolicyNumber ? formData.insurancePolicyNumber.slice(0, 10) : "RM-2026-0891"}
+        <section className="mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs">
+          <div className="bg-slate-900 text-white px-4 py-1.5 font-bold text-xs uppercase tracking-wider flex items-center justify-between font-mono">
+            <div className="flex items-center gap-2">
+              <User size={14} className="text-emerald-400" />
+              <span>1. Identitas Pasien (Patient Information)</span>
+            </div>
+            <span className="text-[10px] text-slate-300">
+              No. RM: {formData.insurancePolicyNumber ? formData.insurancePolicyNumber.slice(0, 12) : "RM-2026-0891"}
             </span>
           </div>
 
-          {/* Row 1: Name, DOB, Gender */}
-          <div className="grid grid-cols-12 border-b border-black text-xs">
-            <div className="col-span-12 sm:col-span-5 p-2 border-b sm:border-b-0 sm:border-r border-black flex items-center gap-1.5">
-              <span className="font-bold text-neutral-800 w-14">Name:</span>
-              <input
-                type="text"
-                value={formData.patientName}
-                onChange={(e) => updateField("patientName", e.target.value)}
-                placeholder="Nama Lengkap Pasien"
-                className="font-semibold text-black font-serif text-sm w-full bg-transparent focus:bg-yellow-50 px-1 border-b border-dashed border-transparent focus:border-black outline-none"
-              />
-            </div>
-            <div className="col-span-6 sm:col-span-3 p-2 border-r border-black flex items-center gap-1.5">
-              <span className="font-bold text-neutral-800 w-10">DOB:</span>
-              <input
-                type="text"
-                value={formData.patientDob}
-                onChange={(e) => updateField("patientDob", e.target.value)}
-                placeholder="Contoh: 14 Mei 1978"
-                className="font-mono text-xs w-full bg-transparent focus:bg-yellow-50 px-1 border-b border-dashed border-transparent focus:border-black outline-none"
-              />
-            </div>
-            <div className="col-span-6 sm:col-span-4 p-2 flex items-center gap-3">
-              <span className="font-bold text-neutral-800">Gender:</span>
-              <label className="flex items-center gap-1 cursor-pointer">
+          <div className="p-4 bg-slate-50/50 space-y-3 text-xs">
+            {/* Grid Row 1 */}
+            <div className="grid grid-cols-12 gap-3">
+              <div className="col-span-12 sm:col-span-6 bg-white p-2.5 rounded-lg border border-slate-300">
+                <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">Nama Pasien / Patient Name</span>
                 <input
-                  type="radio"
-                  name="genderRadio"
-                  checked={formData.patientGender === "M"}
-                  onChange={() => updateField("patientGender", "M")}
-                  className="w-3.5 h-3.5 accent-black"
+                  type="text"
+                  value={formData.patientName}
+                  onChange={(e) => updateField("patientName", e.target.value)}
+                  placeholder="Ketik nama pasien..."
+                  className="font-serif font-bold text-slate-900 text-sm w-full bg-transparent outline-none border-b border-transparent focus:border-slate-900"
                 />
-                <span>M (Laki-laki)</span>
-              </label>
-              <label className="flex items-center gap-1 cursor-pointer">
+              </div>
+
+              <div className="col-span-6 sm:col-span-3 bg-white p-2.5 rounded-lg border border-slate-300">
+                <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">Tgl Lahir / DOB</span>
                 <input
-                  type="radio"
-                  name="genderRadio"
-                  checked={formData.patientGender === "F"}
-                  onChange={() => updateField("patientGender", "F")}
-                  className="w-3.5 h-3.5 accent-black"
+                  type="text"
+                  value={formData.patientDob}
+                  onChange={(e) => updateField("patientDob", e.target.value)}
+                  placeholder="14 Mei 1978"
+                  className="font-mono text-xs w-full bg-transparent outline-none border-b border-transparent focus:border-slate-900"
                 />
-                <span>F (Perempuan)</span>
-              </label>
-            </div>
-          </div>
+              </div>
 
-          {/* Row 2: Address & Phone */}
-          <div className="grid grid-cols-12 border-b border-black text-xs">
-            <div className="col-span-12 sm:col-span-8 p-2 border-b sm:border-b-0 sm:border-r border-black flex items-center gap-1.5">
-              <span className="font-bold text-neutral-800 w-16">Address:</span>
-              <input
-                type="text"
-                value={formData.patientAddress}
-                onChange={(e) => updateField("patientAddress", e.target.value)}
-                className="w-full bg-transparent focus:bg-yellow-50 px-1 border-b border-dashed border-transparent focus:border-black outline-none"
-              />
+              <div className="col-span-6 sm:col-span-3 bg-white p-2.5 rounded-lg border border-slate-300">
+                <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">Jenis Kelamin / Gender</span>
+                <select
+                  value={formData.patientGender}
+                  onChange={(e) => updateField("patientGender", e.target.value as any)}
+                  className="font-bold text-xs w-full bg-transparent outline-none"
+                >
+                  <option value="M">Laki-laki (Male)</option>
+                  <option value="F">Perempuan (Female)</option>
+                  <option value="Other">Lainnya (Other)</option>
+                </select>
+              </div>
             </div>
-            <div className="col-span-12 sm:col-span-4 p-2 flex items-center gap-1.5">
-              <span className="font-bold text-neutral-800 w-14">Phone:</span>
-              <input
-                type="text"
-                value={formData.patientPhone}
-                onChange={(e) => updateField("patientPhone", e.target.value)}
-                className="font-mono text-xs w-full bg-transparent focus:bg-yellow-50 px-1 border-b border-dashed border-transparent focus:border-black outline-none"
-              />
-            </div>
-          </div>
 
-          {/* Row 3: Emergency Contact Header & Data */}
-          <div className="bg-neutral-100 px-3 py-0.5 font-bold text-[11px] uppercase border-b border-black text-neutral-800">
-            Emergency Contact
-          </div>
-          <div className="grid grid-cols-12 border-b border-black text-xs">
-            <div className="col-span-12 sm:col-span-5 p-2 border-b sm:border-b-0 sm:border-r border-black flex items-center gap-1.5">
-              <span className="font-bold text-neutral-800 w-14">Name:</span>
-              <input
-                type="text"
-                value={formData.emergencyContactName}
-                onChange={(e) => updateField("emergencyContactName", e.target.value)}
-                className="w-full bg-transparent focus:bg-yellow-50 px-1 border-b border-dashed border-transparent focus:border-black outline-none"
-              />
-            </div>
-            <div className="col-span-6 sm:col-span-3 p-2 border-r border-black flex items-center gap-1.5">
-              <span className="font-bold text-neutral-800">Rel:</span>
-              <input
-                type="text"
-                value={formData.emergencyContactRelationship}
-                onChange={(e) => updateField("emergencyContactRelationship", e.target.value)}
-                className="w-full bg-transparent focus:bg-yellow-50 px-1 border-b border-dashed border-transparent focus:border-black outline-none"
-              />
-            </div>
-            <div className="col-span-6 sm:col-span-4 p-2 flex items-center gap-1.5">
-              <span className="font-bold text-neutral-800 w-14">Phone:</span>
-              <input
-                type="text"
-                value={formData.emergencyContactPhone}
-                onChange={(e) => updateField("emergencyContactPhone", e.target.value)}
-                className="font-mono text-xs w-full bg-transparent focus:bg-yellow-50 px-1 border-b border-dashed border-transparent focus:border-black outline-none"
-              />
-            </div>
-          </div>
+            {/* Grid Row 2 */}
+            <div className="grid grid-cols-12 gap-3">
+              <div className="col-span-12 sm:col-span-8 bg-white p-2.5 rounded-lg border border-slate-300">
+                <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">Alamat Pasien / Address</span>
+                <input
+                  type="text"
+                  value={formData.patientAddress}
+                  onChange={(e) => updateField("patientAddress", e.target.value)}
+                  placeholder="Alamat lengkap..."
+                  className="text-xs w-full bg-transparent outline-none border-b border-transparent focus:border-slate-900"
+                />
+              </div>
 
-          {/* Row 4: Insurance Information */}
-          <div className="bg-neutral-100 px-3 py-0.5 font-bold text-[11px] uppercase border-b border-black text-neutral-800">
-            Insurance Information
-          </div>
-          <div className="grid grid-cols-12 text-xs">
-            <div className="col-span-12 sm:col-span-7 p-2 border-b sm:border-b-0 sm:border-r border-black flex items-center gap-1.5">
-              <span className="font-bold text-neutral-800 w-32">Insurance Provider:</span>
-              <input
-                type="text"
-                value={formData.insuranceProvider}
-                onChange={(e) => updateField("insuranceProvider", e.target.value)}
-                className="w-full bg-transparent focus:bg-yellow-50 px-1 border-b border-dashed border-transparent focus:border-black outline-none"
-              />
+              <div className="col-span-12 sm:col-span-4 bg-white p-2.5 rounded-lg border border-slate-300">
+                <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">No. Telepon / Phone</span>
+                <input
+                  type="text"
+                  value={formData.patientPhone}
+                  onChange={(e) => updateField("patientPhone", e.target.value)}
+                  placeholder="0812-..."
+                  className="font-mono text-xs w-full bg-transparent outline-none border-b border-transparent focus:border-slate-900"
+                />
+              </div>
             </div>
-            <div className="col-span-12 sm:col-span-5 p-2 flex items-center gap-1.5">
-              <span className="font-bold text-neutral-800 w-28">Policy Number:</span>
-              <input
-                type="text"
-                value={formData.insurancePolicyNumber}
-                onChange={(e) => updateField("insurancePolicyNumber", e.target.value)}
-                className="font-mono font-semibold text-xs w-full bg-transparent focus:bg-yellow-50 px-1 border-b border-dashed border-transparent focus:border-black outline-none"
-              />
+
+            {/* Grid Row 3: Emergency & Insurance */}
+            <div className="grid grid-cols-12 gap-3 pt-1">
+              <div className="col-span-12 sm:col-span-6 bg-white p-2.5 rounded-lg border border-slate-300">
+                <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">Kontak Darurat / Emergency Contact</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={formData.emergencyContactName}
+                    onChange={(e) => updateField("emergencyContactName", e.target.value)}
+                    placeholder="Nama Kerabat"
+                    className="font-semibold text-xs w-1/2 bg-transparent outline-none border-b border-transparent focus:border-slate-900"
+                  />
+                  <input
+                    type="text"
+                    value={formData.emergencyContactRelationship}
+                    onChange={(e) => updateField("emergencyContactRelationship", e.target.value)}
+                    placeholder="Hubungan"
+                    className="text-xs w-1/4 bg-transparent outline-none border-b border-transparent focus:border-slate-900 text-slate-500"
+                  />
+                  <input
+                    type="text"
+                    value={formData.emergencyContactPhone}
+                    onChange={(e) => updateField("emergencyContactPhone", e.target.value)}
+                    placeholder="No. HP"
+                    className="font-mono text-xs w-1/4 bg-transparent outline-none border-b border-transparent focus:border-slate-900"
+                  />
+                </div>
+              </div>
+
+              <div className="col-span-12 sm:col-span-6 bg-white p-2.5 rounded-lg border border-slate-300">
+                <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">Penjamin / Insurance Provider & Policy</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={formData.insuranceProvider}
+                    onChange={(e) => updateField("insuranceProvider", e.target.value)}
+                    placeholder="BPJS / Asuransi"
+                    className="font-semibold text-xs w-1/2 bg-transparent outline-none border-b border-transparent focus:border-slate-900"
+                  />
+                  <input
+                    type="text"
+                    value={formData.insurancePolicyNumber}
+                    onChange={(e) => updateField("insurancePolicyNumber", e.target.value)}
+                    placeholder="No. Polis / Kartu"
+                    className="font-mono text-xs w-1/2 bg-transparent outline-none border-b border-transparent focus:border-slate-900 font-bold text-slate-900"
+                  />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* =====================================================================
-            SECTION 2: PERSONAL HISTORY (CHECK ALL THAT APPLY - 2 COLUMN GRID)
+            SECTION 2: PERSONAL HISTORY CHECKLIST (AI Auto-Fill)
             ===================================================================== */}
-        <div className="mb-5 border border-black">
-          <div className="bg-neutral-200 px-3 py-1 font-bold text-xs uppercase border-b border-black tracking-wider flex items-center justify-between">
-            <span>Personal history (check all that apply)</span>
-            <span className="text-[10px] italic font-normal text-neutral-800">Diekstraksi AI & dapat diedit langsung</span>
+        <section className="mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs">
+          <div className="bg-slate-900 text-white px-4 py-1.5 font-bold text-xs uppercase tracking-wider flex items-center justify-between font-mono">
+            <span>2. Riwayat Penyakit Pribadi (Personal History)</span>
+            <span className="text-[10px] font-normal text-emerald-400">
+              {personalCheckedCount} Indikasi Ditemukan AI
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 text-xs border-b border-black">
-            {/* Left Column */}
-            <div className="p-3 border-b sm:border-b-0 sm:border-r border-black space-y-1.5">
+          <div className="p-4 bg-slate-50/50 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {[
-                { key: "no_known_history", label: "No known medical history" },
                 { key: "acid_reflux", label: "Acid Reflux / GERD" },
                 { key: "anemia", label: "Anemia" },
-                { key: "anxiety", label: "Anxiety" },
-                { key: "asthma", label: "Asthma" },
-                { key: "cancer", label: "Cancer (specify below)" },
+                { key: "anxiety", label: "Anxiety / Cemas" },
+                { key: "asthma", label: "Asthma / Asma" },
+                { key: "cancer", label: "Cancer / Kanker" },
                 { key: "congestive_heart_failure", label: "Congestive Heart Failure" },
-                { key: "copd", label: "COPD" },
-                { key: "depression", label: "Depression" },
+                { key: "copd", label: "COPD / PPOK" },
+                { key: "depression", label: "Depression / Depresi" },
                 { key: "diabetes_type1", label: "Diabetes Type 1" },
                 { key: "diabetes_type2", label: "Diabetes Type 2" },
-                { key: "eating_disorder", label: "Eating Disorder" },
-              ].map((item) => {
-                const isChecked = !!formData.personalHistory[item.key];
-                return (
-                  <label
-                    key={item.key}
-                    onClick={() => toggleCheckbox("personalHistory", item.key)}
-                    className="flex items-center gap-2 cursor-pointer hover:bg-neutral-100 py-0.5 px-1 rounded"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => {}}
-                      className="w-3.5 h-3.5 accent-black rounded-none"
-                    />
-                    <span className={isChecked ? "font-bold text-black" : "text-neutral-800"}>
-                      {item.label}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-
-            {/* Right Column */}
-            <div className="p-3 space-y-1.5">
-              {[
-                { key: "heart_disease", label: "Heart Disease" },
+                { key: "heart_disease", label: "Heart Disease / Jantung" },
                 { key: "hepatitis", label: "Hepatitis" },
                 { key: "high_blood_pressure", label: "High Blood Pressure (Hipertensi)" },
                 { key: "high_cholesterol", label: "High Cholesterol (Dislipidemia)" },
-                { key: "hiv_aids", label: "HIV / AIDS" },
                 { key: "kidney_disease", label: "Kidney Disease (Gagal Ginjal)" },
-                { key: "liver_disease", label: "Liver Disease / Steatohepatitis" },
-                { key: "osteoporosis", label: "Osteoporosis" },
-                { key: "seizures", label: "Seizures / Epilepsy" },
+                { key: "liver_disease", label: "Liver Disease" },
                 { key: "stroke", label: "Stroke / TIA" },
                 { key: "thyroid_disease", label: "Thyroid Disease" },
-                { key: "other_personal", label: "Other" },
-              ].map((item) => {
-                const isChecked = !!formData.personalHistory[item.key];
-                return (
-                  <label
-                    key={item.key}
-                    onClick={() => toggleCheckbox("personalHistory", item.key)}
-                    className="flex items-center gap-2 cursor-pointer hover:bg-neutral-100 py-0.5 px-1 rounded"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => {}}
-                      className="w-3.5 h-3.5 accent-black rounded-none"
-                    />
-                    <span className={isChecked ? "font-bold text-black" : "text-neutral-800"}>
-                      {item.label}
-                    </span>
-                  </label>
-                );
-              })}
+              ].map((item) => (
+                <CustomCheckbox
+                  key={item.key}
+                  label={item.label}
+                  isChecked={!!formData.personalHistory[item.key]}
+                  onToggle={() => toggleCheckbox("personalHistory", item.key)}
+                  isAiKey={formData.aiCheckedKeys?.includes(item.key)}
+                />
+              ))}
+            </div>
+
+            {/* Other Medical Issues Free-text input */}
+            <div className="bg-white p-3 rounded-lg border border-slate-300 space-y-1">
+              <span className="font-bold text-xs uppercase tracking-wider text-slate-700 block">
+                Catatan Anamnesis / Other Medical Issues:
+              </span>
+              <textarea
+                rows={2}
+                value={formData.otherMedicalIssues}
+                onChange={(e) => updateField("otherMedicalIssues", e.target.value)}
+                placeholder="Tambahkan catatan riwayat penyakit atau keluhan tambahan..."
+                className="w-full p-2 bg-slate-50 border border-slate-200 rounded font-serif text-slate-900 text-xs focus:outline-none focus:border-slate-900"
+              />
             </div>
           </div>
-
-          {/* Other Medical Issues Free-text input */}
-          <div className="p-3 text-xs bg-neutral-50">
-            <span className="font-bold block uppercase tracking-wider text-neutral-800 mb-1">
-              Catatan Anamnesis / Other Medical Issues:
-            </span>
-            <textarea
-              rows={2}
-              value={formData.otherMedicalIssues}
-              onChange={(e) => updateField("otherMedicalIssues", e.target.value)}
-              placeholder="Tambahkan catatan riwayat penyakit atau keluhan lain..."
-              className="w-full p-2 bg-white border border-neutral-300 rounded font-serif text-black focus:outline-none focus:border-black text-xs"
-            />
-          </div>
-        </div>
+        </section>
 
         {/* =====================================================================
-            SECTION 3: MEDICATIONS / TREATMENTS (INTERACTIVE TABLE)
+            SECTION 3: MEDICATIONS / TREATMENTS
             ===================================================================== */}
-        <div className="mb-5 border border-black">
-          <div className="bg-neutral-200 px-3 py-1 font-bold text-xs uppercase border-b border-black tracking-wider flex items-center justify-between">
-            <span>Current Medications & Treatments (Resep & Terapi Aktif)</span>
+        <section className="mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs">
+          <div className="bg-slate-900 text-white px-4 py-1.5 font-bold text-xs uppercase tracking-wider flex items-center justify-between font-mono">
+            <span>3. Resep & Terapi Obat Aktif (Current Medications)</span>
             <button
               type="button"
               onClick={handleAddMedication}
-              className="no-print text-[11px] font-bold text-black bg-white border border-black px-2 py-0.5 rounded hover:bg-black hover:text-white transition flex items-center gap-1"
+              className="no-print text-[11px] font-bold text-slate-950 bg-emerald-400 px-2.5 py-0.5 rounded hover:bg-emerald-300 transition flex items-center gap-1"
             >
-              <Plus size={11} /> Tambah Obat
+              <Plus size={12} /> Tambah Obat
             </button>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto bg-white">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-neutral-100 border-b border-black text-black">
-                  <th className="p-2 border-r border-black font-bold w-[25%]">Nama Obat / Terapi</th>
-                  <th className="p-2 border-r border-black font-bold w-[15%]">Dosis</th>
-                  <th className="p-2 border-r border-black font-bold w-[20%]">Frekuensi</th>
-                  <th className="p-2 border-r border-black font-bold w-[25%]">Tujuan / Indikasi</th>
-                  <th className="p-2 font-bold w-[15%] no-print">Aksi</th>
+                <tr className="bg-slate-100 border-b-2 border-slate-900 text-slate-900 font-mono">
+                  <th className="p-2.5 border-r border-slate-300 font-bold w-[28%]">Nama Obat / Terapi</th>
+                  <th className="p-2.5 border-r border-slate-300 font-bold w-[16%]">Dosis</th>
+                  <th className="p-2.5 border-r border-slate-300 font-bold w-[22%]">Frekuensi</th>
+                  <th className="p-2.5 border-r border-slate-300 font-bold w-[24%]">Indikasi Medis</th>
+                  <th className="p-2.5 font-bold w-[10%] text-center no-print">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-300">
-                {formData.medications.map((med) => (
-                  <tr key={med.id} className="hover:bg-neutral-50">
-                    <td className="p-1.5 border-r border-black">
-                      <input
-                        type="text"
-                        value={med.name}
-                        onChange={(e) => handleMedicationChange(med.id, "name", e.target.value)}
-                        placeholder="Nama Obat"
-                        className="w-full font-bold text-black bg-transparent outline-none border-b border-transparent focus:border-black"
-                      />
-                    </td>
-                    <td className="p-1.5 border-r border-black">
-                      <input
-                        type="text"
-                        value={med.dosage}
-                        onChange={(e) => handleMedicationChange(med.id, "dosage", e.target.value)}
-                        placeholder="Contoh: 5 mg"
-                        className="w-full text-black bg-transparent outline-none border-b border-transparent focus:border-black font-mono text-xs"
-                      />
-                    </td>
-                    <td className="p-1.5 border-r border-black">
-                      <input
-                        type="text"
-                        value={med.frequency}
-                        onChange={(e) => handleMedicationChange(med.id, "frequency", e.target.value)}
-                        placeholder="Contoh: 1x1 tablet / hari"
-                        className="w-full text-black bg-transparent outline-none border-b border-transparent focus:border-black"
-                      />
-                    </td>
-                    <td className="p-1.5 border-r border-black">
-                      <input
-                        type="text"
-                        value={med.purpose}
-                        onChange={(e) => handleMedicationChange(med.id, "purpose", e.target.value)}
-                        placeholder="Indikasi Terapi"
-                        className="w-full text-black bg-transparent outline-none border-b border-transparent focus:border-black"
-                      />
-                    </td>
-                    <td className="p-1.5 text-center no-print">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveMedication(med.id)}
-                        className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 transition"
-                        title="Hapus Obat"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+              <tbody className="divide-y divide-slate-200">
+                {formData.medications.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-4 text-center text-slate-500 italic font-serif">
+                      Belum ada obat yang ditambahkan. Klik "Tambah Obat" atau jalankan AI Extraction.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  formData.medications.map((med) => (
+                    <tr key={med.id} className="hover:bg-slate-50 transition">
+                      <td className="p-2 border-r border-slate-200">
+                        <input
+                          type="text"
+                          value={med.name}
+                          onChange={(e) => handleMedicationChange(med.id, "name", e.target.value)}
+                          placeholder="Nama Obat"
+                          className="w-full font-bold text-slate-900 bg-transparent outline-none border-b border-transparent focus:border-slate-900"
+                        />
+                      </td>
+                      <td className="p-2 border-r border-slate-200">
+                        <input
+                          type="text"
+                          value={med.dosage}
+                          onChange={(e) => handleMedicationChange(med.id, "dosage", e.target.value)}
+                          placeholder="5 mg"
+                          className="w-full text-slate-900 bg-transparent outline-none border-b border-transparent focus:border-slate-900 font-mono text-xs"
+                        />
+                      </td>
+                      <td className="p-2 border-r border-slate-200">
+                        <input
+                          type="text"
+                          value={med.frequency}
+                          onChange={(e) => handleMedicationChange(med.id, "frequency", e.target.value)}
+                          placeholder="1x1 tablet / hari"
+                          className="w-full text-slate-900 bg-transparent outline-none border-b border-transparent focus:border-slate-900"
+                        />
+                      </td>
+                      <td className="p-2 border-r border-slate-200">
+                        <input
+                          type="text"
+                          value={med.purpose}
+                          onChange={(e) => handleMedicationChange(med.id, "purpose", e.target.value)}
+                          placeholder="Indikasi Terapi"
+                          className="w-full text-slate-900 bg-transparent outline-none border-b border-transparent focus:border-slate-900"
+                        />
+                      </td>
+                      <td className="p-2 text-center no-print">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMedication(med.id)}
+                          className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 transition"
+                          title="Hapus Obat"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
 
         {/* =====================================================================
-            SECTION 4: SURGERIES / PROCEDURES & RIWAYAT ALERGI (EDITABLE!)
+            SECTION 4: SURGERIES & ALLERGIES
             ===================================================================== */}
-        <div className="grid grid-cols-1 sm:grid-cols-12 border border-black mb-5 text-xs">
+        <section className="grid grid-cols-1 sm:grid-cols-12 gap-4 mb-6">
           {/* Surgeries / Procedures */}
-          <div className="col-span-12 sm:col-span-7 p-3 border-b sm:border-b-0 sm:border-r border-black">
-            <span className="font-bold block uppercase tracking-wider text-neutral-800 mb-2">
-              Surgeries / Procedures:
-            </span>
-            <div className="grid grid-cols-2 gap-y-1.5">
+          <div className="col-span-12 sm:col-span-7 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs bg-slate-50/50">
+            <div className="bg-slate-900 text-white px-3.5 py-1.5 font-bold text-xs uppercase tracking-wider font-mono">
+              4A. Riwayat Operasi (Surgeries)
+            </div>
+            <div className="p-3 grid grid-cols-2 gap-2">
               {[
                 { key: "heart_surgery", label: "Heart surgery" },
                 { key: "cholecystectomy", label: "Cholecystectomy" },
@@ -823,423 +878,328 @@ export function MedicalHistoryFormDocument({
                 { key: "hysterectomy", label: "Hysterectomy" },
                 { key: "bladder", label: "Bladder" },
                 { key: "colonoscopy", label: "Colonoscopy" },
-                { key: "egd", label: "EGD" },
                 { key: "joint", label: "Joint" },
-                { key: "other_surg", label: "Other" },
-              ].map((surg) => {
-                const isChecked = !!formData.surgeries[surg.key];
-                return (
-                  <label
-                    key={surg.key}
-                    onClick={() => toggleCheckbox("surgeries", surg.key)}
-                    className="flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => {}}
-                      className="w-3.5 h-3.5 accent-black rounded-none"
-                    />
-                    <span className={isChecked ? "font-bold text-black" : "text-neutral-700"}>{surg.label}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Allergies Box - 100% EDITABLE! */}
-          <div className="col-span-12 sm:col-span-5 p-3 bg-red-50/40">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="font-bold block uppercase tracking-wider text-red-900 flex items-center gap-1">
-                <AlertTriangle size={13} className="text-red-600" />
-                Riwayat Alergi (Allergies) <span className="text-red-500">*</span>
-              </span>
-              <span className="text-[10px] text-red-700 font-mono">Editable</span>
-            </div>
-
-            {/* Quick Allergies Preset Badges */}
-            <div className="flex flex-wrap gap-1 mb-2 no-print">
-              {[
-                "Penisilin",
-                "Sefalosporin",
-                "Sulfa",
-                "NSAID / Aspirin",
-                "Seafood / Makanan Laut",
-                "Tanpa Alergi Dikenal",
-              ].map((al) => (
-                <button
-                  key={al}
-                  type="button"
-                  onClick={() => {
-                    const current = formData.allergies || "";
-                    if (al === "Tanpa Alergi Dikenal") {
-                      updateField("allergies", "Tidak ada riwayat alergi obat / makanan yang diketahui.");
-                    } else if (!current.includes(al)) {
-                      updateField("allergies", current ? `${current}, Alergi: ${al}` : `Alergi: ${al}`);
-                    }
-                  }}
-                  className="px-1.5 py-0.5 rounded bg-white border border-red-200 hover:bg-red-100 text-[10px] text-red-900 font-medium transition"
-                >
-                  + {al}
-                </button>
+              ].map((surg) => (
+                <CustomCheckbox
+                  key={surg.key}
+                  label={surg.label}
+                  isChecked={!!formData.surgeries[surg.key]}
+                  onToggle={() => toggleCheckbox("surgeries", surg.key)}
+                  isAiKey={formData.aiCheckedKeys?.includes(surg.key)}
+                />
               ))}
             </div>
-
-            <textarea
-              rows={3}
-              value={formData.allergies}
-              onChange={(e) => updateField("allergies", e.target.value)}
-              placeholder="Ketikkan riwayat alergi obat, makanan, debu, atau zat kontras di sini..."
-              className="w-full p-2 bg-white border border-red-300 rounded font-serif leading-relaxed text-black text-xs focus:outline-none focus:border-red-600 shadow-inner"
-            />
-          </div>
-        </div>
-
-        {/* =====================================================================
-            SECTION 5: FAMILY HISTORY (CHECK ALL THAT APPLY)
-            ===================================================================== */}
-        <div className="mb-5 border border-black">
-          <div className="bg-neutral-200 px-3 py-1 font-bold text-xs uppercase border-b border-black tracking-wider">
-            Family history (check all that apply)
           </div>
 
-          <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
-            {[
-              { key: "no_known_family", label: "No known family history of medical conditions" },
-              { key: "cancer", label: "Cancer" },
-              { key: "diabetes", label: "Diabetes" },
-              { key: "heart_disease", label: "Heart Disease" },
-              { key: "high_blood_pressure", label: "High Blood Pressure" },
-              { key: "high_cholesterol", label: "High Cholesterol" },
-              { key: "stroke", label: "Stroke" },
-              { key: "thyroid_disease", label: "Thyroid Disease" },
-              { key: "kidney_disease", label: "Kidney Disease" },
-              { key: "mental_health", label: "Mental Health Conditions (Depression, Anxiety, etc.)" },
-              { key: "autoimmune", label: "Autoimmune Diseases" },
-              { key: "other_fam", label: "Other: ________________" },
-            ].map((fam) => {
-              const isChecked = !!formData.familyHistory[fam.key];
-              return (
-                <label
-                  key={fam.key}
-                  onClick={() => toggleCheckbox("familyHistory", fam.key)}
-                  className="flex items-center gap-2 cursor-pointer hover:bg-neutral-100 py-0.5 px-1 rounded"
-                >
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={() => {}}
-                    className="w-3.5 h-3.5 accent-black rounded-none"
-                  />
-                  <span className={isChecked ? "font-bold text-black" : "text-neutral-800"}>{fam.label}</span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
+          {/* Allergies Box */}
+          <div className="col-span-12 sm:col-span-5 rounded-xl border-2 border-red-900 overflow-hidden shadow-xs bg-red-50/30 flex flex-col justify-between">
+            <div className="bg-red-900 text-white px-3.5 py-1.5 font-bold text-xs uppercase tracking-wider font-mono flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <AlertTriangle size={14} className="text-yellow-400" />
+                4B. Riwayat Alergi (Allergies)
+              </span>
+              <span className="text-[10px] text-red-200">Wajib Diisi</span>
+            </div>
 
-        {/* =====================================================================
-            SECTION 6: SOCIAL HISTORY (TABLE FORMAT FROM PDF)
-            ===================================================================== */}
-        <div className="mb-5 border border-black">
-          <div className="bg-neutral-200 px-3 py-1 font-bold text-xs uppercase border-b border-black tracking-wider">
-            Social history
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-neutral-100 border-b border-black text-black">
-                  <th className="p-2 border-r border-black font-bold w-[25%]">Factor</th>
-                  <th className="p-2 border-r border-black font-bold w-[45%]">Check one</th>
-                  <th className="p-2 font-bold w-[30%]">Most recent date / Notes</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-300">
-                {/* Tobacco */}
-                <tr>
-                  <td className="p-2 border-r border-black font-medium">Tobacco Use</td>
-                  <td className="p-2 border-r border-black flex items-center gap-3">
-                    {["Cigarettes", "Vaping", "Tobacco", "Non-smoker"].map((item) => (
-                      <label key={item} className="flex items-center gap-1 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="tobacco"
-                          checked={formData.tobaccoUse === item}
-                          onChange={() => updateField("tobaccoUse", item as any)}
-                          className="accent-black"
-                        />
-                        <span>{item}</span>
-                      </label>
-                    ))}
-                  </td>
-                  <td className="p-1.5">
-                    <input
-                      type="text"
-                      value={formData.tobaccoRecentDate || ""}
-                      onChange={(e) => updateField("tobaccoRecentDate", e.target.value)}
-                      placeholder="Catatan rokok..."
-                      className="w-full font-mono text-xs bg-transparent outline-none"
-                    />
-                  </td>
-                </tr>
-
-                {/* Alcohol */}
-                <tr>
-                  <td className="p-2 border-r border-black font-medium">Alcohol Use</td>
-                  <td className="p-2 border-r border-black flex items-center gap-3">
-                    {["None", "Occasional", "Moderate", "Heavy"].map((item) => (
-                      <label key={item} className="flex items-center gap-1 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="alcohol"
-                          checked={formData.alcoholUse === item}
-                          onChange={() => updateField("alcoholUse", item as any)}
-                          className="accent-black"
-                        />
-                        <span>{item}</span>
-                      </label>
-                    ))}
-                  </td>
-                  <td className="p-2 text-neutral-600 font-mono">-</td>
-                </tr>
-
-                {/* Recreational Drugs */}
-                <tr>
-                  <td className="p-2 border-r border-black font-medium">Recreational Drugs</td>
-                  <td className="p-2 border-r border-black flex items-center gap-3">
-                    <label className="flex items-center gap-1 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="recDrugs"
-                        checked={formData.recreationalDrugs === "No"}
-                        onChange={() => updateField("recreationalDrugs", "No")}
-                        className="accent-black"
-                      />
-                      <span>No</span>
-                    </label>
-                    <label className="flex items-center gap-1 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="recDrugs"
-                        checked={formData.recreationalDrugs === "Yes"}
-                        onChange={() => updateField("recreationalDrugs", "Yes")}
-                        className="accent-black"
-                      />
-                      <span>Yes</span>
-                    </label>
-                  </td>
-                  <td className="p-2 text-neutral-600 font-mono">-</td>
-                </tr>
-
-                {/* Caffeine */}
-                <tr>
-                  <td className="p-2 border-r border-black font-medium">Caffeine</td>
-                  <td className="p-2 border-r border-black" colSpan={2}>
-                    <input
-                      type="text"
-                      value={formData.caffeineWeekly || "2"}
-                      onChange={(e) => updateField("caffeineWeekly", e.target.value)}
-                      className="w-10 font-bold px-1 border border-neutral-300 rounded text-center"
-                    />{" "}
-                    Times per week
-                  </td>
-                </tr>
-
-                {/* Exercise Routine */}
-                <tr>
-                  <td className="p-2 border-r border-black font-medium">Exercise Routine</td>
-                  <td className="p-2 border-r border-black" colSpan={2}>
-                    <input
-                      type="text"
-                      value={formData.exerciseWeekly || "2"}
-                      onChange={(e) => updateField("exerciseWeekly", e.target.value)}
-                      className="w-10 font-bold px-1 border border-neutral-300 rounded text-center"
-                    />{" "}
-                    Times per week
-                  </td>
-                </tr>
-
-                {/* Sleep */}
-                <tr>
-                  <td className="p-2 border-r border-black font-medium">Sleep</td>
-                  <td className="p-2 border-r border-black" colSpan={2}>
-                    <input
-                      type="text"
-                      value={formData.sleepHours || "6-7"}
-                      onChange={(e) => updateField("sleepHours", e.target.value)}
-                      className="w-14 font-bold px-1 border border-neutral-300 rounded text-center"
-                    />{" "}
-                    Hours a night
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Social Detriments & Living Situation */}
-          <div className="p-2.5 border-t border-black text-xs space-y-2">
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1">
-              <div className="col-span-12 sm:col-span-5 flex items-center gap-2">
-                <span className="font-bold">Occupation:</span>
-                <input
-                  type="text"
-                  value={formData.occupation || "Wiraswasta"}
-                  onChange={(e) => updateField("occupation", e.target.value)}
-                  className="w-full bg-transparent border-b border-neutral-300 outline-none"
-                />
+            <div className="p-3 space-y-2 flex-1">
+              <div className="flex flex-wrap gap-1 no-print">
+                {[
+                  "Penisilin",
+                  "Sefalosporin",
+                  "Sulfa",
+                  "NSAID / Aspirin",
+                  "Seafood",
+                  "Tanpa Alergi",
+                ].map((al) => (
+                  <button
+                    key={al}
+                    type="button"
+                    onClick={() => {
+                      const current = formData.allergies || "";
+                      if (al === "Tanpa Alergi") {
+                        updateField("allergies", "Tidak ada riwayat alergi obat / makanan yang diketahui.");
+                      } else if (!current.includes(al)) {
+                        updateField("allergies", current ? `${current}, Alergi: ${al}` : `Alergi: ${al}`);
+                      }
+                    }}
+                    className="px-2 py-0.5 rounded bg-white border border-red-300 hover:bg-red-100 text-[10px] font-semibold text-red-950 transition"
+                  >
+                    + {al}
+                  </button>
+                ))}
               </div>
-              <div className="col-span-12 sm:col-span-7 flex items-center gap-2 flex-wrap">
-                <span className="font-bold">Living Situation:</span>
-                {["With roommates", "With S/O", "With family", "Other"].map((sit) => (
-                  <label key={sit} className="flex items-center gap-1 cursor-pointer">
+
+              <textarea
+                rows={3}
+                value={formData.allergies}
+                onChange={(e) => updateField("allergies", e.target.value)}
+                placeholder="Ketikkan riwayat alergi obat, makanan, debu..."
+                className="w-full p-2.5 bg-white border border-red-300 rounded-lg font-serif text-slate-900 text-xs focus:outline-none focus:border-red-900 shadow-inner"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* =====================================================================
+            SECTION 5: FAMILY HISTORY
+            ===================================================================== */}
+        <section className="mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs">
+          <div className="bg-slate-900 text-white px-4 py-1.5 font-bold text-xs uppercase tracking-wider flex items-center justify-between font-mono">
+            <span>5. Riwayat Kesehatan Keluarga (Family History)</span>
+            <span className="text-[10px] text-slate-300">{familyCheckedCount} Teridentifikasi</span>
+          </div>
+
+          <div className="p-4 bg-slate-50/50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            {[
+              { key: "cancer", label: "Kanker / Cancer" },
+              { key: "diabetes", label: "Diabetes" },
+              { key: "heart_disease", label: "Penyakit Jantung" },
+              { key: "high_blood_pressure", label: "Hipertensi" },
+              { key: "high_cholesterol", label: "Dislipidemia" },
+              { key: "stroke", label: "Stroke" },
+              { key: "thyroid_disease", label: "Tiroid" },
+              { key: "kidney_disease", label: "Gagal Ginjal" },
+            ].map((fam) => (
+              <CustomCheckbox
+                key={fam.key}
+                label={fam.label}
+                isChecked={!!formData.familyHistory[fam.key]}
+                onToggle={() => toggleCheckbox("familyHistory", fam.key)}
+                isAiKey={formData.aiCheckedKeys?.includes(fam.key)}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* =====================================================================
+            SECTION 6: SOCIAL HISTORY
+            ===================================================================== */}
+        <section className="mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs">
+          <div className="bg-slate-900 text-white px-4 py-1.5 font-bold text-xs uppercase tracking-wider font-mono">
+            6. Gaya Hidup & Faktor Sosial (Social History)
+          </div>
+
+          <div className="p-4 bg-slate-50/50 space-y-3 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center bg-white p-3 rounded-lg border border-slate-200">
+              <span className="col-span-12 sm:col-span-3 font-bold text-slate-900">Merokok (Tobacco Use):</span>
+              <div className="col-span-12 sm:col-span-9 flex items-center gap-4 flex-wrap">
+                {["Non-smoker", "Cigarettes", "Vaping", "Tobacco"].map((item) => (
+                  <label key={item} className="flex items-center gap-1.5 cursor-pointer font-medium">
                     <input
                       type="radio"
-                      name="livingSit"
-                      checked={formData.livingSituation === sit}
-                      onChange={() => updateField("livingSituation", sit as any)}
-                      className="accent-black"
+                      name="tobacco"
+                      checked={formData.tobaccoUse === item}
+                      onChange={() => updateField("tobaccoUse", item as any)}
+                      className="accent-slate-950"
                     />
-                    <span>{sit}</span>
+                    <span>{item}</span>
                   </label>
                 ))}
               </div>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center bg-white p-3 rounded-lg border border-slate-200">
+              <span className="col-span-12 sm:col-span-3 font-bold text-slate-900">Konsumsi Alkohol:</span>
+              <div className="col-span-12 sm:col-span-9 flex items-center gap-4 flex-wrap">
+                {["None", "Occasional", "Moderate", "Heavy"].map((item) => (
+                  <label key={item} className="flex items-center gap-1.5 cursor-pointer font-medium">
+                    <input
+                      type="radio"
+                      name="alcohol"
+                      checked={formData.alcoholUse === item}
+                      onChange={() => updateField("alcoholUse", item as any)}
+                      className="accent-slate-950"
+                    />
+                    <span>{item}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-12 gap-3">
+              <div className="col-span-12 sm:col-span-6 bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between">
+                <span className="font-bold text-slate-900">Pekerjaan (Occupation):</span>
+                <input
+                  type="text"
+                  value={formData.occupation || "Wiraswasta"}
+                  onChange={(e) => updateField("occupation", e.target.value)}
+                  className="font-medium text-xs bg-slate-50 px-2 py-1 rounded border border-slate-300 text-right outline-none"
+                />
+              </div>
+
+              <div className="col-span-12 sm:col-span-6 bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between">
+                <span className="font-bold text-slate-900">Tempat Tinggal:</span>
+                <select
+                  value={formData.livingSituation}
+                  onChange={(e) => updateField("livingSituation", e.target.value as any)}
+                  className="font-medium text-xs bg-slate-50 px-2 py-1 rounded border border-slate-300 outline-none"
+                >
+                  <option value="With family">Bersama Keluarga (With family)</option>
+                  <option value="With S/O">Bersama Pasangan (With S/O)</option>
+                  <option value="With roommates">Bersama Teman (With roommates)</option>
+                  <option value="Other">Lainnya (Other)</option>
+                </select>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
         {/* =====================================================================
-            SECTION 7: REVIEW OF SYSTEMS (ROS - 3x3 MATRIX GRID)
+            SECTION 7: REVIEW OF SYSTEMS (ROS - 3x2 MATRIX GRID)
             ===================================================================== */}
-        <div className="mb-5 border border-black">
-          <div className="bg-neutral-200 px-3 py-1 font-bold text-xs uppercase border-b border-black tracking-wider">
-            Review of Systems (Check any symptoms that you are experiencing)
+        <section className="mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs">
+          <div className="bg-slate-900 text-white px-4 py-1.5 font-bold text-xs uppercase tracking-wider flex items-center justify-between font-mono">
+            <span>7. Skrining Gejala Organ (Review of Systems - ROS)</span>
+            <span className="text-[10px] text-emerald-400 font-bold">{rosCheckedCount} Gejala Positif</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 text-xs divide-y sm:divide-y-0 sm:divide-x divide-black">
-            {/* General */}
-            <div className="p-2.5 space-y-1">
-              <span className="font-bold italic block text-neutral-800 border-b border-neutral-300 pb-1 mb-1">General</span>
-              {[
-                { key: "ros_fatigue", label: "Fatigue" },
-                { key: "ros_fever", label: "Fever or chills" },
-                { key: "ros_weight", label: "Unexplained weight loss/gain" },
-              ].map((item) => {
-                const isChecked = !!formData.reviewOfSystems[item.key];
-                return (
-                  <label key={item.key} onClick={() => toggleCheckbox("reviewOfSystems", item.key)} className="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" checked={isChecked} onChange={() => {}} className="w-3.5 h-3.5 accent-black rounded-none" />
-                    <span className={isChecked ? "font-bold text-black" : "text-neutral-800"}>{item.label}</span>
-                  </label>
-                );
-              })}
-            </div>
+          <div className="p-4 bg-slate-50/50 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* General */}
+              <div className="bg-white p-3 rounded-xl border border-slate-300 space-y-2">
+                <span className="font-bold uppercase text-[11px] font-mono text-slate-900 border-b border-slate-200 pb-1 block">
+                  Sistem Umum (General)
+                </span>
+                <div className="space-y-1.5">
+                  {[
+                    { key: "ros_fatigue", label: "Fatigue / Lelah" },
+                    { key: "ros_fever", label: "Fever / Demam" },
+                    { key: "ros_weight", label: "Weight loss / gain" },
+                  ].map((item) => (
+                    <CustomCheckbox
+                      key={item.key}
+                      label={item.label}
+                      isChecked={!!formData.reviewOfSystems[item.key]}
+                      onToggle={() => toggleCheckbox("reviewOfSystems", item.key)}
+                      isAiKey={formData.aiCheckedKeys?.includes(item.key)}
+                    />
+                  ))}
+                </div>
+              </div>
 
-            {/* EENT */}
-            <div className="p-2.5 space-y-1">
-              <span className="font-bold italic block text-neutral-800 border-b border-neutral-300 pb-1 mb-1">EENT</span>
-              {[
-                { key: "ros_vision", label: "Vision changes" },
-                { key: "ros_hearing", label: "Hearing loss or ringing" },
-                { key: "ros_throat", label: "Sore throat / Hoarseness" },
-              ].map((item) => {
-                const isChecked = !!formData.reviewOfSystems[item.key];
-                return (
-                  <label key={item.key} onClick={() => toggleCheckbox("reviewOfSystems", item.key)} className="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" checked={isChecked} onChange={() => {}} className="w-3.5 h-3.5 accent-black rounded-none" />
-                    <span className={isChecked ? "font-bold text-black" : "text-neutral-800"}>{item.label}</span>
-                  </label>
-                );
-              })}
-            </div>
+              {/* EENT */}
+              <div className="bg-white p-3 rounded-xl border border-slate-300 space-y-2">
+                <span className="font-bold uppercase text-[11px] font-mono text-slate-900 border-b border-slate-200 pb-1 block">
+                  Kepala & THT (EENT)
+                </span>
+                <div className="space-y-1.5">
+                  {[
+                    { key: "ros_vision", label: "Vision changes / Pandangan" },
+                    { key: "ros_hearing", label: "Hearing loss / Berdenging" },
+                    { key: "ros_throat", label: "Sore throat / Serak" },
+                  ].map((item) => (
+                    <CustomCheckbox
+                      key={item.key}
+                      label={item.label}
+                      isChecked={!!formData.reviewOfSystems[item.key]}
+                      onToggle={() => toggleCheckbox("reviewOfSystems", item.key)}
+                      isAiKey={formData.aiCheckedKeys?.includes(item.key)}
+                    />
+                  ))}
+                </div>
+              </div>
 
-            {/* Cardiovascular */}
-            <div className="p-2.5 space-y-1">
-              <span className="font-bold italic block text-neutral-800 border-b border-neutral-300 pb-1 mb-1">Cardiovascular</span>
-              {[
-                { key: "ros_chest_pain", label: "Chest pain or tightness" },
-                { key: "ros_palpitations", label: "Palpitations (fast/irregular)" },
-                { key: "ros_swelling", label: "Swelling in legs or feet" },
-              ].map((item) => {
-                const isChecked = !!formData.reviewOfSystems[item.key];
-                return (
-                  <label key={item.key} onClick={() => toggleCheckbox("reviewOfSystems", item.key)} className="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" checked={isChecked} onChange={() => {}} className="w-3.5 h-3.5 accent-black rounded-none" />
-                    <span className={isChecked ? "font-bold text-black" : "text-neutral-800"}>{item.label}</span>
-                  </label>
-                );
-              })}
+              {/* Cardiovascular */}
+              <div className="bg-white p-3 rounded-xl border border-slate-300 space-y-2">
+                <span className="font-bold uppercase text-[11px] font-mono text-slate-900 border-b border-slate-200 pb-1 block">
+                  Kardiovaskular (Cardio)
+                </span>
+                <div className="space-y-1.5">
+                  {[
+                    { key: "ros_chest_pain", label: "Chest pain / Nyeri Dada" },
+                    { key: "ros_palpitations", label: "Palpitations / Berdebar" },
+                    { key: "ros_swelling", label: "Swelling / Bengkak Kaki" },
+                  ].map((item) => (
+                    <CustomCheckbox
+                      key={item.key}
+                      label={item.label}
+                      isChecked={!!formData.reviewOfSystems[item.key]}
+                      onToggle={() => toggleCheckbox("reviewOfSystems", item.key)}
+                      isAiKey={formData.aiCheckedKeys?.includes(item.key)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Respiratory */}
+              <div className="bg-white p-3 rounded-xl border border-slate-300 space-y-2">
+                <span className="font-bold uppercase text-[11px] font-mono text-slate-900 border-b border-slate-200 pb-1 block">
+                  Respirasi / Paru (Pulmo)
+                </span>
+                <div className="space-y-1.5">
+                  {[
+                    { key: "ros_sob", label: "Shortness of breath / Sesak" },
+                    { key: "ros_cough", label: "Chronic cough / Batuk" },
+                    { key: "ros_wheezing", label: "Wheezing / Mengi" },
+                  ].map((item) => (
+                    <CustomCheckbox
+                      key={item.key}
+                      label={item.label}
+                      isChecked={!!formData.reviewOfSystems[item.key]}
+                      onToggle={() => toggleCheckbox("reviewOfSystems", item.key)}
+                      isAiKey={formData.aiCheckedKeys?.includes(item.key)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Gastrointestinal */}
+              <div className="bg-white p-3 rounded-xl border border-slate-300 space-y-2">
+                <span className="font-bold uppercase text-[11px] font-mono text-slate-900 border-b border-slate-200 pb-1 block">
+                  Pencernaan (Gastro)
+                </span>
+                <div className="space-y-1.5">
+                  {[
+                    { key: "ros_abdo_pain", label: "Abdominal pain / Nyeri Perut" },
+                    { key: "ros_nausea", label: "Nausea / Mual Muntah" },
+                    { key: "ros_diarrhea", label: "Diarrhea / Diare" },
+                  ].map((item) => (
+                    <CustomCheckbox
+                      key={item.key}
+                      label={item.label}
+                      isChecked={!!formData.reviewOfSystems[item.key]}
+                      onToggle={() => toggleCheckbox("reviewOfSystems", item.key)}
+                      isAiKey={formData.aiCheckedKeys?.includes(item.key)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Genitourinary */}
+              <div className="bg-white p-3 rounded-xl border border-slate-300 space-y-2">
+                <span className="font-bold uppercase text-[11px] font-mono text-slate-900 border-b border-slate-200 pb-1 block">
+                  Kemih & Ginjal (Uro)
+                </span>
+                <div className="space-y-1.5">
+                  {[
+                    { key: "ros_incontinence", label: "Incontinence" },
+                    { key: "ros_burning", label: "Burning / Perih Kencing" },
+                    { key: "ros_hematuria", label: "Blood in urine / Darah" },
+                  ].map((item) => (
+                    <CustomCheckbox
+                      key={item.key}
+                      label={item.label}
+                      isChecked={!!formData.reviewOfSystems[item.key]}
+                      onToggle={() => toggleCheckbox("reviewOfSystems", item.key)}
+                      isAiKey={formData.aiCheckedKeys?.includes(item.key)}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-
-          {/* Row 2: Respiratory, Gastrointestinal, Genitourinary */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 text-xs border-t divide-y sm:divide-y-0 sm:divide-x divide-black border-black">
-            {/* Respiratory */}
-            <div className="p-2.5 space-y-1">
-              <span className="font-bold italic block text-neutral-800 border-b border-neutral-300 pb-1 mb-1">Respiratory</span>
-              {[
-                { key: "ros_sob", label: "Shortness of breath" },
-                { key: "ros_cough", label: "Chronic cough" },
-                { key: "ros_wheezing", label: "Wheezing" },
-              ].map((item) => {
-                const isChecked = !!formData.reviewOfSystems[item.key];
-                return (
-                  <label key={item.key} onClick={() => toggleCheckbox("reviewOfSystems", item.key)} className="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" checked={isChecked} onChange={() => {}} className="w-3.5 h-3.5 accent-black rounded-none" />
-                    <span className={isChecked ? "font-bold text-black" : "text-neutral-800"}>{item.label}</span>
-                  </label>
-                );
-              })}
-            </div>
-
-            {/* Gastrointestinal */}
-            <div className="p-2.5 space-y-1">
-              <span className="font-bold italic block text-neutral-800 border-b border-neutral-300 pb-1 mb-1">Gastrointestinal</span>
-              {[
-                { key: "ros_abdo_pain", label: "Abdominal pain" },
-                { key: "ros_nausea", label: "Nausea or vomiting" },
-                { key: "ros_diarrhea", label: "Diarrhea or constipation" },
-              ].map((item) => {
-                const isChecked = !!formData.reviewOfSystems[item.key];
-                return (
-                  <label key={item.key} onClick={() => toggleCheckbox("reviewOfSystems", item.key)} className="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" checked={isChecked} onChange={() => {}} className="w-3.5 h-3.5 accent-black rounded-none" />
-                    <span className={isChecked ? "font-bold text-black" : "text-neutral-800"}>{item.label}</span>
-                  </label>
-                );
-              })}
-            </div>
-
-            {/* Genitourinary */}
-            <div className="p-2.5 space-y-1">
-              <span className="font-bold italic block text-neutral-800 border-b border-neutral-300 pb-1 mb-1">Genitourinary</span>
-              {[
-                { key: "ros_incontinence", label: "Incontinence" },
-                { key: "ros_burning", label: "Burning / Urgency" },
-                { key: "ros_hematuria", label: "Blood in urine" },
-              ].map((item) => {
-                const isChecked = !!formData.reviewOfSystems[item.key];
-                return (
-                  <label key={item.key} onClick={() => toggleCheckbox("reviewOfSystems", item.key)} className="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" checked={isChecked} onChange={() => {}} className="w-3.5 h-3.5 accent-black rounded-none" />
-                    <span className={isChecked ? "font-bold text-black" : "text-neutral-800"}>{item.label}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        </section>
 
         {/* =====================================================================
-            SECTION 8: CLINICAL ASSESSMENT & VITAL SIGNS (EDITABLE!)
+            SECTION 8: CLINICAL ASSESSMENT & VITAL SIGNS
             ===================================================================== */}
-        <div className="mb-5 border border-black">
-          <div className="bg-neutral-200 px-3 py-1 font-bold text-xs uppercase border-b border-black tracking-wider flex items-center justify-between">
-            <span>Primary Clinical Assessment & Vital Signs</span>
+        <section className="mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs">
+          <div className="bg-slate-900 text-white px-4 py-1.5 font-bold text-xs uppercase tracking-wider flex items-center justify-between font-mono">
+            <span>8. Diagnosa Medis & Tanda Vital (Primary Assessment)</span>
             <select
               value={formData.severity}
               onChange={(e) => updateField("severity", e.target.value as any)}
-              className="text-[10px] bg-black text-white px-2 py-0.5 font-bold uppercase rounded outline-none"
+              className="text-[10px] bg-emerald-400 text-slate-950 font-extrabold uppercase px-2.5 py-0.5 rounded outline-none cursor-pointer"
             >
               <option value="CRITICAL">CRITICAL</option>
               <option value="SEVERE">SEVERE</option>
@@ -1249,205 +1209,317 @@ export function MedicalHistoryFormDocument({
             </select>
           </div>
 
-          <div className="p-3 text-xs space-y-4">
-            {/* Vital Signs Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-2.5 bg-neutral-50 border border-neutral-300 rounded text-center">
-              <div>
-                <span className="text-[10px] text-neutral-600 block uppercase font-bold">Tekanan Darah</span>
-                <input
-                  type="text"
-                  value={formData.vitalSigns.bloodPressure}
-                  onChange={(e) => updateVitalSign("bloodPressure", e.target.value)}
-                  className="font-mono font-bold text-xs text-center w-full bg-white border border-neutral-300 rounded p-1"
-                />
+          <div className="p-4 bg-slate-50/50 space-y-4">
+            {/* Quick ICD-10 Presets & Database Search Button (No-Print) */}
+            <div className="flex flex-wrap items-center justify-between gap-2 no-print bg-white p-2.5 rounded-xl border border-slate-300">
+              <div className="flex flex-wrap items-center gap-1 text-[10px] font-mono">
+                <span className="font-bold text-slate-500 uppercase mr-1">Preset ICD-10:</span>
+                {[
+                  { code: "I10", label: "Hipertensi", name: "Hipertensi Esensial" },
+                  { code: "I20.9", label: "Angina SKA", name: "Suspek Sindrom Koroner Akut (SKA)" },
+                  { code: "J06.9", label: "ISPA", name: "Infeksi Saluran Pernapasan Akut (ISPA)" },
+                  { code: "J18.9", label: "Pneumonia", name: "Pneumonia Lobaris" },
+                  { code: "J45.9", label: "Asma", name: "Asma Bronkial" },
+                  { code: "K29.7", label: "Gastritis", name: "Gastritis Akut / Dispepsia" },
+                  { code: "K21.9", label: "GERD", name: "Gastro-Esophageal Reflux Disease" },
+                  { code: "E11.9", label: "Diabetes T2", name: "Diabetes Melitus Tipe 2" },
+                  { code: "R51", label: "Cephalgia", name: "Cephalgia Akut" },
+                  { code: "I63.9", label: "Stroke", name: "Stroke Iskemik Akut" },
+                ].map((preset) => (
+                  <button
+                    key={preset.code}
+                    type="button"
+                    onClick={() => {
+                      updateField("diagnosisIcd", preset.code);
+                      updateField("diagnosis", preset.name);
+                    }}
+                    className="px-2 py-0.5 rounded bg-slate-900 text-emerald-400 font-bold hover:bg-slate-800 transition"
+                  >
+                    {preset.code} ({preset.label})
+                  </button>
+                ))}
               </div>
-              <div>
-                <span className="text-[10px] text-neutral-600 block uppercase font-bold">Nadi / HR</span>
-                <input
-                  type="text"
-                  value={formData.vitalSigns.heartRate}
-                  onChange={(e) => updateVitalSign("heartRate", e.target.value)}
-                  className="font-mono font-bold text-xs text-center w-full bg-white border border-neutral-300 rounded p-1"
-                />
-              </div>
-              <div>
-                <span className="text-[10px] text-neutral-600 block uppercase font-bold">Laju Napas (RR)</span>
-                <input
-                  type="text"
-                  value={formData.vitalSigns.respiratoryRate}
-                  onChange={(e) => updateVitalSign("respiratoryRate", e.target.value)}
-                  className="font-mono font-bold text-xs text-center w-full bg-white border border-neutral-300 rounded p-1"
-                />
-              </div>
-              <div>
-                <span className="text-[10px] text-neutral-600 block uppercase font-bold">Saturasi (SpO2)</span>
-                <input
-                  type="text"
-                  value={formData.vitalSigns.spo2}
-                  onChange={(e) => updateVitalSign("spo2", e.target.value)}
-                  className="font-mono font-bold text-xs text-center w-full bg-white border border-neutral-300 rounded p-1"
-                />
-              </div>
-              <div>
-                <span className="text-[10px] text-neutral-600 block uppercase font-bold">Suhu Tubuh</span>
-                <input
-                  type="text"
-                  value={formData.vitalSigns.temperature}
-                  onChange={(e) => updateVitalSign("temperature", e.target.value)}
-                  className="font-mono font-bold text-xs text-center w-full bg-white border border-neutral-300 rounded p-1"
-                />
-              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowIcdModal(true);
+                  if (formData.diagnosis) {
+                    handleSearchIcd(formData.diagnosis);
+                  }
+                }}
+                className="px-3 py-1 bg-slate-900 text-white rounded-lg font-mono text-[11px] font-bold hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm"
+              >
+                <Search size={13} className="text-emerald-400" />
+                <span>Cari Database ICD-10 DB</span>
+              </button>
             </div>
 
             {/* Diagnosis & ICD-10 */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-bold text-neutral-700 block uppercase">Diagnosis Klinis Utama:</span>
-              <input
-                type="text"
-                value={formData.diagnosis}
-                onChange={(e) => updateField("diagnosis", e.target.value)}
-                placeholder="Diagnosis Kerja"
-                className="font-serif font-bold text-base text-black w-full p-2 border border-neutral-300 rounded bg-white"
-              />
-              <div className="flex items-center gap-2 pt-1">
-                <span className="font-bold text-xs text-neutral-700">Kode ICD-10:</span>
+            <div className="grid grid-cols-12 gap-3">
+              <div className="col-span-12 sm:col-span-9 bg-white p-3 rounded-xl border border-slate-300 space-y-1">
+                <span className="text-[10px] font-bold uppercase text-slate-500 block">Diagnosa Klinis Utama</span>
+                <input
+                  type="text"
+                  value={formData.diagnosis}
+                  onChange={(e) => updateField("diagnosis", e.target.value)}
+                  placeholder="Ketikkan nama diagnosa medis..."
+                  className="font-serif font-black text-slate-950 text-base w-full bg-transparent outline-none border-b border-transparent focus:border-slate-900"
+                />
+              </div>
+
+              <div className="col-span-12 sm:col-span-3 bg-white p-3 rounded-xl border border-slate-300 space-y-1">
+                <span className="text-[10px] font-bold uppercase text-slate-500 block">Kode ICD-10</span>
                 <input
                   type="text"
                   value={formData.diagnosisIcd}
                   onChange={(e) => updateField("diagnosisIcd", e.target.value)}
-                  placeholder="Kode ICD-10"
-                  className="font-mono text-xs p-1 border border-neutral-300 rounded bg-white w-64"
+                  placeholder="I20.9 / J06.9"
+                  className="font-mono font-bold text-slate-950 text-sm w-full bg-transparent outline-none border-b border-transparent focus:border-slate-900"
                 />
               </div>
             </div>
 
-            {/* Rekomendasi & Edukasi */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <div>
-                <span className="text-[10px] font-bold text-neutral-700 block uppercase mb-1">
-                  Rekomendasi / Rencana Tata Laksana:
+            {/* Vital Signs Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 font-mono">
+              <div className="bg-white p-2.5 rounded-xl border border-slate-300 text-center space-y-0.5">
+                <span className="text-[10px] text-slate-500 uppercase block font-bold">Tensi (BP)</span>
+                <input
+                  type="text"
+                  value={formData.vitalSigns.bloodPressure}
+                  onChange={(e) => updateVitalSign("bloodPressure", e.target.value)}
+                  className="font-black text-sm text-slate-950 text-center w-full bg-transparent outline-none"
+                />
+              </div>
+
+              <div className="bg-white p-2.5 rounded-xl border border-slate-300 text-center space-y-0.5">
+                <span className="text-[10px] text-slate-500 uppercase block font-bold">Nadi (HR)</span>
+                <input
+                  type="text"
+                  value={formData.vitalSigns.heartRate}
+                  onChange={(e) => updateVitalSign("heartRate", e.target.value)}
+                  className="font-black text-sm text-slate-950 text-center w-full bg-transparent outline-none"
+                />
+              </div>
+
+              <div className="bg-white p-2.5 rounded-xl border border-slate-300 text-center space-y-0.5">
+                <span className="text-[10px] text-slate-500 uppercase block font-bold">Nafas (RR)</span>
+                <input
+                  type="text"
+                  value={formData.vitalSigns.respiratoryRate}
+                  onChange={(e) => updateVitalSign("respiratoryRate", e.target.value)}
+                  className="font-black text-sm text-slate-950 text-center w-full bg-transparent outline-none"
+                />
+              </div>
+
+              <div className="bg-white p-2.5 rounded-xl border border-slate-300 text-center space-y-0.5">
+                <span className="text-[10px] text-slate-500 uppercase block font-bold">Saturasi (SpO2)</span>
+                <input
+                  type="text"
+                  value={formData.vitalSigns.spo2}
+                  onChange={(e) => updateVitalSign("spo2", e.target.value)}
+                  className="font-black text-sm text-slate-950 text-center w-full bg-transparent outline-none"
+                />
+              </div>
+
+              <div className="bg-white p-2.5 rounded-xl border border-slate-300 text-center space-y-0.5">
+                <span className="text-[10px] text-slate-500 uppercase block font-bold">Suhu (Temp)</span>
+                <input
+                  type="text"
+                  value={formData.vitalSigns.temperature}
+                  onChange={(e) => updateVitalSign("temperature", e.target.value)}
+                  className="font-black text-sm text-slate-950 text-center w-full bg-transparent outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Recommendations & Patient Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div className="bg-white p-3 rounded-xl border border-slate-300 space-y-1">
+                <span className="font-bold uppercase text-[11px] text-slate-700 block">
+                  Tata Laksana Medis & Anjuran DPJP:
                 </span>
                 <textarea
                   rows={3}
                   value={formData.recommendations}
                   onChange={(e) => updateField("recommendations", e.target.value)}
-                  className="w-full p-2 bg-white border border-neutral-300 rounded text-xs font-serif text-black"
+                  placeholder="Instruksi pengobatan & rencana penanganan..."
+                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded font-serif text-slate-900 text-xs focus:outline-none focus:border-slate-900"
                 />
               </div>
-              <div>
-                <span className="text-[10px] font-bold text-neutral-700 block uppercase mb-1">
-                  Ringkasan Edukasi Pasien (Bahasa Awam):
+
+              <div className="bg-white p-3 rounded-xl border border-slate-300 space-y-1">
+                <span className="font-bold uppercase text-[11px] text-slate-700 block">
+                  Ringkasan Untuk Pasien (Bahasa Awam):
                 </span>
                 <textarea
                   rows={3}
                   value={formData.patientSummary}
                   onChange={(e) => updateField("patientSummary", e.target.value)}
-                  className="w-full p-2 bg-white border border-neutral-300 rounded text-xs font-serif text-black"
+                  placeholder="Penjelasan ringkas kondisi pasien..."
+                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded font-serif text-slate-900 text-xs focus:outline-none focus:border-slate-900"
                 />
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* =====================================================================
-            SECTION 9: PATIENT & DOCTOR SIGNATURES (OFFICIAL BORDERED FOOTER)
+            SECTION 9: DOCTOR SIGNATURE & OFFICIAL VALIDATION SEAL
             ===================================================================== */}
-        <div className="border border-black text-xs">
-          {/* Patient Signature Line */}
-          <div className="grid grid-cols-12 border-b border-black">
-            <div className="col-span-12 sm:col-span-8 p-3 border-b sm:border-b-0 sm:border-r border-black flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-neutral-800">Patient Name:</span>
-                <span className="font-serif font-semibold">{formData.patientName}</span>
-              </div>
-              <div className="flex items-center gap-1 text-[11px] text-neutral-700">
-                <input
-                  type="checkbox"
-                  checked={patientSignatureConfirmed}
-                  onChange={(e) => setPatientSignatureConfirmed(e.target.checked)}
-                  className="w-3.5 h-3.5 accent-black rounded-none"
-                />
-                <span>Persetujuan Pasien Terverifikasi</span>
-              </div>
+        <section className="pt-4 border-t-2 border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-slate-100 border-2 border-slate-900 rounded-xl flex items-center justify-center p-1 shrink-0">
+              <QrCode size={48} className="text-slate-950" />
             </div>
-            <div className="col-span-12 sm:col-span-4 p-3 flex items-center gap-2">
-              <span className="font-bold text-neutral-800">Date:</span>
-              <span className="font-mono">{new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}</span>
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1 text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded border border-emerald-300">
+                <BadgeCheck size={12} /> VERIFIKASI DIGITAL SATUSEHAT
+              </div>
+              <p className="text-[11px] font-medium text-slate-600 max-w-xs leading-tight">
+                Dokumen ini ditandatangani secara elektronik dan tersimpan secara sah dalam jaringan Rekam Medis Elektronik Nasional.
+              </p>
             </div>
           </div>
 
-          {/* Doctor DPJP Signature & SatuSehat Verification */}
-          <div className="p-4 grid grid-cols-1 sm:grid-cols-12 gap-4 items-center bg-neutral-50">
-            <div className="col-span-12 sm:col-span-7 space-y-2">
-              <div>
-                <span className="text-[10px] font-bold text-neutral-600 block uppercase">
-                  Dokter Penanggung Jawab Pelayanan (DPJP Utama):
-                </span>
-                <b className="text-sm font-serif text-black block">{formData.doctorName}</b>
-                <span className="text-xs font-mono text-neutral-700 block">
-                  SIP: {formData.doctorSip} • {formData.doctorSpecialty}
-                </span>
+          <div className="text-center sm:text-right space-y-2 w-full sm:w-auto">
+            <div className="text-[11px] font-mono font-bold text-slate-700">
+              Dokter Penanggung Jawab Pelayanan (DPJP)
+            </div>
+
+            {/* Signature Area */}
+            <div className="relative inline-block bg-slate-50 border-2 border-slate-900 rounded-xl p-2 min-w-[240px]">
+              <canvas
+                ref={sigCanvasRef}
+                width={240}
+                height={80}
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                onTouchStart={startDrawing}
+                onTouchMove={draw}
+                onTouchEnd={stopDrawing}
+                className="cursor-crosshair bg-white border border-slate-200 rounded touch-none"
+              />
+
+              <div className="flex items-center justify-between pt-1 font-mono text-[10px] no-print">
+                <button
+                  type="button"
+                  onClick={handleUseRegisteredSignature}
+                  className="text-emerald-700 hover:underline font-bold"
+                >
+                  + Gunakan TTE Terdaftar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="text-slate-500 hover:text-red-600"
+                >
+                  Hapus
+                </button>
               </div>
 
-              {/* Signature Canvas Pad */}
-              <div className="no-print pt-1">
-                <div className="border border-neutral-400 bg-white p-2 rounded">
-                  <canvas
-                    ref={sigCanvasRef}
-                    width={300}
-                    height={65}
-                    className="w-full h-[65px] border border-dashed border-neutral-300 bg-white cursor-crosshair"
-                    onMouseDown={startDrawing}
-                    onMouseMove={draw}
-                    onMouseUp={stopDrawing}
-                    onMouseLeave={stopDrawing}
-                    onTouchStart={startDrawing}
-                    onTouchMove={draw}
-                    onTouchEnd={stopDrawing}
-                  />
-                  <div className="flex items-center justify-between text-[10px] mt-1 text-neutral-600 font-sans">
-                    <span>Goreskan TTD resmi di kotak</span>
-                    <div className="flex items-center gap-2">
-                      <button type="button" onClick={handleClear} className="text-neutral-500 hover:text-red-600">
-                        Hapus
-                      </button>
-                      <button type="button" onClick={handleUseRegisteredSignature} className="font-bold text-black underline">
-                        Gunakan TTD Terdaftar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {isDoctorSigned && (
-                <div className="text-[11px] font-mono text-green-700 flex items-center gap-1 font-semibold">
-                  <CheckCircle2 size={13} />
-                  <span>Dokumen Terverifikasi & Ditandatangani: {signedAtTimestamp}</span>
+              {isDoctorSigned && signedAtTimestamp && (
+                <div className="mt-1 text-[9px] font-mono font-bold text-emerald-800 bg-emerald-50 py-0.5 px-1.5 rounded border border-emerald-200 text-center">
+                  ✓ TTD Sah: {signedAtTimestamp}
                 </div>
               )}
             </div>
 
-            {/* Official Kemenkes SatuSehat QR & Seal Stamp */}
-            <div className="col-span-12 sm:col-span-5 flex items-center justify-end gap-3">
-              <div className="doctor-seal-stamp border-2 border-black text-black">
-                <span>★ VERIFIED CLINICAL ★</span>
-                <b>DPJP SPESIALIS</b>
-                <span>MED-AI REKAM MEDIS</span>
-              </div>
+            <div className="space-y-0.5">
+              <input
+                type="text"
+                value={formData.doctorName}
+                onChange={(e) => updateField("doctorName", e.target.value)}
+                className="font-serif font-black text-sm text-slate-950 text-center sm:text-right w-full bg-transparent outline-none"
+              />
+              <div className="text-[11px] text-slate-600 font-medium">{formData.doctorSpecialty}</div>
+              <div className="text-[10px] font-mono font-bold text-slate-800">{formData.doctorSip}</div>
+            </div>
+          </div>
+        </section>
 
-              <div className="text-center">
-                <div className="w-16 h-16 p-1 border border-black bg-white flex items-center justify-center shadow-xs">
-                  <QrCode size={52} className="text-black" />
-                </div>
-                <span className="text-[8px] font-mono text-neutral-600 block mt-1">
-                  KEMENKES SATUSEHAT
-                </span>
+      </article>
+
+      {/* Digital ICD-10 Search Modal */}
+      {showIcdModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs no-print">
+          <div className="bg-white border-2 border-slate-900 rounded-2xl p-6 max-w-xl w-full shadow-2xl space-y-4 font-sans text-xs">
+            <div className="flex items-center justify-between border-b-2 border-slate-900 pb-3 font-mono">
+              <div className="flex items-center gap-2">
+                <Database size={18} className="text-emerald-600" />
+                <h3 className="font-black text-sm uppercase text-slate-950">Pencarian Kode ICD-10 Database</h3>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowIcdModal(false)}
+                className="p-1 rounded text-slate-500 hover:text-slate-950 hover:bg-slate-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="relative">
+              <input
+                type="text"
+                value={icdSearchQuery}
+                onChange={(e) => handleSearchIcd(e.target.value)}
+                placeholder="Ketikkan diagnosa atau kode ICD-10 (mis. I10, J06, Gastritis, SKA, Diabetes)..."
+                className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border-2 border-slate-900 rounded-xl font-medium text-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                autoFocus
+              />
+              <Search size={16} className="absolute left-3 top-3 text-slate-400" />
+            </div>
+
+            <div className="max-h-72 overflow-y-auto divide-y divide-slate-200 border border-slate-300 rounded-xl">
+              {isSearchingIcd ? (
+                <div className="p-6 text-center text-slate-500 font-mono animate-pulse">
+                  Mencari data ICD-10 di Database PostgreSQL...
+                </div>
+              ) : icdSearchResults.length === 0 ? (
+                <div className="p-6 text-center text-slate-500 italic font-serif">
+                  {icdSearchQuery ? "Tidak ditemukan kode ICD-10 yang cocok." : "Ketik kata kunci untuk mencari di database ICD-10."}
+                </div>
+              ) : (
+                icdSearchResults.map((item) => (
+                  <button
+                    key={item.code + item.display}
+                    type="button"
+                    onClick={() => selectIcdCodeItem(item.code, item.display)}
+                    className="w-full p-3 text-left hover:bg-emerald-50 transition flex items-center justify-between group"
+                  >
+                    <div>
+                      <div className="font-mono font-black text-slate-950 text-sm group-hover:text-emerald-700 flex items-center gap-2">
+                        <span>{item.code}</span>
+                        {item.groupName && (
+                          <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-300 font-sans font-normal">
+                            {item.groupName}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-700 font-medium">{item.display}</div>
+                    </div>
+                    <span className="shrink-0 px-2 py-1 text-[10px] font-mono font-bold bg-slate-900 text-white rounded group-hover:bg-emerald-600">
+                      Pilih Code
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setShowIcdModal(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-950 font-mono font-bold rounded-lg uppercase text-xs"
+              >
+                Tutup
+              </button>
             </div>
           </div>
         </div>
-
-      </article>
+      )}
     </main>
   );
 }

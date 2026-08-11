@@ -1,32 +1,26 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import {
   Mic,
   MicOff,
   Sparkles,
   RotateCcw,
-  CheckCircle2,
-  FileText,
-  User,
-  Stethoscope,
   Database,
   ChevronRight,
-  Save,
-  Plus,
-  Trash2,
   Lock,
   Zap,
 } from "lucide-react";
 import { useMedicalStore } from "../store/medical-store";
 import type { OrganId } from "../lib/anatomy-data";
 import { runNarasiAiExtraction, type EvidenceLinkedItem } from "../server/ai-extract";
-import { classifySpeakerRole, transcribeWithElevenLabs } from "../server/elevenlabs-stt";
+import { classifySpeakerRole } from "../server/elevenlabs-stt";
 
 export const Route = createFileRoute("/consultation")({
   component: ConsultationPage,
 });
 
 function ConsultationPage() {
+  const navigate = useNavigate();
   const {
     cases,
     activeCaseId,
@@ -60,7 +54,7 @@ function ConsultationPage() {
   const [newPatientName, setNewPatientName] = useState("");
   const [newPatientDob, setNewPatientDob] = useState("14 Mei 1978");
   const [newPatientGender, setNewPatientGender] = useState<"Laki-laki" | "Perempuan">("Laki-laki");
-  const [newPatientOrgan, setNewPatientOrgan] = useState<OrganId>("lungs");
+  const [newPatientOrgan] = useState<OrganId>("lungs");
   const [newPatientChiefComplaint, setNewPatientChiefComplaint] = useState("");
 
   // Manual Line Input fallback
@@ -178,16 +172,26 @@ function ConsultationPage() {
     }
   };
 
-  const handleAddDialogueItem = () => {
+  const handleAddDialogueItem = (forcedSpeaker?: "doctor" | "patient") => {
     if (!newSpeakerText.trim()) return;
-    const autoSpeaker = classifySpeakerRole(newSpeakerText);
+    
+    let finalSpeaker = forcedSpeaker;
+    if (!finalSpeaker) {
+      if (activeCase.dialogue.length > 0) {
+        const lastSpeaker = activeCase.dialogue[activeCase.dialogue.length - 1].speaker;
+        finalSpeaker = lastSpeaker === "doctor" ? "patient" : "doctor";
+      } else {
+        finalSpeaker = "patient";
+      }
+    }
+
     const speakerName =
-      autoSpeaker === "doctor"
+      finalSpeaker === "doctor"
         ? doctorProfile?.name || "dr. Spesialis DPJP"
         : activeCase.patientName || "Pasien";
 
     const newItem = {
-      speaker: autoSpeaker,
+      speaker: finalSpeaker,
       speakerName,
       text: newSpeakerText.trim(),
       time: new Date().toLocaleTimeString("id-ID", { minute: "2-digit", second: "2-digit" }),
@@ -265,6 +269,11 @@ function ConsultationPage() {
           surgeries: result.surgeries,
           reviewOfSystems: result.reviewOfSystems,
           otherMedicalIssues: result.otherMedicalIssues,
+          tobaccoUse: result.tobaccoUse,
+          alcoholUse: result.alcoholUse,
+          occupation: result.occupation,
+          livingSituation: result.livingSituation,
+          aiCheckedKeys: result.aiCheckedKeys,
           organId: result.primaryOrgan,
         });
 
@@ -278,6 +287,15 @@ function ConsultationPage() {
       await saveNowToDb();
       setIsExtracting(false);
     }
+  };
+
+  const handleOpenResumeMedis = async () => {
+    if (isExtracting) return;
+
+    if (!activeCase.isAiGenerated) {
+      await handleRunAiExtraction();
+    }
+    navigate({ to: "/report" });
   };
 
   const formatTime = (totalSeconds: number) => {
@@ -497,15 +515,28 @@ function ConsultationPage() {
 
             <button
               type="button"
-              onClick={handleRunAiExtraction}
+              onClick={handleOpenResumeMedis}
               disabled={isExtracting}
-              className="w-full py-4 px-4 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-mono uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]"
+              className="w-full py-4 px-4 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-mono uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] cursor-pointer"
             >
-              <Sparkles size={18} className={isExtracting ? "animate-spin" : ""} />
+              <Sparkles size={18} className={isExtracting ? "animate-spin text-emerald-400" : "text-emerald-400"} />
               <span>
-                {isExtracting ? "AI Menganalisis & Menyusun Rekam Medis..." : "EKSTRAKSI AI NARASI (SOAP & EVIDENCE)"}
+                {isExtracting ? "AI Menganalisis & Menyusun Rekam Medis..." : "BUKA RESUME MEDIS"}
               </span>
+              <ChevronRight size={18} />
             </button>
+
+            {activeCase.isAiGenerated && (
+              <button
+                type="button"
+                onClick={handleRunAiExtraction}
+                disabled={isExtracting}
+                className="w-full py-2 px-3 bg-neutral-100 hover:bg-neutral-200 border-2 border-black text-black font-mono text-[11px] uppercase font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Sparkles size={14} className={isExtracting ? "animate-spin text-black" : "text-black"} />
+                <span>{isExtracting ? "Memproses..." : "Ekstraksi Ulang AI (SOAP & Checklists)"}</span>
+              </button>
+            )}
           </div>
         </section>
 
@@ -600,22 +631,31 @@ function ConsultationPage() {
                 </div>
 
                 {/* Add Manual Line Input */}
-                <div className="p-3 border-2 border-black bg-white flex items-center gap-2">
+                <div className="p-3 border-2 border-black bg-white flex flex-col sm:flex-row items-center gap-2">
                   <input
                     type="text"
                     value={newSpeakerText}
                     onChange={(e) => setNewSpeakerText(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAddDialogueItem()}
-                    placeholder="Tambah baris percakapan (Pembicara dideteksi otomatis)..."
-                    className="flex-1 text-xs font-sans p-1.5 border-b-2 border-black outline-none font-medium"
+                    placeholder="Tambah baris percakapan..."
+                    className="flex-1 w-full text-xs font-sans p-1.5 border-b-2 border-black outline-none font-medium"
                   />
-                  <button
-                    type="button"
-                    onClick={handleAddDialogueItem}
-                    className="px-3 py-1.5 bg-black text-white text-xs font-mono font-bold uppercase"
-                  >
-                    + Tambah
-                  </button>
+                  <div className="flex gap-2 w-full sm:w-auto shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleAddDialogueItem("doctor")}
+                      className="flex-1 sm:flex-none px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-black border-2 border-black text-xs font-mono font-bold uppercase transition"
+                    >
+                      + Dokter
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAddDialogueItem("patient")}
+                      className="flex-1 sm:flex-none px-3 py-1.5 bg-black hover:bg-neutral-800 text-white border-2 border-black text-xs font-mono font-bold uppercase transition"
+                    >
+                      + Pasien
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -690,13 +730,16 @@ function ConsultationPage() {
           {/* Footer Action */}
           <div className="border-t-2 border-black pt-4 flex items-center justify-between font-mono font-bold text-xs">
             <span className="text-neutral-700">SIAP DITERBITKAN KE RESUME MEDIS</span>
-            <Link
-              to="/report"
-              className="px-6 py-3 bg-black hover:bg-neutral-800 text-white uppercase tracking-wider flex items-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] transition"
+            <button
+              type="button"
+              onClick={handleOpenResumeMedis}
+              disabled={isExtracting}
+              className="px-6 py-3 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white uppercase tracking-wider flex items-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] transition cursor-pointer"
             >
-              <span>Buka Resume Medis</span>
+              <Sparkles size={15} className={isExtracting ? "animate-spin text-emerald-400" : "text-emerald-400"} />
+              <span>{isExtracting ? "AI Menyusun Rekam Medis..." : "Buka Resume Medis"}</span>
               <ChevronRight size={16} />
-            </Link>
+            </button>
           </div>
         </section>
       </div>

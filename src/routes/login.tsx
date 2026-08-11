@@ -1,12 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  UserCheck,
   Lock,
   ArrowRight,
-  ShieldCheck,
   AlertCircle,
-  CheckCircle2,
   Stethoscope,
 } from "lucide-react";
 import { useMedicalStore } from "../store/medical-store";
