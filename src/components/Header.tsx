@@ -3,14 +3,12 @@ import {
   LayoutDashboard,
   Mic,
   FileText,
-  Box,
   UserCheck,
   ShieldCheck,
-  Search,
-  Activity,
   Lock,
   LogOut,
   Stethoscope,
+  LogIn,
 } from 'lucide-react'
 import { useMedicalStore } from '../store/medical-store'
 
@@ -22,7 +20,7 @@ export default function Header() {
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (confirm("Apakah Anda yakin ingin keluar dari sesi dokter saat ini?")) {
+    if (confirm("Apakah Anda yakin ingin keluar dari akun dokter saat ini?")) {
       setDoctorProfile({
         id: "",
         name: "",
@@ -35,164 +33,111 @@ export default function Header() {
         isRegistered: false,
         registeredAt: "",
       });
-      window.location.href = "/register";
+      window.location.href = "/login";
     }
   };
 
   return (
-    <header className="topbar no-print">
-      {/* Brand Logo */}
-      <Link to="/" className="brand">
-        <strong>
-          MED-AI Atelier<sup>✦</sup>
-        </strong>
-        <em>Clinical 3D & AI Medical Assistant</em>
-      </Link>
-
-      {/* Main Multi-Page Navigation with Role & Clinical Gating */}
-      <nav className="main-nav" aria-label="Main Navigation">
-        <Link
-          to="/"
-          activeOptions={{ exact: true }}
-          activeProps={{ className: 'active' }}
-        >
-          <LayoutDashboard size={15} />
-          <span>Dashboard</span>
-        </Link>
-
-        {/* Step 1: Doctor Registration / Profile */}
-        <Link
-          to="/register"
-          activeProps={{ className: 'active' }}
-        >
-          <UserCheck size={15} />
-          <span>{isDoctorRegistered ? "Profil DPJP" : "Registrasi / Login"}</span>
-        </Link>
-
-        {/* Step 2: Consultation (Requires Registered Doctor) */}
-        <Link
-          to="/consultation"
-          activeProps={{ className: 'active' }}
-          className={!isDoctorRegistered ? "opacity-60 hover:opacity-100" : ""}
-          title={!isDoctorRegistered ? "Memerlukan Registrasi / Login Dokter DPJP" : "Konsultasi Suara AI"}
-        >
-          {!isDoctorRegistered ? <Lock size={13} className="text-amber-500" /> : <Mic size={15} />}
-          <span>Konsultasi AI</span>
-        </Link>
-
-        {/* Step 3: Medical Report (Requires Registered Doctor & Active Patient Case) */}
-        <Link
-          to="/report"
-          activeProps={{ className: 'active' }}
-          className={(!isDoctorRegistered || !hasPatientCases) ? "opacity-60 hover:opacity-100" : ""}
-          title={
-            !isDoctorRegistered
-              ? "Memerlukan Registrasi / Login Dokter"
-              : !hasPatientCases
-              ? "Memerlukan Pasien / Indikasi Klinis"
-              : "Lembar Rekam Medis (EHR)"
-          }
-        >
-          {(!isDoctorRegistered || !hasPatientCases) ? (
-            <Lock size={13} className="text-amber-500" />
-          ) : (
-            <FileText size={15} />
-          )}
-          <span>Medical Report</span>
-        </Link>
-
-        {/* Step 4: 3D Anatomy (Requires Registered Doctor & Active Patient Case Indication) */}
-        <Link
-          to="/anatomy"
-          activeProps={{ className: 'active' }}
-          className={(!isDoctorRegistered || !hasPatientCases) ? "opacity-60 hover:opacity-100" : ""}
-          title={
-            !isDoctorRegistered
-              ? "Memerlukan Registrasi / Login Dokter"
-              : !hasPatientCases
-              ? "Memerlukan Indikasi Patologi Pasien"
-              : "Stasiun Rekonstruksi 3D"
-          }
-        >
-          {(!isDoctorRegistered || !hasPatientCases) ? (
-            <Lock size={13} className="text-amber-500" />
-          ) : (
-            <Box size={15} />
-          )}
-          <span>3D Anatomy</span>
-        </Link>
-
-        <Link
-          to="/about"
-          activeProps={{ className: 'active' }}
-        >
-          <ShieldCheck size={15} />
-          <span>Tentang</span>
-        </Link>
-      </nav>
-
-      {/* Search Box */}
-      <div className="search-box">
-        <Search size={15} />
-        <input
-          type="search"
-          placeholder="Cari pasien, organ, ICD-10..."
-          aria-label="Cari pasien, organ, ICD-10"
-        />
-      </div>
-
-      {/* Doctor Profile & GEMASTIK Badge */}
-      <div className="flex items-center gap-2.5">
-        <span className="gemastik-badge hidden xl:inline-flex">
-          <Activity size={13} />
-          GEMASTIK 2026
-        </span>
-
-        {isDoctorRegistered && doctorProfile ? (
-          <div className="flex items-center gap-2 p-1 pl-2.5 rounded-full bg-white/90 border border-[var(--line)] shadow-xs">
-            <Link
-              to="/register"
-              className="text-right hidden md:block leading-tight pr-1 hover:opacity-80 transition"
-              title={`DPJP Aktif: ${doctorProfile.name}`}
-            >
-              <div className="text-[11px] font-bold text-[var(--ink)] line-clamp-1 max-w-[130px]">
-                {doctorProfile.name}
-              </div>
-              <div className="text-[9px] font-medium text-[var(--terracotta)]">
-                {doctorProfile.specialtyKey.toUpperCase()} • {doctorProfile.licenseNumber.split("/")[0] || "SIP Aktif"}
-              </div>
-            </Link>
-
-            <Link
-              to="/register"
-              className="w-8 h-8 rounded-full flex items-center justify-center text-white font-serif font-bold text-xs shadow-inner"
-              style={{
-                background: 'linear-gradient(140deg, #c46854, #efb59c)',
-                border: '1px solid rgba(82,64,50,0.4)',
-              }}
-              title="Pengaturan Profil Dokter"
-            >
-              DPJP
-            </Link>
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="p-1.5 text-neutral-400 hover:text-red-600 transition rounded-full hover:bg-neutral-100"
-              title="Keluar / Ganti Dokter"
-            >
-              <LogOut size={13} />
-            </button>
+    <header className="no-print bg-white border-b-2 border-black sticky top-0 z-40 px-4 py-3 font-sans">
+      <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-4">
+        {/* Brand Logo */}
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="w-8 h-8 bg-black text-white font-mono font-black text-sm flex items-center justify-center border-2 border-black">
+            N
           </div>
-        ) : (
+          <div>
+            <div className="font-black text-base uppercase tracking-wider text-black group-hover:underline">
+              NARASI ✦
+            </div>
+            <div className="text-[10px] font-mono text-neutral-600 font-bold uppercase tracking-tight">
+              Asisten Dokumentasi Klinis AI
+            </div>
+          </div>
+        </Link>
+
+        {/* Navigation Items */}
+        <nav className="flex items-center gap-1 sm:gap-2 font-mono text-xs font-bold" aria-label="Main Navigation">
+          <Link
+            to="/"
+            activeOptions={{ exact: true }}
+            className="px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black"
+          >
+            <LayoutDashboard size={14} />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Link>
+
           <Link
             to="/register"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--terracotta)] text-white text-xs font-serif font-bold hover:bg-[#d95d4b] transition shadow-xs"
+            className="px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black"
           >
-            <Stethoscope size={13} />
-            <span>Login / Registrasi DPJP</span>
+            <UserCheck size={14} />
+            <span>Registrasi SATUSEHAT</span>
           </Link>
-        )}
+
+          <Link
+            to="/login"
+            className="px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black"
+          >
+            <LogIn size={14} />
+            <span>Login</span>
+          </Link>
+
+          <Link
+            to="/consultation"
+            className={`px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black ${
+              !isDoctorRegistered ? "opacity-60" : ""
+            }`}
+          >
+            {!isDoctorRegistered ? <Lock size={12} /> : <Mic size={14} />}
+            <span>Konsultasi Suara</span>
+          </Link>
+
+          <Link
+            to="/report"
+            className={`px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black ${
+              (!isDoctorRegistered || !hasPatientCases) ? "opacity-60" : ""
+            }`}
+          >
+            {(!isDoctorRegistered || !hasPatientCases) ? <Lock size={12} /> : <FileText size={14} />}
+            <span>Resume Medis</span>
+          </Link>
+
+          <Link
+            to="/about"
+            className="px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black"
+          >
+            <ShieldCheck size={14} />
+            <span className="hidden md:inline">Tentang</span>
+          </Link>
+        </nav>
+
+        {/* Doctor Status Badge */}
+        <div className="flex items-center gap-2 font-mono text-xs font-bold">
+          {isDoctorRegistered && doctorProfile ? (
+            <div className="flex items-center gap-2 p-1 pl-3 bg-neutral-100 border-2 border-black">
+              <div className="text-right leading-tight hidden md:block">
+                <div className="text-[11px] font-black text-black">{doctorProfile.name}</div>
+                <div className="text-[9px] text-neutral-600">DPJP VERIFIED</div>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="p-1.5 bg-black text-white hover:bg-neutral-800 transition"
+                title="Keluar"
+              >
+                <LogOut size={13} />
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/register"
+              className="px-3.5 py-1.5 bg-black text-white border-2 border-black uppercase hover:bg-neutral-800 transition flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]"
+            >
+              <Stethoscope size={14} />
+              <span>Verifikasi SATUSEHAT</span>
+            </Link>
+          )}
+        </div>
       </div>
     </header>
   )

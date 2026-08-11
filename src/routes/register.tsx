@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import {
   UserCheck,
@@ -8,6 +8,12 @@ import {
   Lock,
   PenTool,
   RotateCcw,
+  ShieldCheck,
+  Search,
+  AlertCircle,
+  Check,
+  Building2,
+  FileText,
   Activity,
   Heart,
   Wind,
@@ -16,14 +22,14 @@ import {
   Scissors,
   Baby,
   Eye,
-  Check,
-  FileCheck2,
 } from "lucide-react";
 import {
   useMedicalStore,
   type DoctorSpecialtyKey,
   type DoctorProfile,
 } from "../store/medical-store";
+import { verifyPractitionerWithSatuSehat, type SatuSehatVerificationResult } from "../server/satusehat";
+import { registerDoctorUser } from "../server/medical-db";
 
 export const Route = createFileRoute("/register")({
   component: DoctorRegistrationPage,
@@ -33,222 +39,134 @@ const SPECIALTY_OPTIONS: {
   key: DoctorSpecialtyKey;
   title: string;
   subTitle: string;
-  icon: any;
-  color: string;
   badge: string;
-  defaultOrgan: string;
   description: string;
 }[] = [
   {
     key: "cardio",
     title: "Kardiologi & Kedokteran Vaskular",
     subTitle: "Spesialis Jantung (Sp.JP / FIHA)",
-    icon: Heart,
-    color: "#e11d48",
     badge: "Sp.JP",
-    defaultOrgan: "heart",
-    description: "Diagnosis kalsifikasi katup aorta, hipertrofi ventrikel (LVH), sindrom koroner akut, dan gagal jantung.",
+    description: "Evaluasi kalsifikasi aorta, hipertrofi ventrikel, sindrom koroner akut, dan gagal jantung.",
   },
   {
     key: "pulmo",
-    title: "Pulmonologi & Respirasi",
+    title: "Pulmonologi & Kedokteran Respirasi",
     subTitle: "Spesialis Paru (Sp.P / FAPSR)",
-    icon: Wind,
-    color: "#0284c7",
     badge: "Sp.P",
-    defaultOrgan: "lungs",
-    description: "Evaluasi konsolidasi lobaris, pneumonia bakterial, PPOK, tuberkulosis paru, dan efusi pleura.",
+    description: "Evaluasi konsolidasi lobaris, pneumonia, PPOK, tuberkulosis paru, dan efusi pleura.",
   },
   {
     key: "neuro",
     title: "Neurologi & Kedokteran Saraf",
     subTitle: "Spesialis Saraf (Sp.N / Sp.S)",
-    icon: Brain,
-    color: "#7c3aed",
     badge: "Sp.N",
-    defaultOrgan: "brain",
-    description: "Evaluasi infark serebri akut, MCA territory stroke, aneurisma intraserebral, dan defisit neurologis.",
+    description: "Evaluasi infark serebri akut, MCA stroke, aneurisma intraserebral, dan defisit neurologis.",
   },
   {
     key: "internal",
     title: "Ilmu Penyakit Dalam",
     subTitle: "Spesialis Penyakit Dalam (Sp.PD / FINASIM)",
-    icon: Layers,
-    color: "#059669",
     badge: "Sp.PD",
-    defaultOrgan: "liver",
-    description: "Tata laksana steatohepatitis (NASH/MASLD), nefropati diabetik, sirosis hepatis, dan penyakit metabolik sistemik.",
+    description: "Tata laksana steatohepatitis, nefropati diabetik, sirosis hepatis, dan penyakit metabolik.",
   },
   {
     key: "surgery",
     title: "Bedah Umum & Subspesialis",
     subTitle: "Spesialis Bedah (Sp.B / FICS)",
-    icon: Scissors,
-    color: "#ea580c",
     badge: "Sp.B",
-    defaultOrgan: "intestine",
-    description: "Perencanaan bedah digestif, appendisitis perforasi, kolesistektomi laparoskopi, dan trauma torakoabdominal.",
+    description: "Bedah digestif, appendisitis perforasi, kolesistektomi, dan trauma torakoabdominal.",
   },
   {
     key: "pediatrics",
     title: "Ilmu Kesehatan Anak",
     subTitle: "Spesialis Anak (Sp.A)",
-    icon: Baby,
-    color: "#d97706",
     badge: "Sp.A",
-    defaultOrgan: "lungs",
-    description: "Evaluasi infeksi pernapasan akut anak, asma bronkiale pediatrik, dan pemantauan tumbuh kembang.",
+    description: "Infeksi pernapasan akut anak, asma bronkiale pediatrik, dan pemantauan tumbuh kembang.",
   },
   {
     key: "ophthalmology",
-    title: "Oftalmologi / Ilmu Kesehatan Mata",
+    title: "Oftalmologi / Kesehatan Mata",
     subTitle: "Spesialis Mata (Sp.M)",
-    icon: Eye,
-    color: "#0d9488",
     badge: "Sp.M",
-    defaultOrgan: "eyeball",
-    description: "Inspeksi retinopati diabetik, neuropati optik, glaukoma sudut terbuka, dan defek vaskular retina 3D.",
+    description: "Retinopati diabetik, neuropati optik, glaukoma sudut terbuka, dan kelainan vaskular retina.",
   },
   {
     key: "general",
     title: "Dokter Umum & Triase Primer",
     subTitle: "Dokter Layanan Primer (dr. / GP)",
-    icon: Stethoscope,
-    color: "#475569",
     badge: "dr.",
-    defaultOrgan: "heart",
-    description: "Konsultasi anamnesis komprehensif, triase kegawatdaruratan, rujukan subspesialis, dan rekam medis elektronik.",
-  },
-];
-
-const DOCTOR_PRESETS: {
-  name: string;
-  specialtyKey: DoctorSpecialtyKey;
-  specialization: string;
-  licenseNumber: string;
-  institution: string;
-  email: string;
-  phone: string;
-  badge: string;
-}[] = [
-  {
-    name: "dr. Adrian Santoso, Sp.JP, FIHA",
-    specialtyKey: "cardio",
-    specialization: "Spesialis Jantung (Sp.JP / FIHA) — Kardiologi & Kedokteran Vaskular",
-    licenseNumber: "503/482/SIP.D/2026",
-    institution: "RS Pusat Jantung & Vaskular Harapan Kita",
-    email: "adrian.santoso@harapkita.go.id",
-    phone: "0812-3456-7890",
-    badge: "Sp.JP (Jantung)",
-  },
-  {
-    name: "dr. Budi Hartono, Sp.P, FAPSR",
-    specialtyKey: "pulmo",
-    specialization: "Spesialis Paru (Sp.P / FAPSR) — Pulmonologi & Kedokteran Respirasi",
-    licenseNumber: "503/129/SIP.P/2026",
-    institution: "RSUP Persahabatan Jakarta",
-    email: "budi.hartono@rsuppersahabatan.go.id",
-    phone: "0813-8822-1100",
-    badge: "Sp.P (Paru)",
-  },
-  {
-    name: "dr. Sarah Wijaya, Sp.N",
-    specialtyKey: "neuro",
-    specialization: "Spesialis Saraf (Sp.N) — Neurologi & Kedokteran Otak",
-    licenseNumber: "503/992/SIP.N/2026",
-    institution: "RS Pusat Otak Nasional (RS PON)",
-    email: "sarah.wijaya@rspon.co.id",
-    phone: "0811-9922-3344",
-    badge: "Sp.N (Saraf)",
-  },
-  {
-    name: "dr. Hendra Pratama, Sp.PD, FINASIM",
-    specialtyKey: "internal",
-    specialization: "Spesialis Penyakit Dalam (Sp.PD) — Ilmu Penyakit Dalam",
-    licenseNumber: "503/771/SIP.PD/2026",
-    institution: "RSUP Nasional Dr. Cipto Mangunkusumo",
-    email: "hendra.pratama@rscm.co.id",
-    phone: "0812-5566-7788",
-    badge: "Sp.PD (Internist)",
-  },
-  {
-    name: "dr. Dimas Surya, Sp.B, Subsp.BD",
-    specialtyKey: "surgery",
-    specialization: "Spesialis Bedah Digestif (Sp.B) — Bedah Umum & Subspesialis",
-    licenseNumber: "503/332/SIP.B/2026",
-    institution: "RSUP Fatmawati",
-    email: "dimas.surya@rsfatmawati.go.id",
-    phone: "0813-1122-3344",
-    badge: "Sp.B (Bedah)",
-  },
-  {
-    name: "dr. Maya Anggraini, Sp.A",
-    specialtyKey: "pediatrics",
-    specialization: "Spesialis Anak (Sp.A) — Ilmu Kesehatan Anak",
-    licenseNumber: "503/612/SIP.A/2026",
-    institution: "RSIA Bunda Jakarta",
-    email: "maya.anggraini@rsiabunda.co.id",
-    phone: "0815-9988-7766",
-    badge: "Sp.A (Anak)",
+    description: "Anamnesis komprehensif, triase primer, rujukan spesialis, dan rekam medis elektronik.",
   },
 ];
 
 function DoctorRegistrationPage() {
+  const navigate = useNavigate();
   const { doctorProfile, setDoctorProfile, saveNowToDb } = useMedicalStore();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [formData, setFormData] = useState<DoctorProfile>(() => {
-    if (doctorProfile && doctorProfile.name) return doctorProfile;
-    const defaultPreset = DOCTOR_PRESETS[0];
-    return {
-      id: "doc-main",
-      name: defaultPreset.name,
-      specialization: defaultPreset.specialization,
-      specialtyKey: defaultPreset.specialtyKey,
-      licenseNumber: defaultPreset.licenseNumber,
-      institution: defaultPreset.institution,
-      email: defaultPreset.email,
-      phone: defaultPreset.phone,
-      signaturePin: "123456",
-      isRegistered: false,
-      registeredAt: new Date().toISOString(),
-    };
+
+  // Form State
+  const [nikInput, setNikInput] = useState(doctorProfile?.nik || "3171012304850001");
+  const [isVerifyingSatusehat, setIsVerifyingSatusehat] = useState(false);
+  const [satusehatResult, setSatusehatResult] = useState<SatuSehatVerificationResult | null>(null);
+
+  const [formData, setFormData] = useState({
+    name: doctorProfile?.name || "dr. Adrian Santoso, Sp.JP, FIHA",
+    email: doctorProfile?.email || "adrian.santoso@kemenkes.go.id",
+    password: "Password123!",
+    licenseNumber: doctorProfile?.licenseNumber || "503/482/SIP.D/2026",
+    specialization: doctorProfile?.specialization || "Spesialis Jantung (Sp.JP) — Kardiologi & Vaskular",
+    specialtyKey: (doctorProfile?.specialtyKey || "cardio") as DoctorSpecialtyKey,
+    institution: doctorProfile?.institution || "RS Pusat Jantung Harapan Kita",
+    phone: doctorProfile?.phone || "081234567890",
+    signaturePin: doctorProfile?.signaturePin || "123456",
   });
+
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(
+    doctorProfile?.signatureDataUrl || null
+  );
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleApplyPreset = (preset: typeof DOCTOR_PRESETS[0]) => {
-    setFormData((prev) => ({
-      ...prev,
-      name: preset.name,
-      specialtyKey: preset.specialtyKey,
-      specialization: preset.specialization,
-      licenseNumber: preset.licenseNumber,
-      institution: preset.institution,
-      email: preset.email,
-      phone: preset.phone,
-    }));
-  };
+  // Handler: Verifikasi SATUSEHAT Live API
+  const handleVerifySatuSehat = async () => {
+    if (!nikInput || nikInput.trim().length < 10) {
+      alert("Masukkan 16 Digit NIK Kependudukan Dokter.");
+      return;
+    }
 
-  const handleQuickLoginAsPreset = async (preset: typeof DOCTOR_PRESETS[0]) => {
-    const updatedProfile: DoctorProfile = {
-      id: "doc-main",
-      name: preset.name,
-      specialtyKey: preset.specialtyKey,
-      specialization: preset.specialization,
-      licenseNumber: preset.licenseNumber,
-      institution: preset.institution,
-      email: preset.email,
-      phone: preset.phone,
-      signaturePin: "123456",
-      isRegistered: true,
-      registeredAt: new Date().toISOString(),
-    };
-    setFormData(updatedProfile);
-    setDoctorProfile(updatedProfile);
-    await saveNowToDb();
-    setStep(4);
+    setIsVerifyingSatusehat(true);
+    setSatusehatResult(null);
+
+    try {
+      const res = await verifyPractitionerWithSatuSehat({
+        data: {
+          nik: nikInput.trim(),
+          doctorName: formData.name,
+        },
+      });
+
+      setSatusehatResult(res);
+
+      if (res && res.isVerified && res.officialName) {
+        setFormData((prev) => ({
+          ...prev,
+          name: res.officialName || prev.name,
+        }));
+      }
+    } catch (e: any) {
+      setSatusehatResult({
+        success: false,
+        isVerified: false,
+        message: `Error memanggil SATUSEHAT API: ${e.message}`,
+      });
+    } finally {
+      setIsVerifyingSatusehat(false);
+    }
   };
 
   // Drawing canvas logic
@@ -263,8 +181,8 @@ function DoctorRegistrationPage() {
 
     ctx.beginPath();
     ctx.moveTo(x, y);
-    ctx.strokeStyle = "#1e293b";
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 3;
     ctx.lineCap = "round";
     setIsDrawing(true);
   };
@@ -286,10 +204,7 @@ function DoctorRegistrationPage() {
   const stopDrawing = () => {
     setIsDrawing(false);
     if (canvasRef.current) {
-      setFormData((prev) => ({
-        ...prev,
-        signatureDataUrl: canvasRef.current?.toDataURL("image/png"),
-      }));
+      setSignatureDataUrl(canvasRef.current.toDataURL("image/png"));
     }
   };
 
@@ -299,10 +214,7 @@ function DoctorRegistrationPage() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    setFormData((prev) => ({
-      ...prev,
-      signatureDataUrl: undefined,
-    }));
+    setSignatureDataUrl(null);
   };
 
   const handleSelectSpecialty = (key: DoctorSpecialtyKey) => {
@@ -316,48 +228,95 @@ function DoctorRegistrationPage() {
   };
 
   const handleSubmitRegistration = async () => {
-    setDoctorProfile({
-      ...formData,
-      isRegistered: true,
-      registeredAt: new Date().toISOString(),
-    });
+    setErrorMsg("");
+    setIsSaving(true);
 
-    await saveNowToDb();
-    setStep(4);
+    try {
+      // 1. Save to Prisma Database via Server Function
+      const dbRes = await registerDoctorUser({
+        data: {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          nik: nikInput.trim(),
+          licenseNumber: formData.licenseNumber,
+          specialization: formData.specialization,
+          institution: formData.institution,
+          satusehatId: satusehatResult?.satusehatId || undefined,
+          isSatusehatVerified: satusehatResult?.isVerified || false,
+          signatureDataUrl: signatureDataUrl || undefined,
+          signaturePin: formData.signaturePin,
+        },
+      });
+
+      if (!dbRes.success) {
+        setErrorMsg(dbRes.error || "Gagal menyimpan data ke Database.");
+        setIsSaving(false);
+        return;
+      }
+
+      // 2. Set Local Doctor Profile Session
+      const updatedProfile: DoctorProfile = {
+        id: dbRes.user?.id || "doc-" + Date.now(),
+        name: formData.name,
+        specialization: formData.specialization,
+        specialtyKey: formData.specialtyKey,
+        licenseNumber: formData.licenseNumber,
+        institution: formData.institution,
+        email: formData.email,
+        phone: formData.phone,
+        nik: nikInput.trim(),
+        satusehatId: satusehatResult?.satusehatId || undefined,
+        isSatusehatVerified: satusehatResult?.isVerified || false,
+        satusehatVerifiedAt: satusehatResult?.isVerified ? new Date().toISOString() : undefined,
+        signaturePin: formData.signaturePin,
+        signatureDataUrl: signatureDataUrl || undefined,
+        isRegistered: true,
+        registeredAt: new Date().toISOString(),
+      };
+
+      setDoctorProfile(updatedProfile);
+      await saveNowToDb();
+      setStep(4);
+    } catch (e: any) {
+      setErrorMsg(`Error registrasi: ${e.message}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-10 space-y-8">
-      {/* Header Banner */}
-      <section className="bg-[var(--paper)] border border-[var(--line)] rounded-[30px] p-6 sm:p-8 shadow-[var(--shadow)] relative overflow-hidden">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+    <main className="max-w-4xl mx-auto px-4 py-10 space-y-8 font-sans">
+      {/* Top Banner Header */}
+      <section className="bg-white border-2 border-black rounded-none p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b-2 border-black pb-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[rgba(235,124,107,0.12)] text-[var(--terracotta)] border border-[rgba(235,124,107,0.25)]">
+            <div className="inline-flex items-center gap-2 px-3 py-1 font-mono text-xs font-bold bg-black text-white uppercase tracking-widest">
               <UserCheck size={14} />
-              <span>Portal Registrasi & Onboarding Dokter DPJP</span>
+              <span>NARASI — REGISTRASI DOKTER DPJP</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[var(--ink)]">
-              Registrasi Dokter & Pemilihan Spesialis
+            <h1 className="text-3xl sm:text-4xl font-black text-black tracking-tight uppercase">
+              Onboarding Dokter & Verifikasi SATUSEHAT API
             </h1>
-            <p className="text-xs sm:text-sm text-[var(--ink-soft)] font-serif max-w-2xl">
-              Daftarkan identitas profesional, nomor SIP/STR, pilih bidang spesialisasi klinis, dan siapkan tanda tangan elektronik resmi untuk validasi rekam medis AI.
+            <p className="text-xs sm:text-sm text-neutral-700 font-medium max-w-2xl leading-relaxed">
+              Verifikasi kredensial NIK Dokter secara real-time dengan Platform Kemenkes RI SATUSEHAT API, daftarkan lisensi SIP/STR, dan siapkan tanda tangan digital.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <Link
-              to="/consultation"
-              className="px-4 py-2.5 rounded-2xl bg-white border border-[var(--line)] text-xs font-serif font-bold text-[var(--ink)] hover:bg-[var(--paper-soft)] transition shadow-xs"
+              to="/login"
+              className="px-4 py-2.5 bg-white border-2 border-black text-xs font-bold text-black hover:bg-neutral-100 transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
             >
-              Langsung ke Konsultasi
+              Sudah Memiliki Akun? Login
             </Link>
           </div>
         </div>
 
         {/* Stepper Wizard Bar */}
-        <div className="mt-8 pt-6 border-t border-[var(--line)] grid grid-cols-4 gap-2 sm:gap-4">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs font-bold">
           {[
-            { num: 1, label: "Identitas Dokter" },
+            { num: 1, label: "Verifikasi & Identitas" },
             { num: 2, label: "Bidang Spesialis" },
             { num: 3, label: "Tanda Tangan Digital" },
             { num: 4, label: "Siap Praktik" },
@@ -369,28 +328,24 @@ function DoctorRegistrationPage() {
                 key={s.num}
                 type="button"
                 onClick={() => setStep(s.num as any)}
-                className={`p-2.5 sm:p-3 rounded-2xl border text-left transition flex items-center gap-2 sm:gap-3 ${
+                className={`p-3 border-2 border-black text-left transition flex items-center gap-2.5 ${
                   isActive
-                    ? "bg-[rgba(235,124,107,0.12)] border-[var(--terracotta)] shadow-xs"
+                    ? "bg-black text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
                     : isDone
-                    ? "bg-white border-[#3b6b39] text-[#3b6b39]"
-                    : "bg-white/60 border-[var(--line)] opacity-70"
+                    ? "bg-neutral-200 text-black border-black"
+                    : "bg-white text-neutral-600 opacity-60"
                 }`}
               >
                 <div
-                  className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs ${
-                    isActive
-                      ? "bg-[var(--terracotta)] text-white"
-                      : isDone
-                      ? "bg-[#3b6b39] text-white"
-                      : "bg-[var(--paper-soft)] text-[var(--ink-muted)]"
+                  className={`w-6 h-6 rounded-none flex items-center justify-center font-mono font-bold text-xs ${
+                    isActive ? "bg-white text-black" : "bg-black text-white"
                   }`}
                 >
                   {isDone ? "✓" : s.num}
                 </div>
-                <div className="hidden sm:block">
-                  <div className="text-[10px] uppercase font-bold text-[var(--ink-muted)]">Langkah {s.num}</div>
-                  <div className="text-xs font-serif font-bold text-[var(--ink)] line-clamp-1">{s.label}</div>
+                <div className="hidden sm:block truncate">
+                  <div className="text-[9px] uppercase font-mono tracking-wider">Langkah {s.num}</div>
+                  <div className="text-xs font-bold uppercase truncate">{s.label}</div>
                 </div>
               </button>
             );
@@ -398,220 +353,261 @@ function DoctorRegistrationPage() {
         </div>
       </section>
 
-      {/* Step 1: Doctor Identity Form */}
+      {/* STEP 1: SATUSEHAT VERIFICATION & CREDENTIALS */}
       {step === 1 && (
-        <section className="bg-white border border-[var(--line)] rounded-[26px] p-6 sm:p-8 shadow-[var(--shadow)] space-y-6">
-          <div className="flex items-center gap-3 border-b border-[var(--line)] pb-4">
-            <div className="w-10 h-10 rounded-2xl bg-[rgba(235,124,107,0.12)] text-[var(--terracotta)] flex items-center justify-center">
-              <UserCheck size={20} />
+        <section className="bg-white border-2 border-black rounded-none p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
+          <div className="flex items-center gap-3 border-b-2 border-black pb-4">
+            <div className="w-10 h-10 bg-black text-white flex items-center justify-center font-mono font-bold">
+              <ShieldCheck size={20} />
             </div>
             <div>
-              <h2 className="text-xl font-serif font-bold text-[var(--ink)]">Langkah 1: Identitas & Lisensi Dokter</h2>
-              <p className="text-xs text-[var(--ink-soft)] font-serif">
-                Pilih profil dokter spesialis siap pakai (1-klik) atau isi formulir identitas kustom di bawah.
+              <h2 className="text-xl font-black text-black uppercase">
+                Langkah 1: Verifikasi SATUSEHAT & Identitas Dokter
+              </h2>
+              <p className="text-xs text-neutral-700 font-medium">
+                Masukkan NIK untuk mengecek status terverifikasi di SATUSEHAT Kemenkes RI API STG.
               </p>
             </div>
           </div>
 
-          {/* Quick Specialist Presets Selector */}
-          <div className="p-4 rounded-2xl bg-[var(--paper-soft)] border border-[var(--line)] space-y-3">
+          {/* SATUSEHAT API Live Verification Bar */}
+          <div className="p-5 border-2 border-black bg-neutral-50 space-y-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--terracotta)] flex items-center gap-1.5">
-                <Stethoscope size={14} />
-                Pilih Cepat Profil Dokter Spesialis (1-Klik):
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-black flex items-center gap-1.5">
+                <Activity size={15} />
+                LIVE API: SATUSEHAT PRACTITIONER KEMENKES RI
               </span>
-              <span className="text-[10px] text-[var(--ink-muted)]">Otomatis isi SIP & RS</span>
+              <span className="text-[10px] font-mono font-bold bg-black text-white px-2 py-0.5">
+                STG API ACTIVE
+              </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {DOCTOR_PRESETS.map((preset) => {
-                const isSelected = formData.name === preset.name;
-                return (
-                  <button
-                    key={preset.specialtyKey}
-                    type="button"
-                    onClick={() => handleApplyPreset(preset)}
-                    className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between ${
-                      isSelected
-                        ? "bg-white border-[var(--terracotta)] ring-2 ring-[var(--terracotta)]/20 shadow-xs font-bold"
-                        : "bg-white/80 border-[var(--line)] hover:bg-white text-[var(--ink-soft)]"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-1 mb-1">
-                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-neutral-100 text-neutral-800">
-                        {preset.badge}
-                      </span>
-                      {isSelected && <span className="text-[10px] text-[var(--terracotta)] font-bold">✓ Aktif</span>}
-                    </div>
-                    <div className="text-xs font-serif font-bold text-[var(--ink)] line-clamp-1">{preset.name}</div>
-                    <div className="text-[10px] text-[var(--ink-muted)] line-clamp-1">{preset.institution}</div>
-                  </button>
-                );
-              })}
+            <div className="flex flex-col sm:flex-row items-stretch gap-2.5">
+              <div className="flex-1 space-y-1">
+                <label className="text-[10px] font-mono font-bold uppercase text-black block">
+                  Nomor Induk Kependudukan (NIK 16 Digit) *
+                </label>
+                <input
+                  type="text"
+                  maxLength={16}
+                  value={nikInput}
+                  onChange={(e) => setNikInput(e.target.value)}
+                  placeholder="3171012304850001"
+                  className="w-full px-3.5 py-2.5 border-2 border-black bg-white font-mono font-bold text-xs text-black focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleVerifySatuSehat}
+                disabled={isVerifyingSatusehat}
+                className="px-5 py-2.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-mono font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 shrink-0 self-end shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+              >
+                {isVerifyingSatusehat ? (
+                  <span>Mengirim Ke SATUSEHAT...</span>
+                ) : (
+                  <>
+                    <Search size={14} />
+                    <span>Verifikasi SATUSEHAT</span>
+                  </>
+                )}
+              </button>
             </div>
+
+            {/* SATUSEHAT Verification Result Card */}
+            {satusehatResult && (
+              <div
+                className={`p-4 border-2 border-black text-xs font-mono space-y-2 ${
+                  satusehatResult.isVerified
+                    ? "bg-white text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                    : "bg-neutral-100 text-black"
+                }`}
+              >
+                <div className="flex items-center justify-between border-b border-black pb-2">
+                  <span className="font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    {satusehatResult.isVerified ? (
+                      <CheckCircle2 size={16} className="text-black" />
+                    ) : (
+                      <AlertCircle size={16} />
+                    )}
+                    STATUS: {satusehatResult.isVerified ? "TERVERIFIKASI RESMI SATUSEHAT" : "MEMERLUKAN TINJAUAN"}
+                  </span>
+                  {satusehatResult.satusehatId && (
+                    <span className="text-[10px] font-bold bg-black text-white px-2 py-0.5">
+                      ID: {satusehatResult.satusehatId}
+                    </span>
+                  )}
+                </div>
+
+                <p className="font-medium text-xs leading-relaxed">{satusehatResult.message}</p>
+
+                {satusehatResult.isVerified && (
+                  <div className="pt-2 border-t border-dashed border-black text-[11px] grid grid-cols-2 gap-2">
+                    <div><strong>Nama Resmi:</strong> {satusehatResult.officialName}</div>
+                    <div><strong>Jenis Kelamin:</strong> {satusehatResult.gender}</div>
+                    <div><strong>Tgl Lahir:</strong> {satusehatResult.birthDate}</div>
+                    <div><strong>Kualifikasi:</strong> {satusehatResult.qualifications?.join(", ") || "Spesialis Medis"}</div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs font-serif">
+          {/* Identity & License Input Form */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold">
             <div className="space-y-1.5 sm:col-span-2">
-              <label className="font-bold text-[var(--ink)] block">
-                Nama Lengkap Dokter Penanggung Jawab Pelayanan (DPJP) <span className="text-red-500">*</span>
+              <label className="uppercase tracking-wider text-black block">
+                Nama Lengkap Dokter & Gelar Spesialis *
               </label>
               <input
                 type="text"
+                required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Contoh: dr. Adrian Santoso, Sp.JP, FIHA"
-                className="w-full px-4 py-3 rounded-xl border border-[var(--line)] font-bold text-sm text-[var(--ink)] focus:outline-none focus:border-[var(--terracotta)]"
+                placeholder="dr. Adrian Santoso, Sp.JP, FIHA"
+                className="w-full px-4 py-3 border-2 border-black font-bold text-sm text-black bg-white focus:outline-none"
               />
-              <p className="text-[11px] text-[var(--ink-muted)]">
-                Nama ini akan dicetak pada seluruh Formulir Riwayat Medis, Resep Elektronik, dan Lembar Evaluasi AI.
-              </p>
             </div>
 
             <div className="space-y-1.5">
-              <label className="font-bold text-[var(--ink)] block">
-                Nomor SIP / STR (Surat Izin Praktik) <span className="text-red-500">*</span>
+              <label className="uppercase tracking-wider text-black block">
+                Nomor SIP / STR (Surat Izin Praktik) *
               </label>
               <input
                 type="text"
+                required
                 value={formData.licenseNumber}
                 onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
-                placeholder="Contoh: 503/482/SIP.D/2024"
-                className="w-full px-4 py-3 rounded-xl border border-[var(--line)] font-mono font-semibold text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--terracotta)]"
+                placeholder="503/482/SIP.D/2026"
+                className="w-full px-4 py-3 border-2 border-black font-mono font-bold text-xs text-black bg-white focus:outline-none"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="font-bold text-[var(--ink)] block">
-                Institusi / Rumah Sakit / Klinik Utama <span className="text-red-500">*</span>
+              <label className="uppercase tracking-wider text-black block">
+                Institusi RS / Klinik Utama *
               </label>
               <input
                 type="text"
+                required
                 value={formData.institution}
                 onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
-                placeholder="Contoh: RS Jantung & Pembuluh Darah Harapan Kita"
-                className="w-full px-4 py-3 rounded-xl border border-[var(--line)] font-bold text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--terracotta)]"
+                placeholder="RS Pusat Jantung Harapan Kita"
+                className="w-full px-4 py-3 border-2 border-black font-bold text-xs text-black bg-white focus:outline-none"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="font-bold text-[var(--ink)] block">Email Kedinasan Dokter</label>
+              <label className="uppercase tracking-wider text-black block">
+                Email Kedinasan Dokter *
+              </label>
               <input
                 type="email"
+                required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="dokter@rumah-sakit.ac.id"
-                className="w-full px-4 py-3 rounded-xl border border-[var(--line)] text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--terracotta)]"
+                placeholder="adrian.santoso@kemenkes.go.id"
+                className="w-full px-4 py-3 border-2 border-black text-xs text-black bg-white focus:outline-none"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="font-bold text-[var(--ink)] block">Nomor Kontak / WhatsApp Dokter</label>
+              <label className="uppercase tracking-wider text-black block">
+                Kata Sandi Akun / Password *
+              </label>
               <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="0812-xxxx-xxxx"
-                className="w-full px-4 py-3 rounded-xl border border-[var(--line)] font-mono text-xs text-[var(--ink)] focus:outline-none focus:border-[var(--terracotta)]"
+                type="password"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="••••••••"
+                className="w-full px-4 py-3 border-2 border-black font-mono text-xs text-black bg-white focus:outline-none"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--line)]">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t-2 border-black">
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="px-6 py-3 rounded-xl bg-[var(--ink)] hover:bg-black text-white font-serif font-bold text-xs flex items-center gap-2 shadow-md transition"
+              className="px-6 py-3 bg-black hover:bg-neutral-800 text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)]"
             >
-              <span>Lanjut ke Pemilihan Spesialis</span>
+              <span>Lanjut ke Pilih Spesialis</span>
               <ArrowRight size={15} />
             </button>
           </div>
         </section>
       )}
 
-      {/* Step 2: Choose Specialist Grid */}
+      {/* STEP 2: SPECIALTY SELECTION */}
       {step === 2 && (
-        <section className="bg-white border border-[var(--line)] rounded-[26px] p-6 sm:p-8 shadow-[var(--shadow)] space-y-6">
-          <div className="flex items-center gap-3 border-b border-[var(--line)] pb-4">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+        <section className="bg-white border-2 border-black rounded-none p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
+          <div className="flex items-center gap-3 border-b-2 border-black pb-4">
+            <div className="w-10 h-10 bg-black text-white flex items-center justify-center font-mono font-bold">
               <Stethoscope size={20} />
             </div>
             <div>
-              <h2 className="text-xl font-serif font-bold text-[var(--ink)]">Langkah 2: Pilih Bidang Spesialisasi</h2>
-              <p className="text-xs text-[var(--ink-soft)] font-serif">
-                Sistem AI dan Atlas Anatomi 3D akan menyesuaikan default template anamnesis dan algoritma triase organ sesuai bidang Anda.
+              <h2 className="text-xl font-black text-black uppercase">
+                Langkah 2: Pilih Bidang Spesialisasi Medis
+              </h2>
+              <p className="text-xs text-neutral-700 font-medium">
+                Pilih bidang spesialisasi untuk mengonfigurasi formulir SOAP & parameter dokumentasi AI.
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             {SPECIALTY_OPTIONS.map((spec) => {
               const isSelected = formData.specialtyKey === spec.key;
-              const IconComp = spec.icon;
               return (
                 <button
                   key={spec.key}
                   type="button"
                   onClick={() => handleSelectSpecialty(spec.key)}
-                  className={`p-4 sm:p-5 rounded-2xl border text-left transition relative flex flex-col justify-between space-y-3 ${
+                  className={`p-4 border-2 border-black text-left transition flex flex-col justify-between space-y-2.5 ${
                     isSelected
-                      ? "bg-[rgba(235,124,107,0.08)] border-[var(--terracotta)] ring-2 ring-[var(--terracotta)]/20 shadow-md"
-                      : "bg-white border-[var(--line)] hover:border-[var(--ink-muted)] hover:shadow-xs"
+                      ? "bg-black text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]"
+                      : "bg-white text-black hover:bg-neutral-100"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shadow-xs"
-                        style={{ backgroundColor: spec.color }}
-                      >
-                        <IconComp size={20} />
-                      </div>
-                      <div>
-                        <div className="font-serif font-bold text-sm text-[var(--ink)]">{spec.title}</div>
-                        <div className="text-xs font-serif font-medium text-[var(--terracotta)]">{spec.subTitle}</div>
-                      </div>
+                  <div className="flex items-center justify-between gap-2 border-b border-current pb-2">
+                    <div>
+                      <div className="font-black text-sm uppercase">{spec.title}</div>
+                      <div className="text-[11px] font-mono font-medium opacity-90">{spec.subTitle}</div>
                     </div>
-
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        isSelected ? "bg-[var(--terracotta)] text-white" : "bg-neutral-100 text-neutral-600"
+                      className={`text-[10px] font-mono font-bold px-2 py-0.5 uppercase ${
+                        isSelected ? "bg-white text-black" : "bg-black text-white"
                       }`}
                     >
                       {spec.badge}
                     </span>
                   </div>
 
-                  <p className="text-xs text-[var(--ink-soft)] font-serif leading-relaxed">
-                    {spec.description}
-                  </p>
+                  <p className="text-[11px] leading-relaxed opacity-95">{spec.description}</p>
 
-                  <div className="pt-2 border-t border-[var(--line)] flex items-center justify-between text-[11px]">
-                    <span className="text-[var(--ink-muted)] font-mono">Organ Utama: {spec.defaultOrgan.toUpperCase()}</span>
-                    {isSelected && (
-                      <span className="text-[var(--terracotta)] font-bold flex items-center gap-1">
-                        <Check size={13} /> Terpilih
-                      </span>
-                    )}
-                  </div>
+                  {isSelected && (
+                    <div className="text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 pt-1">
+                      <Check size={13} /> DIPILIH
+                    </div>
+                  )}
                 </button>
               );
             })}
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-[var(--line)]">
+          <div className="flex items-center justify-between pt-4 border-t-2 border-black">
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="px-5 py-2.5 rounded-xl border border-[var(--line)] text-xs font-serif font-bold text-[var(--ink-soft)] hover:bg-gray-50 transition"
+              className="px-5 py-2.5 border-2 border-black text-black font-bold text-xs uppercase tracking-wider hover:bg-neutral-100 transition"
             >
               Kembali
             </button>
             <button
               type="button"
               onClick={() => setStep(3)}
-              className="px-6 py-3 rounded-xl bg-[var(--ink)] hover:bg-black text-white font-serif font-bold text-xs flex items-center gap-2 shadow-md transition"
+              className="px-6 py-3 bg-black hover:bg-neutral-800 text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)]"
             >
               <span>Lanjut ke Tanda Tangan Digital</span>
               <ArrowRight size={15} />
@@ -620,40 +616,49 @@ function DoctorRegistrationPage() {
         </section>
       )}
 
-      {/* Step 3: Electronic Signature & PIN */}
+      {/* STEP 3: DIGITAL SIGNATURE & PIN */}
       {step === 3 && (
-        <section className="bg-white border border-[var(--line)] rounded-[26px] p-6 sm:p-8 shadow-[var(--shadow)] space-y-6">
-          <div className="flex items-center gap-3 border-b border-[var(--line)] pb-4">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+        <section className="bg-white border-2 border-black rounded-none p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
+          <div className="flex items-center gap-3 border-b-2 border-black pb-4">
+            <div className="w-10 h-10 bg-black text-white flex items-center justify-center font-mono font-bold">
               <PenTool size={20} />
             </div>
             <div>
-              <h2 className="text-xl font-serif font-bold text-[var(--ink)]">Langkah 3: Tanda Tangan Digital & PIN Verifikasi</h2>
-              <p className="text-xs text-[var(--ink-soft)] font-serif">
-                Goreskan tanda tangan resmi Anda pada kanvas di bawah untuk otomatisasi pengesahan rekam medis.
+              <h2 className="text-xl font-black text-black uppercase">
+                Langkah 3: Tanda Tangan Digital & PIN Pengesahan
+              </h2>
+              <p className="text-xs text-neutral-700 font-medium">
+                Goreskan tanda tangan pada kanvas untuk validasi dokumen Resume Medis resmi.
               </p>
             </div>
           </div>
 
+          {errorMsg && (
+            <div className="p-3.5 bg-neutral-100 border-2 border-black text-xs font-bold text-black flex items-start gap-2">
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-serif font-bold text-[var(--ink)]">
+            <div className="flex items-center justify-between text-xs font-bold">
+              <label className="uppercase tracking-wider text-black">
                 Kanvas Tanda Tangan Elektronik Dokter DPJP:
               </label>
               <button
                 type="button"
                 onClick={clearCanvas}
-                className="text-xs text-[var(--terracotta)] font-serif font-bold hover:underline flex items-center gap-1"
+                className="text-xs text-black font-mono font-bold underline flex items-center gap-1 hover:opacity-80"
               >
-                <RotateCcw size={13} /> Hapus & Ulangi
+                <RotateCcw size={12} /> Hapus & Ulangi
               </button>
             </div>
 
-            <div className="border-2 border-dashed border-[var(--line)] rounded-2xl p-2 bg-[var(--paper-soft)]">
+            <div className="border-2 border-black rounded-none p-1 bg-neutral-100 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
               <canvas
                 ref={canvasRef}
                 width={700}
-                height={180}
+                height={170}
                 onMouseDown={startDrawing}
                 onMouseMove={draw}
                 onMouseUp={stopDrawing}
@@ -661,96 +666,98 @@ function DoctorRegistrationPage() {
                 onTouchStart={startDrawing}
                 onTouchMove={draw}
                 onTouchEnd={stopDrawing}
-                className="w-full bg-white rounded-xl cursor-crosshair touch-none h-[180px]"
+                className="w-full bg-white cursor-crosshair touch-none h-[170px]"
               />
             </div>
-            <p className="text-[11px] text-[var(--ink-muted)] font-serif">
-              * Tanda tangan ini disimpan secara aman dan terenkripsi, digunakan untuk pengesahan otomatis saat Anda mengklik "Verifikasi & Tanda Tangani" pada lembar PDF.
-            </p>
 
-            <div className="pt-2 max-w-xs space-y-1.5">
-              <label className="text-xs font-serif font-bold text-[var(--ink)] flex items-center gap-1.5">
+            <div className="pt-2 max-w-xs space-y-1.5 text-xs font-bold">
+              <label className="uppercase tracking-wider text-black flex items-center gap-1.5">
                 <Lock size={13} />
-                PIN Verifikasi Cepat (6 Angka)
+                PIN Pengesahan Cepat (6 Digit)
               </label>
               <input
                 type="password"
                 maxLength={6}
-                value={formData.signaturePin || "123456"}
+                value={formData.signaturePin}
                 onChange={(e) => setFormData({ ...formData, signaturePin: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-[var(--line)] font-mono text-center font-bold tracking-widest text-sm text-[var(--ink)]"
+                className="w-full px-4 py-2.5 border-2 border-black font-mono text-center font-bold tracking-widest text-sm text-black bg-white focus:outline-none"
                 placeholder="123456"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-[var(--line)]">
+          <div className="flex items-center justify-between pt-4 border-t-2 border-black">
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="px-5 py-2.5 rounded-xl border border-[var(--line)] text-xs font-serif font-bold text-[var(--ink-soft)] hover:bg-gray-50 transition"
+              className="px-5 py-2.5 border-2 border-black text-black font-bold text-xs uppercase tracking-wider hover:bg-neutral-100 transition"
             >
               Kembali
             </button>
             <button
               type="button"
               onClick={handleSubmitRegistration}
-              className="px-8 py-3 rounded-xl bg-gradient-to-r from-[var(--terracotta)] to-[#d95d4b] hover:opacity-95 text-white font-serif font-bold text-xs flex items-center gap-2 shadow-md transition"
+              disabled={isSaving}
+              className="px-8 py-3.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]"
             >
               <CheckCircle2 size={16} />
-              <span>Simpan Profil & Aktifkan Dokter</span>
+              <span>{isSaving ? "Menyimpan ke Database..." : "Simpan & Aktifkan Dokter"}</span>
             </button>
           </div>
         </section>
       )}
 
-      {/* Step 4: Ready to Practice Summary */}
+      {/* STEP 4: READY TO PRACTICE */}
       {step === 4 && (
-        <section className="bg-white border border-[#3b6b39] rounded-[26px] p-8 shadow-xl space-y-6 text-center">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 text-[#3b6b39] flex items-center justify-center mx-auto shadow-inner animate-bounce">
-            <CheckCircle2 size={32} />
+        <section className="bg-white border-2 border-black rounded-none p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6 text-center">
+          <div className="w-16 h-16 bg-black text-white flex items-center justify-center mx-auto font-mono font-bold text-2xl">
+            ✓
           </div>
 
           <div className="space-y-1 max-w-lg mx-auto">
-            <h2 className="text-2xl font-serif font-bold text-[var(--ink)]">
-              Profil Dokter Berhasil Diaktifkan!
+            <h2 className="text-2xl font-black text-black uppercase">
+              Dokter DPJP Berhasil Terdaftar!
             </h2>
-            <p className="text-xs text-[var(--ink-soft)] font-serif">
-              Data Anda telah tersinkronisasi ke PostgreSQL Neon DB. Seluruh modul konsultasi suara, rekam medis, dan triase anatomi 3D kini beroperasi di bawah kredensial resmi Anda.
+            <p className="text-xs text-neutral-700 font-medium leading-relaxed">
+              Kredensial dan tanda tangan digital Anda tersimpan di Database PostgreSQL. Anda kini dapat langsung memulai sesi konsultasi dikte suara.
             </p>
           </div>
 
-          {/* Doctor Credential Badge Card */}
-          <div className="max-w-md mx-auto bg-[var(--paper-soft)] border border-[var(--line)] rounded-2xl p-5 text-left space-y-3 font-serif">
+          {/* Credential Card */}
+          <div className="max-w-md mx-auto bg-neutral-100 border-2 border-black p-5 text-left space-y-3 text-xs font-mono font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
             <div className="flex items-center justify-between">
-              <div className="font-bold text-sm text-[var(--ink)]">{formData.name}</div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[var(--terracotta)] text-white">
+              <div className="text-sm text-black">{formData.name}</div>
+              <span className="text-[10px] bg-black text-white px-2 py-0.5">
                 {formData.specialtyKey.toUpperCase()}
               </span>
             </div>
-            <div className="text-xs text-[var(--ink-soft)]">{formData.specialization}</div>
-            <div className="text-[11px] text-[var(--ink-muted)] pt-2 border-t border-[var(--line)] flex items-center justify-between">
+            <div className="text-neutral-700 font-sans">{formData.specialization}</div>
+            <div className="text-[11px] pt-2 border-t border-black flex items-center justify-between">
               <span>SIP: {formData.licenseNumber}</span>
               <span>{formData.institution}</span>
             </div>
+            {satusehatResult?.satusehatId && (
+              <div className="text-[10px] bg-white border border-black p-2 text-black">
+                SATUSEHAT PRACTITIONER ID: {satusehatResult.satusehatId} (VERIFIED)
+              </div>
+            )}
           </div>
 
-          {/* Action CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
             <Link
               to="/consultation"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[var(--ink)] hover:bg-black text-white font-serif font-bold text-xs flex items-center justify-center gap-2 shadow-md transition"
+              className="w-full sm:w-auto px-6 py-3.5 bg-black hover:bg-neutral-800 text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] transition"
             >
               <Activity size={15} />
-              <span>Mulai Sesi Konsultasi Suara Pasien</span>
+              <span>Mulai Dikte Suara Konsultasi</span>
             </Link>
 
             <Link
               to="/report"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white border border-[var(--line)] hover:bg-gray-50 text-[var(--ink)] font-serif font-bold text-xs flex items-center justify-center gap-2 transition"
+              className="w-full sm:w-auto px-6 py-3.5 bg-white border-2 border-black text-black font-mono font-bold text-xs uppercase tracking-wider hover:bg-neutral-100 transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2"
             >
-              <FileCheck2 size={15} />
-              <span>Buka Formulir Medical Report</span>
+              <FileText size={15} />
+              <span>Formulir Resume Medis</span>
             </Link>
           </div>
         </section>

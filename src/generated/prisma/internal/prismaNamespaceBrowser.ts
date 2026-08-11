@@ -57,7 +57,8 @@ export const ModelName = {
   ReportOrganHighlight: 'ReportOrganHighlight',
   VerificationRecord: 'VerificationRecord',
   MedicalGlossary: 'MedicalGlossary',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  MedicalCode: 'MedicalCode'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -79,10 +80,18 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
+  nik: 'nik',
   name: 'name',
+  passwordHash: 'passwordHash',
   role: 'role',
   licenseNumber: 'licenseNumber',
   specialization: 'specialization',
+  institution: 'institution',
+  satusehatId: 'satusehatId',
+  isSatusehatVerified: 'isSatusehatVerified',
+  satusehatVerifiedAt: 'satusehatVerifiedAt',
+  signatureDataUrl: 'signatureDataUrl',
+  signaturePin: 'signaturePin',
   avatarUrl: 'avatarUrl',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -193,6 +202,20 @@ export const AuditLogScalarFieldEnum = {
 } as const
 
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+export const MedicalCodeScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  display: 'display',
+  system: 'system',
+  version: 'version',
+  groupName: 'groupName',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MedicalCodeScalarFieldEnum = (typeof MedicalCodeScalarFieldEnum)[keyof typeof MedicalCodeScalarFieldEnum]
 
 
 export const SortOrder = {

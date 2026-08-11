@@ -52,3 +52,8 @@ export type MedicalGlossary = Prisma.MedicalGlossaryModel
  * 
  */
 export type AuditLog = Prisma.AuditLogModel
+/**
+ * Model MedicalCode
+ * 
+ */
+export type MedicalCode = Prisma.MedicalCodeModel

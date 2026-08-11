@@ -446,7 +446,7 @@ export function MedicalHistoryFormDocument({
         <div className="no-print bg-emerald-50 border border-emerald-300 rounded-2xl p-3.5 flex items-center gap-3 text-xs text-emerald-900 font-serif">
           <Sparkles size={18} className="text-emerald-700 shrink-0" />
           <div>
-            <b>Mode Edit Dokumen Terbuka:</b> Anda dapat mengedit Nama Pasien, Tanggal Lahir, Riwayat Alergi, Obat-obatan, ICD-10, Catatan Anamnesis, dan Tanda-Tanda Vital secara langsung. Setiap perubahan otomatis tersinkronisasi ke PostgreSQL Neon DB.
+            <b>Mode Edit Dokumen Terbuka:</b> Anda dapat mengedit Nama Pasien, Tanggal Lahir, Riwayat Alergi, Obat-obatan, ICD-10, Catatan Anamnesis, dan Tanda-Tanda Vital secara langsung. Setiap perubahan pada rekam medis otomatis tersimpan secara aman.
           </div>
         </div>
       )}

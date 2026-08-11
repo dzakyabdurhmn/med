@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AnatomyRouteImport } from './routes/anatomy'
 import { Route as ConsultationRouteImport } from './routes/consultation'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as DemoAiChatRouteImport } from './routes/demo/ai-chat'
@@ -49,6 +50,11 @@ const AnatomyRoute = AnatomyRouteImport.update({
 const ConsultationRoute = ConsultationRouteImport.update({
   id: '/consultation',
   path: '/consultation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/anatomy': typeof AnatomyRoute
   '/consultation': typeof ConsultationRoute
+  '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/report': typeof ReportRoute
   '/demo/ai-chat': typeof DemoAiChatRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/anatomy': typeof AnatomyRoute
   '/consultation': typeof ConsultationRoute
+  '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/report': typeof ReportRoute
   '/demo/ai-chat': typeof DemoAiChatRoute
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/anatomy': typeof AnatomyRoute
   '/consultation': typeof ConsultationRoute
+  '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/report': typeof ReportRoute
   '/demo/ai-chat': typeof DemoAiChatRoute
@@ -214,6 +223,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/anatomy'
     | '/consultation'
+    | '/login'
     | '/register'
     | '/report'
     | '/demo/ai-chat'
@@ -237,6 +247,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/anatomy'
     | '/consultation'
+    | '/login'
     | '/register'
     | '/report'
     | '/demo/ai-chat'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/anatomy'
     | '/consultation'
+    | '/login'
     | '/register'
     | '/report'
     | '/demo/ai-chat'
@@ -284,6 +296,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AnatomyRoute: typeof AnatomyRoute
   ConsultationRoute: typeof ConsultationRoute
+  LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   ReportRoute: typeof ReportRoute
   DemoAiChatRoute: typeof DemoAiChatRoute
@@ -331,6 +344,13 @@ declare module '@tanstack/react-router' {
       path: '/consultation'
       fullPath: '/consultation'
       preLoaderRoute: typeof ConsultationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -460,6 +480,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AnatomyRoute: AnatomyRoute,
   ConsultationRoute: ConsultationRoute,
+  LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   ReportRoute: ReportRoute,
   DemoAiChatRoute: DemoAiChatRoute,

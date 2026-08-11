@@ -4,6 +4,158 @@ import type { MedicalFormData } from "../components/medical/MedicalHistoryFormDo
 import type { OrganId } from "../lib/anatomy-data";
 
 /**
+ * Doctor Registration Server Function (Prisma DB + SATUSEHAT Verification)
+ */
+export const registerDoctorUser = createServerFn({
+  method: "POST",
+})
+  .validator(
+    (input: {
+      name: string;
+      email: string;
+      password: string;
+      nik?: string;
+      licenseNumber: string;
+      specialization: string;
+      institution: string;
+      satusehatId?: string;
+      isSatusehatVerified?: boolean;
+      signatureDataUrl?: string;
+      signaturePin?: string;
+    }) => input
+  )
+  .handler(async ({ data }) => {
+    const {
+      name,
+      email,
+      password,
+      nik,
+      licenseNumber,
+      specialization,
+      institution,
+      satusehatId,
+      isSatusehatVerified,
+      signatureDataUrl,
+      signaturePin,
+    } = data;
+
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const cleanNik = nik ? nik.trim() : null;
+
+      // Check existing user by email or NIK
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: cleanEmail },
+            ...(cleanNik ? [{ nik: cleanNik }] : []),
+          ],
+        },
+      });
+
+      if (existingUser) {
+        // Update doctor profile with new credentials
+        const updated = await prisma.user.update({
+          where: { id: existingUser.id },
+          data: {
+            name,
+            email: cleanEmail,
+            nik: cleanNik || existingUser.nik,
+            passwordHash: password, // Store password hash / credential
+            role: "DOCTOR",
+            licenseNumber,
+            specialization,
+            institution,
+            satusehatId: satusehatId || existingUser.satusehatId,
+            isSatusehatVerified: isSatusehatVerified ?? existingUser.isSatusehatVerified,
+            satusehatVerifiedAt: isSatusehatVerified ? new Date() : existingUser.satusehatVerifiedAt,
+            signatureDataUrl: signatureDataUrl || existingUser.signatureDataUrl,
+            signaturePin: signaturePin || existingUser.signaturePin,
+          },
+        });
+
+        return {
+          success: true,
+          user: updated,
+          message: "Profil Dokter berhasil diperbarui di Database.",
+        };
+      }
+
+      // Create new doctor user
+      const newDoctor = await prisma.user.create({
+        data: {
+          name,
+          email: cleanEmail,
+          nik: cleanNik,
+          passwordHash: password,
+          role: "DOCTOR",
+          licenseNumber,
+          specialization,
+          institution,
+          satusehatId,
+          isSatusehatVerified: !!isSatusehatVerified,
+          satusehatVerifiedAt: isSatusehatVerified ? new Date() : null,
+          signatureDataUrl,
+          signaturePin: signaturePin || "123456",
+        },
+      });
+
+      return {
+        success: true,
+        user: newDoctor,
+        message: "Pendaftaran Dokter DPJP berhasil tersimpan di Database.",
+      };
+    } catch (error: any) {
+      console.error("Error in registerDoctorUser:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+/**
+ * Doctor Login Server Function
+ */
+export const loginDoctorUser = createServerFn({
+  method: "POST",
+})
+  .validator((input: { identifier: string; password: string }) => input)
+  .handler(async ({ data }) => {
+    const { identifier, password } = data;
+    const cleanId = identifier.trim().toLowerCase();
+
+    try {
+      const user = await prisma.user.findFirst({
+        where: {
+          role: "DOCTOR",
+          OR: [{ email: cleanId }, { nik: identifier.trim() }],
+        },
+      });
+
+      if (!user) {
+        return {
+          success: false,
+          message: "Akun Dokter dengan Email / NIK tersebut tidak ditemukan.",
+        };
+      }
+
+      if (user.passwordHash && user.passwordHash !== password) {
+        return {
+          success: false,
+          message: "Password yang Anda masukkan salah.",
+        };
+      }
+
+      return {
+        success: true,
+        user,
+        message: "Login Dokter Berhasil.",
+      };
+    } catch (error: any) {
+      console.error("Error in loginDoctorUser:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+/**
  * Get the latest active Medical Report from PostgreSQL DB
  */
 export const getActiveReportFromDb = createServerFn({

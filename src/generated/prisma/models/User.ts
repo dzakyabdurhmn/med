@@ -27,10 +27,18 @@ export type AggregateUser = {
 export type UserMinAggregateOutputType = {
   id: string | null
   email: string | null
+  nik: string | null
   name: string | null
+  passwordHash: string | null
   role: $Enums.Role | null
   licenseNumber: string | null
   specialization: string | null
+  institution: string | null
+  satusehatId: string | null
+  isSatusehatVerified: boolean | null
+  satusehatVerifiedAt: Date | null
+  signatureDataUrl: string | null
+  signaturePin: string | null
   avatarUrl: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -39,10 +47,18 @@ export type UserMinAggregateOutputType = {
 export type UserMaxAggregateOutputType = {
   id: string | null
   email: string | null
+  nik: string | null
   name: string | null
+  passwordHash: string | null
   role: $Enums.Role | null
   licenseNumber: string | null
   specialization: string | null
+  institution: string | null
+  satusehatId: string | null
+  isSatusehatVerified: boolean | null
+  satusehatVerifiedAt: Date | null
+  signatureDataUrl: string | null
+  signaturePin: string | null
   avatarUrl: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -51,10 +67,18 @@ export type UserMaxAggregateOutputType = {
 export type UserCountAggregateOutputType = {
   id: number
   email: number
+  nik: number
   name: number
+  passwordHash: number
   role: number
   licenseNumber: number
   specialization: number
+  institution: number
+  satusehatId: number
+  isSatusehatVerified: number
+  satusehatVerifiedAt: number
+  signatureDataUrl: number
+  signaturePin: number
   avatarUrl: number
   createdAt: number
   updatedAt: number
@@ -65,10 +89,18 @@ export type UserCountAggregateOutputType = {
 export type UserMinAggregateInputType = {
   id?: true
   email?: true
+  nik?: true
   name?: true
+  passwordHash?: true
   role?: true
   licenseNumber?: true
   specialization?: true
+  institution?: true
+  satusehatId?: true
+  isSatusehatVerified?: true
+  satusehatVerifiedAt?: true
+  signatureDataUrl?: true
+  signaturePin?: true
   avatarUrl?: true
   createdAt?: true
   updatedAt?: true
@@ -77,10 +109,18 @@ export type UserMinAggregateInputType = {
 export type UserMaxAggregateInputType = {
   id?: true
   email?: true
+  nik?: true
   name?: true
+  passwordHash?: true
   role?: true
   licenseNumber?: true
   specialization?: true
+  institution?: true
+  satusehatId?: true
+  isSatusehatVerified?: true
+  satusehatVerifiedAt?: true
+  signatureDataUrl?: true
+  signaturePin?: true
   avatarUrl?: true
   createdAt?: true
   updatedAt?: true
@@ -89,10 +129,18 @@ export type UserMaxAggregateInputType = {
 export type UserCountAggregateInputType = {
   id?: true
   email?: true
+  nik?: true
   name?: true
+  passwordHash?: true
   role?: true
   licenseNumber?: true
   specialization?: true
+  institution?: true
+  satusehatId?: true
+  isSatusehatVerified?: true
+  satusehatVerifiedAt?: true
+  signatureDataUrl?: true
+  signaturePin?: true
   avatarUrl?: true
   createdAt?: true
   updatedAt?: true
@@ -174,10 +222,18 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type UserGroupByOutputType = {
   id: string
   email: string
+  nik: string | null
   name: string
+  passwordHash: string | null
   role: $Enums.Role
   licenseNumber: string | null
   specialization: string | null
+  institution: string | null
+  satusehatId: string | null
+  isSatusehatVerified: boolean
+  satusehatVerifiedAt: Date | null
+  signatureDataUrl: string | null
+  signaturePin: string | null
   avatarUrl: string | null
   createdAt: Date
   updatedAt: Date
@@ -207,10 +263,18 @@ export type UserWhereInput = {
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.StringFilter<"User"> | string
   email?: Prisma.StringFilter<"User"> | string
+  nik?: Prisma.StringNullableFilter<"User"> | string | null
   name?: Prisma.StringFilter<"User"> | string
+  passwordHash?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   licenseNumber?: Prisma.StringNullableFilter<"User"> | string | null
   specialization?: Prisma.StringNullableFilter<"User"> | string | null
+  institution?: Prisma.StringNullableFilter<"User"> | string | null
+  satusehatId?: Prisma.StringNullableFilter<"User"> | string | null
+  isSatusehatVerified?: Prisma.BoolFilter<"User"> | boolean
+  satusehatVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  signatureDataUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  signaturePin?: Prisma.StringNullableFilter<"User"> | string | null
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -224,10 +288,18 @@ export type UserWhereInput = {
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  nik?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   licenseNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   specialization?: Prisma.SortOrderInput | Prisma.SortOrder
+  institution?: Prisma.SortOrderInput | Prisma.SortOrder
+  satusehatId?: Prisma.SortOrderInput | Prisma.SortOrder
+  isSatusehatVerified?: Prisma.SortOrder
+  satusehatVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  signatureDataUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  signaturePin?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -241,13 +313,21 @@ export type UserOrderByWithRelationInput = {
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   email?: string
+  nik?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   name?: Prisma.StringFilter<"User"> | string
+  passwordHash?: Prisma.StringNullableFilter<"User"> | string | null
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   licenseNumber?: Prisma.StringNullableFilter<"User"> | string | null
   specialization?: Prisma.StringNullableFilter<"User"> | string | null
+  institution?: Prisma.StringNullableFilter<"User"> | string | null
+  satusehatId?: Prisma.StringNullableFilter<"User"> | string | null
+  isSatusehatVerified?: Prisma.BoolFilter<"User"> | boolean
+  satusehatVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  signatureDataUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  signaturePin?: Prisma.StringNullableFilter<"User"> | string | null
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -256,15 +336,23 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   patientReports?: Prisma.MedicalReportListRelationFilter
   auditLogs?: Prisma.AuditLogListRelationFilter
   verifications?: Prisma.VerificationRecordListRelationFilter
-}, "id" | "email">
+}, "id" | "email" | "nik">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  nik?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
   role?: Prisma.SortOrder
   licenseNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   specialization?: Prisma.SortOrderInput | Prisma.SortOrder
+  institution?: Prisma.SortOrderInput | Prisma.SortOrder
+  satusehatId?: Prisma.SortOrderInput | Prisma.SortOrder
+  isSatusehatVerified?: Prisma.SortOrder
+  satusehatVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  signatureDataUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  signaturePin?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -279,10 +367,18 @@ export type UserScalarWhereWithAggregatesInput = {
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"User"> | string
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
+  nik?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   name?: Prisma.StringWithAggregatesFilter<"User"> | string
+  passwordHash?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   role?: Prisma.EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
   licenseNumber?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   specialization?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  institution?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  satusehatId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  isSatusehatVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  satusehatVerifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  signatureDataUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  signaturePin?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   avatarUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -291,10 +387,18 @@ export type UserScalarWhereWithAggregatesInput = {
 export type UserCreateInput = {
   id?: string
   email: string
+  nik?: string | null
   name: string
+  passwordHash?: string | null
   role?: $Enums.Role
   licenseNumber?: string | null
   specialization?: string | null
+  institution?: string | null
+  satusehatId?: string | null
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: Date | string | null
+  signatureDataUrl?: string | null
+  signaturePin?: string | null
   avatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -308,10 +412,18 @@ export type UserCreateInput = {
 export type UserUncheckedCreateInput = {
   id?: string
   email: string
+  nik?: string | null
   name: string
+  passwordHash?: string | null
   role?: $Enums.Role
   licenseNumber?: string | null
   specialization?: string | null
+  institution?: string | null
+  satusehatId?: string | null
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: Date | string | null
+  signatureDataUrl?: string | null
+  signaturePin?: string | null
   avatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -325,10 +437,18 @@ export type UserUncheckedCreateInput = {
 export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  nik?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   licenseNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   specialization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  institution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  satusehatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSatusehatVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  satusehatVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signatureDataUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signaturePin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -342,10 +462,18 @@ export type UserUpdateInput = {
 export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  nik?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   licenseNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   specialization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  institution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  satusehatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSatusehatVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  satusehatVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signatureDataUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signaturePin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -359,10 +487,18 @@ export type UserUncheckedUpdateInput = {
 export type UserCreateManyInput = {
   id?: string
   email: string
+  nik?: string | null
   name: string
+  passwordHash?: string | null
   role?: $Enums.Role
   licenseNumber?: string | null
   specialization?: string | null
+  institution?: string | null
+  satusehatId?: string | null
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: Date | string | null
+  signatureDataUrl?: string | null
+  signaturePin?: string | null
   avatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -371,10 +507,18 @@ export type UserCreateManyInput = {
 export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  nik?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   licenseNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   specialization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  institution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  satusehatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSatusehatVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  satusehatVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signatureDataUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signaturePin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -383,10 +527,18 @@ export type UserUpdateManyMutationInput = {
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  nik?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   licenseNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   specialization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  institution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  satusehatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSatusehatVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  satusehatVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signatureDataUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signaturePin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -395,10 +547,18 @@ export type UserUncheckedUpdateManyInput = {
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  nik?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
   licenseNumber?: Prisma.SortOrder
   specialization?: Prisma.SortOrder
+  institution?: Prisma.SortOrder
+  satusehatId?: Prisma.SortOrder
+  isSatusehatVerified?: Prisma.SortOrder
+  satusehatVerifiedAt?: Prisma.SortOrder
+  signatureDataUrl?: Prisma.SortOrder
+  signaturePin?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -407,10 +567,18 @@ export type UserCountOrderByAggregateInput = {
 export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  nik?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
   licenseNumber?: Prisma.SortOrder
   specialization?: Prisma.SortOrder
+  institution?: Prisma.SortOrder
+  satusehatId?: Prisma.SortOrder
+  isSatusehatVerified?: Prisma.SortOrder
+  satusehatVerifiedAt?: Prisma.SortOrder
+  signatureDataUrl?: Prisma.SortOrder
+  signaturePin?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -419,10 +587,18 @@ export type UserMaxOrderByAggregateInput = {
 export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  nik?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
   role?: Prisma.SortOrder
   licenseNumber?: Prisma.SortOrder
   specialization?: Prisma.SortOrder
+  institution?: Prisma.SortOrder
+  satusehatId?: Prisma.SortOrder
+  isSatusehatVerified?: Prisma.SortOrder
+  satusehatVerifiedAt?: Prisma.SortOrder
+  signatureDataUrl?: Prisma.SortOrder
+  signaturePin?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -442,12 +618,20 @@ export type StringFieldUpdateOperationsInput = {
   set?: string
 }
 
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
 export type EnumRoleFieldUpdateOperationsInput = {
   set?: $Enums.Role
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -531,10 +715,18 @@ export type UserUpdateOneWithoutAuditLogsNestedInput = {
 export type UserCreateWithoutPatientProfileInput = {
   id?: string
   email: string
+  nik?: string | null
   name: string
+  passwordHash?: string | null
   role?: $Enums.Role
   licenseNumber?: string | null
   specialization?: string | null
+  institution?: string | null
+  satusehatId?: string | null
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: Date | string | null
+  signatureDataUrl?: string | null
+  signaturePin?: string | null
   avatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -547,10 +739,18 @@ export type UserCreateWithoutPatientProfileInput = {
 export type UserUncheckedCreateWithoutPatientProfileInput = {
   id?: string
   email: string
+  nik?: string | null
   name: string
+  passwordHash?: string | null
   role?: $Enums.Role
   licenseNumber?: string | null
   specialization?: string | null
+  institution?: string | null
+  satusehatId?: string | null
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: Date | string | null
+  signatureDataUrl?: string | null
+  signaturePin?: string | null
   avatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -579,10 +779,18 @@ export type UserUpdateToOneWithWhereWithoutPatientProfileInput = {
 export type UserUpdateWithoutPatientProfileInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  nik?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   licenseNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   specialization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  institution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  satusehatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSatusehatVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  satusehatVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signatureDataUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signaturePin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -595,10 +803,18 @@ export type UserUpdateWithoutPatientProfileInput = {
 export type UserUncheckedUpdateWithoutPatientProfileInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  nik?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   licenseNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   specialization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  institution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  satusehatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSatusehatVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  satusehatVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signatureDataUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signaturePin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -611,10 +827,18 @@ export type UserUncheckedUpdateWithoutPatientProfileInput = {
 export type UserCreateWithoutPatientReportsInput = {
   id?: string
   email: string
+  nik?: string | null
   name: string
+  passwordHash?: string | null
   role?: $Enums.Role
   licenseNumber?: string | null
   specialization?: string | null
+  institution?: string | null
+  satusehatId?: string | null
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: Date | string | null
+  signatureDataUrl?: string | null
+  signaturePin?: string | null
   avatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -627,10 +851,18 @@ export type UserCreateWithoutPatientReportsInput = {
 export type UserUncheckedCreateWithoutPatientReportsInput = {
   id?: string
   email: string
+  nik?: string | null
   name: string
+  passwordHash?: string | null
   role?: $Enums.Role
   licenseNumber?: string | null
   specialization?: string | null
+  institution?: string | null
+  satusehatId?: string | null
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: Date | string | null
+  signatureDataUrl?: string | null
+  signaturePin?: string | null
   avatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -648,10 +880,18 @@ export type UserCreateOrConnectWithoutPatientReportsInput = {
 export type UserCreateWithoutAuthoredReportsInput = {
   id?: string
   email: string
+  nik?: string | null
   name: string
+  passwordHash?: string | null
   role?: $Enums.Role
   licenseNumber?: string | null
   specialization?: string | null
+  institution?: string | null
+  satusehatId?: string | null
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: Date | string | null
+  signatureDataUrl?: string | null
+  signaturePin?: string | null
   avatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -664,10 +904,18 @@ export type UserCreateWithoutAuthoredReportsInput = {
 export type UserUncheckedCreateWithoutAuthoredReportsInput = {
   id?: string
   email: string
+  nik?: string | null
   name: string
+  passwordHash?: string | null
   role?: $Enums.Role
   licenseNumber?: string | null
   specialization?: string | null
+  institution?: string | null
+  satusehatId?: string | null
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: Date | string | null
+  signatureDataUrl?: string | null
+  signaturePin?: string | null
   avatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -696,10 +944,18 @@ export type UserUpdateToOneWithWhereWithoutPatientReportsInput = {
 export type UserUpdateWithoutPatientReportsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  nik?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   licenseNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   specialization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  institution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  satusehatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSatusehatVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  satusehatVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signatureDataUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signaturePin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -712,10 +968,18 @@ export type UserUpdateWithoutPatientReportsInput = {
 export type UserUncheckedUpdateWithoutPatientReportsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  nik?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   licenseNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   specialization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  institution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  satusehatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSatusehatVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  satusehatVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signatureDataUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signaturePin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -739,10 +1003,18 @@ export type UserUpdateToOneWithWhereWithoutAuthoredReportsInput = {
 export type UserUpdateWithoutAuthoredReportsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  nik?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   licenseNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   specialization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  institution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  satusehatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSatusehatVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  satusehatVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signatureDataUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signaturePin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -755,10 +1027,18 @@ export type UserUpdateWithoutAuthoredReportsInput = {
 export type UserUncheckedUpdateWithoutAuthoredReportsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  nik?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   licenseNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   specialization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  institution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  satusehatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSatusehatVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  satusehatVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signatureDataUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signaturePin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -771,10 +1051,18 @@ export type UserUncheckedUpdateWithoutAuthoredReportsInput = {
 export type UserCreateWithoutVerificationsInput = {
   id?: string
   email: string
+  nik?: string | null
   name: string
+  passwordHash?: string | null
   role?: $Enums.Role
   licenseNumber?: string | null
   specialization?: string | null
+  institution?: string | null
+  satusehatId?: string | null
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: Date | string | null
+  signatureDataUrl?: string | null
+  signaturePin?: string | null
   avatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -787,10 +1075,18 @@ export type UserCreateWithoutVerificationsInput = {
 export type UserUncheckedCreateWithoutVerificationsInput = {
   id?: string
   email: string
+  nik?: string | null
   name: string
+  passwordHash?: string | null
   role?: $Enums.Role
   licenseNumber?: string | null
   specialization?: string | null
+  institution?: string | null
+  satusehatId?: string | null
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: Date | string | null
+  signatureDataUrl?: string | null
+  signaturePin?: string | null
   avatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -819,10 +1115,18 @@ export type UserUpdateToOneWithWhereWithoutVerificationsInput = {
 export type UserUpdateWithoutVerificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  nik?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   licenseNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   specialization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  institution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  satusehatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSatusehatVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  satusehatVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signatureDataUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signaturePin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -835,10 +1139,18 @@ export type UserUpdateWithoutVerificationsInput = {
 export type UserUncheckedUpdateWithoutVerificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  nik?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   licenseNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   specialization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  institution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  satusehatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSatusehatVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  satusehatVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signatureDataUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signaturePin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -851,10 +1163,18 @@ export type UserUncheckedUpdateWithoutVerificationsInput = {
 export type UserCreateWithoutAuditLogsInput = {
   id?: string
   email: string
+  nik?: string | null
   name: string
+  passwordHash?: string | null
   role?: $Enums.Role
   licenseNumber?: string | null
   specialization?: string | null
+  institution?: string | null
+  satusehatId?: string | null
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: Date | string | null
+  signatureDataUrl?: string | null
+  signaturePin?: string | null
   avatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -867,10 +1187,18 @@ export type UserCreateWithoutAuditLogsInput = {
 export type UserUncheckedCreateWithoutAuditLogsInput = {
   id?: string
   email: string
+  nik?: string | null
   name: string
+  passwordHash?: string | null
   role?: $Enums.Role
   licenseNumber?: string | null
   specialization?: string | null
+  institution?: string | null
+  satusehatId?: string | null
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: Date | string | null
+  signatureDataUrl?: string | null
+  signaturePin?: string | null
   avatarUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -899,10 +1227,18 @@ export type UserUpdateToOneWithWhereWithoutAuditLogsInput = {
 export type UserUpdateWithoutAuditLogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  nik?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   licenseNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   specialization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  institution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  satusehatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSatusehatVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  satusehatVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signatureDataUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signaturePin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -915,10 +1251,18 @@ export type UserUpdateWithoutAuditLogsInput = {
 export type UserUncheckedUpdateWithoutAuditLogsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  nik?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
   licenseNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   specialization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  institution?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  satusehatId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isSatusehatVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  satusehatVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  signatureDataUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signaturePin?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -989,10 +1333,18 @@ export type UserCountOutputTypeCountVerificationsArgs<ExtArgs extends runtime.Ty
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
+  nik?: boolean
   name?: boolean
+  passwordHash?: boolean
   role?: boolean
   licenseNumber?: boolean
   specialization?: boolean
+  institution?: boolean
+  satusehatId?: boolean
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: boolean
+  signatureDataUrl?: boolean
+  signaturePin?: boolean
   avatarUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1007,10 +1359,18 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
+  nik?: boolean
   name?: boolean
+  passwordHash?: boolean
   role?: boolean
   licenseNumber?: boolean
   specialization?: boolean
+  institution?: boolean
+  satusehatId?: boolean
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: boolean
+  signatureDataUrl?: boolean
+  signaturePin?: boolean
   avatarUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1019,10 +1379,18 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   email?: boolean
+  nik?: boolean
   name?: boolean
+  passwordHash?: boolean
   role?: boolean
   licenseNumber?: boolean
   specialization?: boolean
+  institution?: boolean
+  satusehatId?: boolean
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: boolean
+  signatureDataUrl?: boolean
+  signaturePin?: boolean
   avatarUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -1031,16 +1399,24 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 export type UserSelectScalar = {
   id?: boolean
   email?: boolean
+  nik?: boolean
   name?: boolean
+  passwordHash?: boolean
   role?: boolean
   licenseNumber?: boolean
   specialization?: boolean
+  institution?: boolean
+  satusehatId?: boolean
+  isSatusehatVerified?: boolean
+  satusehatVerifiedAt?: boolean
+  signatureDataUrl?: boolean
+  signaturePin?: boolean
   avatarUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "name" | "role" | "licenseNumber" | "specialization" | "avatarUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "nik" | "name" | "passwordHash" | "role" | "licenseNumber" | "specialization" | "institution" | "satusehatId" | "isSatusehatVerified" | "satusehatVerifiedAt" | "signatureDataUrl" | "signaturePin" | "avatarUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   patientProfile?: boolean | Prisma.User$patientProfileArgs<ExtArgs>
   authoredReports?: boolean | Prisma.User$authoredReportsArgs<ExtArgs>
@@ -1064,10 +1440,18 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     email: string
+    nik: string | null
     name: string
+    passwordHash: string | null
     role: $Enums.Role
     licenseNumber: string | null
     specialization: string | null
+    institution: string | null
+    satusehatId: string | null
+    isSatusehatVerified: boolean
+    satusehatVerifiedAt: Date | null
+    signatureDataUrl: string | null
+    signaturePin: string | null
     avatarUrl: string | null
     createdAt: Date
     updatedAt: Date
@@ -1501,10 +1885,18 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
 export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'String'>
   readonly email: Prisma.FieldRef<"User", 'String'>
+  readonly nik: Prisma.FieldRef<"User", 'String'>
   readonly name: Prisma.FieldRef<"User", 'String'>
+  readonly passwordHash: Prisma.FieldRef<"User", 'String'>
   readonly role: Prisma.FieldRef<"User", 'Role'>
   readonly licenseNumber: Prisma.FieldRef<"User", 'String'>
   readonly specialization: Prisma.FieldRef<"User", 'String'>
+  readonly institution: Prisma.FieldRef<"User", 'String'>
+  readonly satusehatId: Prisma.FieldRef<"User", 'String'>
+  readonly isSatusehatVerified: Prisma.FieldRef<"User", 'Boolean'>
+  readonly satusehatVerifiedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly signatureDataUrl: Prisma.FieldRef<"User", 'String'>
+  readonly signaturePin: Prisma.FieldRef<"User", 'String'>
   readonly avatarUrl: Prisma.FieldRef<"User", 'String'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>

@@ -37,15 +37,23 @@ enum Gender {
 }
 
 model User {
-  id            String          @id @default(cuid())
-  email         String          @unique
-  name          String
-  role          Role            @default(PATIENT)
-  licenseNumber String?         // SIP / STR for Doctor or Radiologist
-  specialization String?        // e.g. "Sp.JP (Kardiologi)", "Sp.Rad (Radiologi)"
-  avatarUrl     String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id                  String          @id @default(cuid())
+  email               String          @unique
+  nik                 String?         @unique
+  name                String
+  passwordHash        String?
+  role                Role            @default(PATIENT)
+  licenseNumber       String?         // SIP / STR for Doctor or Radiologist
+  specialization      String?        // e.g. "Sp.JP (Kardiologi)", "Sp.Rad (Radiologi)"
+  institution         String?         // RS / Klinik Utama
+  satusehatId         String?         // SATUSEHAT Practitioner ID (FHIR ID)
+  isSatusehatVerified Boolean         @default(false)
+  satusehatVerifiedAt DateTime?
+  signatureDataUrl    String?         @db.Text
+  signaturePin        String?
+  avatarUrl           String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
 
   patientProfile PatientProfile?
   authoredReports MedicalReport[] @relation("DoctorReports")
@@ -165,4 +173,18 @@ model AuditLog {
   ipAddress  String?
   userAgent  String?
   timestamp  DateTime       @default(now())
+}
+
+model MedicalCode {
+  id        String   @id @default(cuid())
+  code      String
+  display   String   @db.Text
+  system    String   // "ICD10", "ICD9CM", "ICDO_MORPHOLOGY", "ICDO_TOPOGRAPHY", "ICD_MM", "ICD_PM"
+  version   String?
+  groupName String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([system])
 }

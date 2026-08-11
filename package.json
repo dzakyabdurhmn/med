@@ -19,9 +19,13 @@
     "db:push": "dotenv -e .env.local -- prisma db push",
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",
     "db:studio": "dotenv -e .env.local -- prisma studio",
-    "db:seed": "dotenv -e .env.local -- prisma db seed"
+    "db:seed": "dotenv -e .env.local -- npx tsx scripts/seed-icd.ts"
+  },
+  "prisma": {
+    "seed": "npx tsx scripts/seed-icd.ts"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.62.0",
     "@prisma/adapter-pg": "^7.4.2",
     "@prisma/client": "^7.4.2",
     "@tailwindcss/vite": "^4.1.18",

@@ -776,14 +776,6 @@ export type NullableFloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type MedicalReportCreateNestedOneWithoutOrganHighlightsInput = {
   create?: Prisma.XOR<Prisma.MedicalReportCreateWithoutOrganHighlightsInput, Prisma.MedicalReportUncheckedCreateWithoutOrganHighlightsInput>
   connectOrCreate?: Prisma.MedicalReportCreateOrConnectWithoutOrganHighlightsInput

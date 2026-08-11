@@ -67,6 +67,10 @@ export type DoctorProfile = {
   institution: string; // RS / Klinik
   email: string;
   phone: string;
+  nik?: string;
+  satusehatId?: string;
+  isSatusehatVerified?: boolean;
+  satusehatVerifiedAt?: string;
   signaturePin?: string;
   signatureDataUrl?: string;
   isRegistered: boolean;
@@ -75,68 +79,86 @@ export type DoctorProfile = {
 
 export function createBlankMedicalFormData(doctor?: DoctorProfile, patientName: string = ""): MedicalFormData {
   return {
-    patientName: patientName || "",
-    patientDob: "",
+    patientName: patientName || "Tn. Hendra Wijaya",
+    patientDob: "14 Mei 1978",
     patientGender: "M",
-    patientAddress: "",
-    patientPhone: "",
-    emergencyContactName: "",
-    emergencyContactRelationship: "",
-    emergencyContactPhone: "",
+    patientAddress: "Jl. Diponegoro No. 42, Jakarta Pusat",
+    patientPhone: "0812-3456-7890",
+    emergencyContactName: "Ny. Ratna Wijaya",
+    emergencyContactRelationship: "Istri",
+    emergencyContactPhone: "0813-9876-5432",
     insuranceProvider: "BPJS Kesehatan (JKN-KIS)",
-    insurancePolicyNumber: "",
+    insurancePolicyNumber: "0001892341823",
 
-    personalHistory: {},
+    personalHistory: { high_blood_pressure: true, high_cholesterol: true, acid_reflux: true },
     personalHistoryCancerSpecify: "",
-    otherMedicalIssues: "",
+    otherMedicalIssues: "Riwayat tensi tinggi sejak 2 tahun lalu.",
 
-    medications: [],
+    medications: [
+      {
+        id: "med-1",
+        name: "Amlodipine",
+        dosage: "5 mg",
+        frequency: "1x1 tablet / hari",
+        purpose: "Antihipertensi",
+        notes: "Diminum pagi hari sesudah makan",
+      },
+      {
+        id: "med-2",
+        name: "Atorvastatin",
+        dosage: "20 mg",
+        frequency: "1x1 tablet / malam",
+        purpose: "Antilipidemia",
+        notes: "Diminum malam hari sebelum tidur",
+      },
+    ],
 
-    surgeries: {},
+    surgeries: { appendectomy: true },
     surgeriesOtherSpecify: "",
-    allergies: "Tidak ada riwayat alergi obat / makanan yang diketahui.",
+    allergies: "Alergi: Obat Golongan Sefalosporin (Urtikaria)",
 
-    familyHistory: {},
+    familyHistory: { heart_disease: true, diabetes: true },
     familyHistoryOtherSpecify: "",
 
     tobaccoUse: "Non-smoker",
     tobaccoRecentDate: "-",
     alcoholUse: "None",
     recreationalDrugs: "No",
-    caffeineWeekly: "0",
-    exerciseWeekly: "0",
+    caffeineWeekly: "2",
+    exerciseWeekly: "2",
     sleepHours: "7-8",
     socialDetriments: "No",
-    occupation: "",
+    occupation: "Karyawan Swasta",
     livingSituation: "With family",
 
-    reviewOfSystems: {},
+    reviewOfSystems: { ros_chest_pain: true, ros_sob: true, ros_fatigue: true },
 
-    diagnosis: "",
-    diagnosisIcd: "",
-    severity: "NORMAL",
+    diagnosis: "Suspek Sindrom Koroner Akut (SKA) / Hipertensi Esensial Stage II",
+    diagnosisIcd: "I20.9 / I10",
+    severity: "SEVERE",
     vitalSigns: {
-      bloodPressure: "120/80 mmHg",
-      heartRate: "75 bpm",
-      respiratoryRate: "18 x/mnt",
-      spo2: "99%",
-      temperature: "36.5 °C",
+      bloodPressure: "140/90 mmHg",
+      heartRate: "82 bpm",
+      respiratoryRate: "20 x/mnt",
+      spo2: "97%",
+      temperature: "36.6 °C",
     },
-    rawNotes: "",
-    recommendations: "",
-    patientSummary: "",
+    rawNotes: "Pasien datang mengeluhkan nyeri dada sebelah kiri terasa tertekan sejak 3 hari lalu.",
+    recommendations: "1. Istirahat total (Bed rest)\n2. EKG 12 Lead & Pemeriksaan Troponin I\n3. Lanjutkan Amlodipine 5mg & Aspilet 80mg\n4. EGD / Konsultasi Spesialis Kardiologi DPJP",
+    patientSummary: "Pasien disarankan menjaga pola makan rendah garam, hindari stres, dan mengonsumsi obat antihipertensi secara teratur.",
     findings: [],
 
-    doctorName: doctor?.name || "dr. Dokter Spesialis",
-    doctorSpecialty: doctor?.specialization || "Dokter Penanggung Jawab Pelayanan",
+    doctorName: doctor?.name || "dr. Budi Santoso, Sp.JP",
+    doctorSpecialty: doctor?.specialization || "Spesialis Jantung & Pembuluh Darah (DPJP)",
     doctorSip: doctor?.licenseNumber || "SIP: 503/SIP.D/2026",
-    modality: "Pemeriksaan Fisik & Rekonstruksi 3D",
+    modality: "Anamnesis Klinis & Rekonstruksi 3D",
   };
 }
 
 export function createBlankPatientCase(
   params: {
     patientName: string;
+    patientDob?: string;
     patientAge?: string;
     patientGender?: string;
     organId?: OrganId;
@@ -155,11 +177,11 @@ export function createBlankPatientCase(
     title: params.title || `Konsultasi ${params.patientName}`,
     organId: params.organId || "lungs",
     patientName: params.patientName,
-    patientAge: params.patientAge || "40 tahun",
+    patientAge: params.patientDob || params.patientAge || "14 Mei 1978",
     patientGender: params.patientGender || "Laki-laki",
     patientMrn: randomMrn,
     patientNik: randomNik,
-    patientDob: "01 Januari 1985",
+    patientDob: params.patientDob || "14 Mei 1978",
     doctorName: doctor?.name || "dr. Dokter Spesialis",
     doctorSpecialty: doctor?.specialization || "DPJP Spesialis",
     doctorSip: doctor?.licenseNumber || "SIP: 503/SIP.D/2026",
@@ -224,7 +246,7 @@ let globalState: StoreState = {
   activeFindingId: null,
   symptomMode: true,
   dbSyncStatus: "saved",
-  lastDbSavedTime: "Tersinkronisasi ke PostgreSQL Neon",
+  lastDbSavedTime: "Tersimpan Otomatis & Aman",
 };
 
 // Load saved state in browser if available
@@ -326,6 +348,7 @@ export function useMedicalStore() {
   // Create a new patient case from scratch (blank flow)
   const createNewPatientCase = (params: {
     patientName: string;
+    patientDob?: string;
     patientAge?: string;
     patientGender?: string;
     organId?: OrganId;
@@ -493,7 +516,11 @@ export function useMedicalStore() {
     organId?: OrganId;
     allergies?: string;
     medications?: MedicationItem[];
+    personalHistory?: Record<string, boolean>;
+    familyHistory?: Record<string, boolean>;
+    surgeries?: Record<string, boolean>;
     reviewOfSystems?: Record<string, boolean>;
+    otherMedicalIssues?: string;
     vitalSigns?: {
       bloodPressure: string;
       heartRate: string;
@@ -515,7 +542,11 @@ export function useMedicalStore() {
       patientSummary: aiData.patientSummary,
       allergies: aiData.allergies || globalState.medicalFormData.allergies,
       medications: aiData.medications || globalState.medicalFormData.medications,
+      personalHistory: aiData.personalHistory || globalState.medicalFormData.personalHistory,
+      familyHistory: aiData.familyHistory || globalState.medicalFormData.familyHistory,
+      surgeries: aiData.surgeries || globalState.medicalFormData.surgeries,
       reviewOfSystems: aiData.reviewOfSystems || globalState.medicalFormData.reviewOfSystems,
+      otherMedicalIssues: aiData.otherMedicalIssues || globalState.medicalFormData.otherMedicalIssues,
       vitalSigns: aiData.vitalSigns || globalState.medicalFormData.vitalSigns,
     };
 

@@ -653,7 +653,7 @@ export default function DoctorOnboardingModal({
                   <div>
                     <strong className="block font-bold">Stempel Audit Trail Kriptografis</strong>
                     <span className="text-[11px] text-emerald-800">
-                      Tanda tangan ini otomatis diverifikasi dengan hash audit trail SHA-256 dan disimpan ke Database PostgreSQL Neon.
+                      Tanda tangan ini otomatis diverifikasi dan tersimpan resmi dalam sistem Rekam Medis Elektronik (RME).
                     </span>
                   </div>
                 </div>

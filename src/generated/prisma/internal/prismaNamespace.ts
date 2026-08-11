@@ -403,7 +403,8 @@ export const ModelName = {
   ReportOrganHighlight: 'ReportOrganHighlight',
   VerificationRecord: 'VerificationRecord',
   MedicalGlossary: 'MedicalGlossary',
-  AuditLog: 'AuditLog'
+  AuditLog: 'AuditLog',
+  MedicalCode: 'MedicalCode'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -419,7 +420,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "patientProfile" | "medicalReport" | "reportOrganHighlight" | "verificationRecord" | "medicalGlossary" | "auditLog"
+    modelProps: "user" | "patientProfile" | "medicalReport" | "reportOrganHighlight" | "verificationRecord" | "medicalGlossary" | "auditLog" | "medicalCode"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -941,6 +942,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MedicalCode: {
+      payload: Prisma.$MedicalCodePayload<ExtArgs>
+      fields: Prisma.MedicalCodeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MedicalCodeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MedicalCodePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MedicalCodeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MedicalCodePayload>
+        }
+        findFirst: {
+          args: Prisma.MedicalCodeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MedicalCodePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MedicalCodeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MedicalCodePayload>
+        }
+        findMany: {
+          args: Prisma.MedicalCodeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MedicalCodePayload>[]
+        }
+        create: {
+          args: Prisma.MedicalCodeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MedicalCodePayload>
+        }
+        createMany: {
+          args: Prisma.MedicalCodeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MedicalCodeCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MedicalCodePayload>[]
+        }
+        delete: {
+          args: Prisma.MedicalCodeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MedicalCodePayload>
+        }
+        update: {
+          args: Prisma.MedicalCodeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MedicalCodePayload>
+        }
+        deleteMany: {
+          args: Prisma.MedicalCodeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MedicalCodeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MedicalCodeUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MedicalCodePayload>[]
+        }
+        upsert: {
+          args: Prisma.MedicalCodeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MedicalCodePayload>
+        }
+        aggregate: {
+          args: Prisma.MedicalCodeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMedicalCode>
+        }
+        groupBy: {
+          args: Prisma.MedicalCodeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MedicalCodeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MedicalCodeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MedicalCodeCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -983,10 +1058,18 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
+  nik: 'nik',
   name: 'name',
+  passwordHash: 'passwordHash',
   role: 'role',
   licenseNumber: 'licenseNumber',
   specialization: 'specialization',
+  institution: 'institution',
+  satusehatId: 'satusehatId',
+  isSatusehatVerified: 'isSatusehatVerified',
+  satusehatVerifiedAt: 'satusehatVerifiedAt',
+  signatureDataUrl: 'signatureDataUrl',
+  signaturePin: 'signaturePin',
   avatarUrl: 'avatarUrl',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1099,6 +1182,20 @@ export const AuditLogScalarFieldEnum = {
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
 
 
+export const MedicalCodeScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  display: 'display',
+  system: 'system',
+  version: 'version',
+  groupName: 'groupName',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MedicalCodeScalarFieldEnum = (typeof MedicalCodeScalarFieldEnum)[keyof typeof MedicalCodeScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1158,6 +1255,13 @@ export type ListEnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
  * Reference to a field of type 'DateTime'
  */
 export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -1210,13 +1314,6 @@ export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, '
  * Reference to a field of type 'Float[]'
  */
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
-    
-
-
-/**
- * Reference to a field of type 'Boolean'
- */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -1405,6 +1502,7 @@ export type GlobalOmitConfig = {
   verificationRecord?: Prisma.VerificationRecordOmit
   medicalGlossary?: Prisma.MedicalGlossaryOmit
   auditLog?: Prisma.AuditLogOmit
+  medicalCode?: Prisma.MedicalCodeOmit
 }
 
 /* Types for Logging */

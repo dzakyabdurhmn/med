@@ -44,71 +44,71 @@ const QUICK_PATHOLOGY_PRESETS: {
   icon: string;
   badgeColor: string;
 }[] = [
-  {
-    id: "smoker_tar",
-    label: "Paru-Paru Perokok Kronis (Black Tar)",
-    organId: "lungs",
-    prompt: "Pasien riwayat perokok 25 tahun, paru-paru hitam pekat antrakosis tar jelaga dengan emfisema",
-    icon: "🚬",
-    badgeColor: "bg-neutral-800 text-neutral-100 border-neutral-700",
-  },
-  {
-    id: "stab_wound_bleeding",
-    label: "Trauma Luka Tusuk & Pendarahan Aktif",
-    organId: "lungs",
-    prompt: "Pasien korban kekerasan luka tusuk tembus dinding thorax dengan pendarahan hebat aktif",
-    icon: "🩸",
-    badgeColor: "bg-red-900/90 text-red-100 border-red-700",
-  },
-  {
-    id: "acute_infarction",
-    label: "Infark Miokard Akut & Iskemia Sianosis",
-    organId: "heart",
-    prompt: "Pasien serangan jantung akut STEMI oklusi arteri koroner dengan iskemia kebiruan nekrotik",
-    icon: "⚡",
-    badgeColor: "bg-purple-950 text-purple-100 border-purple-800",
-  },
-  {
-    id: "kidney_stone",
-    label: "Nefrolitiasis (Batu Kristal Kalsium 3D)",
-    organId: "kidneys",
-    prompt: "Pasien kolik renal dengan pembentukan batu kristal kalsium bergerigi pada pelvikalises ginjal",
-    icon: "🪨",
-    badgeColor: "bg-amber-950 text-amber-100 border-amber-800",
-  },
-  {
-    id: "purulent_infection",
-    label: "Konsolidasi Pneumonia & Pus Nanah",
-    organId: "lungs",
-    prompt: "Pasien pneumonia lobaris berat dengan infiltrat purulen eksudat nanah kekuningan",
-    icon: "🦠",
-    badgeColor: "bg-lime-950 text-lime-100 border-lime-800",
-  },
-  {
-    id: "cirrhosis_jaundice",
-    label: "Sirosis Hepatobilier & Ikterus Kuning",
-    organId: "liver",
-    prompt: "Pasien sirosis hepatis stadium lanjut dengan sklera ikterik kekuningan dan fibrosis nodular",
-    icon: "🟡",
-    badgeColor: "bg-yellow-950 text-yellow-100 border-yellow-800",
-  },
-  {
-    id: "cerebral_hemorrhage",
-    label: "Stroke Pendarahan Otak & Hematoma",
-    organId: "brain",
-    prompt: "Pasien stroke hemoragik dengan ruptur pembuluh darah serebral dan penumpukan hematoma masif",
-    icon: "🧠",
-    badgeColor: "bg-rose-950 text-rose-100 border-rose-800",
-  },
-  {
-    id: "normal",
-    label: "Kondisi Anatomi Normal Sehat",
-    organId: "lungs",
-    prompt: "Jaringan parenkim utuh, perfusi vaskular optimal tanpa lesi patologis",
-    icon: "🩺",
-    badgeColor: "bg-emerald-950 text-emerald-100 border-emerald-800",
-  },
-];
+    {
+      id: "smoker_tar",
+      label: "Paru-Paru Perokok Kronis (Black Tar)",
+      organId: "lungs",
+      prompt: "Pasien riwayat perokok 25 tahun, paru-paru hitam pekat antrakosis tar jelaga dengan emfisema",
+      icon: "🚬",
+      badgeColor: "bg-neutral-800 text-neutral-100 border-neutral-700",
+    },
+    {
+      id: "stab_wound_bleeding",
+      label: "Trauma Luka Tusuk & Pendarahan Aktif",
+      organId: "lungs",
+      prompt: "Pasien korban kekerasan luka tusuk tembus dinding thorax dengan pendarahan hebat aktif",
+      icon: "🩸",
+      badgeColor: "bg-red-900/90 text-red-100 border-red-700",
+    },
+    {
+      id: "acute_infarction",
+      label: "Infark Miokard Akut & Iskemia Sianosis",
+      organId: "heart",
+      prompt: "Pasien serangan jantung akut STEMI oklusi arteri koroner dengan iskemia kebiruan nekrotik",
+      icon: "⚡",
+      badgeColor: "bg-purple-950 text-purple-100 border-purple-800",
+    },
+    {
+      id: "kidney_stone",
+      label: "Nefrolitiasis (Batu Kristal Kalsium 3D)",
+      organId: "kidneys",
+      prompt: "Pasien kolik renal dengan pembentukan batu kristal kalsium bergerigi pada pelvikalises ginjal",
+      icon: "🪨",
+      badgeColor: "bg-amber-950 text-amber-100 border-amber-800",
+    },
+    {
+      id: "purulent_infection",
+      label: "Konsolidasi Pneumonia & Pus Nanah",
+      organId: "lungs",
+      prompt: "Pasien pneumonia lobaris berat dengan infiltrat purulen eksudat nanah kekuningan",
+      icon: "🦠",
+      badgeColor: "bg-lime-950 text-lime-100 border-lime-800",
+    },
+    {
+      id: "cirrhosis_jaundice",
+      label: "Sirosis Hepatobilier & Ikterus Kuning",
+      organId: "liver",
+      prompt: "Pasien sirosis hepatis stadium lanjut dengan sklera ikterik kekuningan dan fibrosis nodular",
+      icon: "🟡",
+      badgeColor: "bg-yellow-950 text-yellow-100 border-yellow-800",
+    },
+    {
+      id: "cerebral_hemorrhage",
+      label: "Stroke Pendarahan Otak & Hematoma",
+      organId: "brain",
+      prompt: "Pasien stroke hemoragik dengan ruptur pembuluh darah serebral dan penumpukan hematoma masif",
+      icon: "🧠",
+      badgeColor: "bg-rose-950 text-rose-100 border-rose-800",
+    },
+    {
+      id: "normal",
+      label: "Kondisi Anatomi Normal Sehat",
+      organId: "lungs",
+      prompt: "Jaringan parenkim utuh, perfusi vaskular optimal tanpa lesi patologis",
+      icon: "🩺",
+      badgeColor: "bg-emerald-950 text-emerald-100 border-emerald-800",
+    },
+  ];
 
 function AnatomyPage() {
   const {
@@ -274,6 +274,8 @@ function AnatomyPage() {
 
   const currentPathologyConfig = PATHOLOGY_PRESETS[activePathology] || PATHOLOGY_PRESETS.normal;
 
+  return;
+
   // 🔒 ACCESS CONTROL GATE 1: Require Registered DPJP Doctor
   if (!isDoctorRegistered) {
     return (
@@ -380,7 +382,7 @@ function AnatomyPage() {
         <div className="flex items-center gap-3">
           <div className="px-3.5 py-1.5 rounded-xl bg-white border border-[var(--line)] shadow-sm flex items-center gap-2 text-xs font-serif">
             <Database size={14} className="text-[#3b6b39]" />
-            <span className="font-bold text-[var(--ink)]">Tersinkron ke DB Neon</span>
+            <span className="font-bold text-[var(--ink)]">Tersimpan Terenkripsi</span>
           </div>
 
           <Link
@@ -476,11 +478,10 @@ function AnatomyPage() {
                     }
                     handleTriggerAiPathologySynthesis(preset.prompt, preset.id);
                   }}
-                  className={`p-2.5 rounded-xl border text-left transition flex flex-col items-start gap-1 ${
-                    isActive
-                      ? "bg-amber-500 text-black border-amber-400 font-bold shadow-md ring-2 ring-amber-400/50"
-                      : "bg-neutral-800/80 text-neutral-300 border-neutral-700 hover:bg-neutral-750 hover:border-neutral-500"
-                  }`}
+                  className={`p-2.5 rounded-xl border text-left transition flex flex-col items-start gap-1 ${isActive
+                    ? "bg-amber-500 text-black border-amber-400 font-bold shadow-md ring-2 ring-amber-400/50"
+                    : "bg-neutral-800/80 text-neutral-300 border-neutral-700 hover:bg-neutral-750 hover:border-neutral-500"
+                    }`}
                 >
                   <span className="text-base">{preset.icon}</span>
                   <span className="text-[11px] font-serif leading-tight">{preset.label.split(" (")[0]}</span>
@@ -525,11 +526,10 @@ function AnatomyPage() {
                 key={organ.id}
                 type="button"
                 onClick={() => handleSelectOrgan(organ.id)}
-                className={`p-3.5 rounded-2xl border text-left transition relative flex items-center gap-3.5 ${
-                  isSelected
-                    ? "bg-white border-[var(--terracotta)] shadow-md ring-2 ring-[var(--terracotta)]/25"
-                    : "bg-[var(--paper)] border-[var(--line)] hover:bg-white"
-                }`}
+                className={`p-3.5 rounded-2xl border text-left transition relative flex items-center gap-3.5 ${isSelected
+                  ? "bg-white border-[var(--terracotta)] shadow-md ring-2 ring-[var(--terracotta)]/25"
+                  : "bg-[var(--paper)] border-[var(--line)] hover:bg-white"
+                  }`}
               >
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-2xl transition shrink-0"
@@ -581,11 +581,10 @@ function AnatomyPage() {
                     key={organ.id}
                     type="button"
                     onClick={() => handleSelectOrgan(organ.id)}
-                    className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
-                      isSelected
-                        ? "bg-white border-[var(--terracotta)] shadow-sm font-bold"
-                        : "bg-[var(--paper-soft)] border-[var(--line)] hover:bg-white text-[var(--ink-soft)]"
-                    }`}
+                    className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center gap-1 ${isSelected
+                      ? "bg-white border-[var(--terracotta)] shadow-sm font-bold"
+                      : "bg-[var(--paper-soft)] border-[var(--line)] hover:bg-white text-[var(--ink-soft)]"
+                      }`}
                   >
                     <span className="text-lg">{organ.icon}</span>
                     <span className="font-serif text-xs">{organ.name}</span>
@@ -769,20 +768,18 @@ function AnatomyPage() {
                         set3DInspection(currentOrganId, hotspot.id, null);
                       }
                     }}
-                    className={`w-full p-3 rounded-2xl border text-left transition flex items-start justify-between gap-2 ${
-                      isSelected
-                        ? "bg-[rgba(235,124,107,0.12)] border-[var(--terracotta)] shadow-sm"
-                        : isSymptom
+                    className={`w-full p-3 rounded-2xl border text-left transition flex items-start justify-between gap-2 ${isSelected
+                      ? "bg-[rgba(235,124,107,0.12)] border-[var(--terracotta)] shadow-sm"
+                      : isSymptom
                         ? "bg-red-50/60 border-red-200 hover:bg-red-50"
                         : "bg-white border-[var(--line)] hover:bg-[var(--paper-soft)]"
-                    }`}
+                      }`}
                   >
                     <div className="space-y-0.5">
                       <div className="font-bold text-xs text-[var(--ink)] flex items-center gap-1.5">
                         <span
-                          className={`w-2 h-2 rounded-full ${
-                            isSymptom ? "bg-red-500 animate-ping" : "bg-gray-400"
-                          }`}
+                          className={`w-2 h-2 rounded-full ${isSymptom ? "bg-red-500 animate-ping" : "bg-gray-400"
+                            }`}
                         />
                         <span>{hotspot.label}</span>
                       </div>
@@ -869,9 +866,8 @@ function AnatomyPage() {
               {synthesisLogs.map((log, idx) => (
                 <div
                   key={idx}
-                  className={`leading-relaxed ${
-                    idx === synthesisLogs.length - 1 ? "text-amber-300 font-bold" : "text-neutral-400"
-                  }`}
+                  className={`leading-relaxed ${idx === synthesisLogs.length - 1 ? "text-amber-300 font-bold" : "text-neutral-400"
+                    }`}
                 >
                   {log}
                 </div>

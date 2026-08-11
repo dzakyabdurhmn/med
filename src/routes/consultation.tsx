@@ -14,12 +14,13 @@ import {
   Save,
   Plus,
   Trash2,
-  Check,
   Lock,
-  AlertCircle,
+  Zap,
 } from "lucide-react";
 import { useMedicalStore } from "../store/medical-store";
 import type { OrganId } from "../lib/anatomy-data";
+import { runNarasiAiExtraction, type EvidenceLinkedItem } from "../server/ai-extract";
+import { classifySpeakerRole, transcribeWithElevenLabs } from "../server/elevenlabs-stt";
 
 export const Route = createFileRoute("/consultation")({
   component: ConsultationPage,
@@ -43,26 +44,29 @@ function ConsultationPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [isExtracting, setIsExtracting] = useState(false);
-  const [extractionComplete, setExtractionComplete] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dialogue" | "notes" | "vitals">("dialogue");
-  
-  // Real-time live speech recognition state
+  const [activeTab, setActiveTab] = useState<"dialogue" | "notes" | "vitals" | "evidence">("dialogue");
+
+  // Real-time live transcript state
   const [liveTranscript, setLiveTranscript] = useState("");
+  const [detectedSpeaker, setDetectedSpeaker] = useState<"doctor" | "patient">("patient");
   const recognitionRef = useRef<any>(null);
 
-  // New patient modal / inline state
+  // Evidence-Linking State
+  const [highlightedTranscriptIndex, setHighlightedTranscriptIndex] = useState<number | null>(null);
+  const [extractedEvidences, setExtractedEvidences] = useState<EvidenceLinkedItem[]>([]);
+
+  // Modal State
   const [showNewPatientModal, setShowNewPatientModal] = useState(false);
   const [newPatientName, setNewPatientName] = useState("");
-  const [newPatientAge, setNewPatientAge] = useState("45 tahun");
+  const [newPatientDob, setNewPatientDob] = useState("14 Mei 1978");
   const [newPatientGender, setNewPatientGender] = useState<"Laki-laki" | "Perempuan">("Laki-laki");
-  const [newPatientOrgan, setNewPatientOrgan] = useState<OrganId>("heart");
+  const [newPatientOrgan, setNewPatientOrgan] = useState<OrganId>("lungs");
   const [newPatientChiefComplaint, setNewPatientChiefComplaint] = useState("");
 
-  // New dialogue line input
-  const [newSpeaker, setNewSpeaker] = useState<"doctor" | "patient">("doctor");
+  // Manual Line Input fallback
   const [newSpeakerText, setNewSpeakerText] = useState("");
 
-  // Audio timer simulation
+  // Timer
   useEffect(() => {
     let interval: number;
     if (isRecording) {
@@ -73,7 +77,7 @@ function ConsultationPage() {
     return () => window.clearInterval(interval);
   }, [isRecording]);
 
-  // Speech recognition setup (Web Speech API)
+  // Real-time Web Speech API Setup with Automatic Speaker Detection & Direct Insertion to Right Pane
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -83,11 +87,48 @@ function ConsultationPage() {
       recognition.lang = "id-ID";
 
       recognition.onresult = (event: any) => {
-        let current = "";
+        let interimText = "";
+        let finalSegment = "";
+
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          current += event.results[i][0].transcript;
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalSegment += transcript;
+          } else {
+            interimText += transcript;
+          }
         }
-        setLiveTranscript(current);
+
+        const activeText = finalSegment || interimText;
+        setLiveTranscript(activeText);
+
+        // Automatic Speaker Classification
+        if (activeText.trim()) {
+          const autoSpeaker = classifySpeakerRole(activeText);
+          setDetectedSpeaker(autoSpeaker);
+        }
+
+        // Direct Real-time Insertion on Final Result
+        if (finalSegment.trim()) {
+          const autoSpeaker = classifySpeakerRole(finalSegment);
+          const speakerName =
+            autoSpeaker === "doctor"
+              ? doctorProfile?.name || "dr. Spesialis DPJP"
+              : activeCase.patientName || "Pasien";
+
+          const newItem = {
+            speaker: autoSpeaker,
+            speakerName,
+            text: finalSegment.trim(),
+            time: new Date().toLocaleTimeString("id-ID", { minute: "2-digit", second: "2-digit" }),
+          };
+
+          updateActiveCase({
+            dialogue: [...activeCase.dialogue, newItem],
+          });
+
+          setLiveTranscript("");
+        }
       };
 
       recognition.onerror = (e: any) => {
@@ -96,50 +137,62 @@ function ConsultationPage() {
 
       recognitionRef.current = recognition;
     }
-  }, []);
+  }, [activeCase, doctorProfile]);
 
   const handleStartStopRecording = () => {
     if (isRecording) {
-      // Stop recording
       setIsRecording(false);
       try {
         recognitionRef.current?.stop();
       } catch (e) {}
 
-      // If live transcript captured, add it to the dialogue
+      // Commit any lingering interim transcript to the right pane
       if (liveTranscript.trim()) {
-        const newDialogueItem = {
-          speaker: "patient" as const,
-          speakerName: activeCase.patientName || "Pasien",
+        const autoSpeaker = classifySpeakerRole(liveTranscript);
+        const speakerName =
+          autoSpeaker === "doctor"
+            ? doctorProfile?.name || "dr. Spesialis DPJP"
+            : activeCase.patientName || "Pasien";
+
+        const newItem = {
+          speaker: autoSpeaker,
+          speakerName,
           text: liveTranscript.trim(),
           time: new Date().toLocaleTimeString("id-ID", { minute: "2-digit", second: "2-digit" }),
         };
+
         updateActiveCase({
-          dialogue: [...activeCase.dialogue, newDialogueItem],
+          dialogue: [...activeCase.dialogue, newItem],
         });
+
         setLiveTranscript("");
       }
     } else {
-      // Start recording
       setIsRecording(true);
       setLiveTranscript("");
       try {
         recognitionRef.current?.start();
       } catch (e) {
-        console.log("Recognition start failed or already active:", e);
+        console.log("Recognition start failed:", e);
       }
     }
   };
 
   const handleAddDialogueItem = () => {
     if (!newSpeakerText.trim()) return;
-    const speakerName = newSpeaker === "doctor" ? activeCase.doctorName || "Dokter" : activeCase.patientName || "Pasien";
+    const autoSpeaker = classifySpeakerRole(newSpeakerText);
+    const speakerName =
+      autoSpeaker === "doctor"
+        ? doctorProfile?.name || "dr. Spesialis DPJP"
+        : activeCase.patientName || "Pasien";
+
     const newItem = {
-      speaker: newSpeaker,
+      speaker: autoSpeaker,
       speakerName,
       text: newSpeakerText.trim(),
       time: new Date().toLocaleTimeString("id-ID", { minute: "2-digit", second: "2-digit" }),
     };
+
     updateActiveCase({
       dialogue: [...activeCase.dialogue, newItem],
     });
@@ -157,22 +210,22 @@ function ConsultationPage() {
 
     createNewPatientCase({
       patientName: newPatientName,
-      patientAge: newPatientAge,
+      patientDob: newPatientDob,
       patientGender: newPatientGender,
       organId: newPatientOrgan,
       title: newPatientChiefComplaint || `Konsultasi ${newPatientName}`,
-      rawNotes: `Pasien datang dengan keluhan utama: ${newPatientChiefComplaint || "Pemeriksaan rutin"}. Dilakukan anamnesis mendalam.`,
+      rawNotes: `Pasien datang dengan keluhan utama: ${newPatientChiefComplaint || "Pemeriksaan klinis"}.`,
       dialogue: [
         {
           speaker: "doctor",
-          speakerName: doctorProfile?.name || "dr. Spesialis",
-          text: `Selamat pagi, ${newPatientName}. Ada keluhan apa yang bisa saya bantu hari ini?`,
+          speakerName: doctorProfile?.name || "dr. Spesialis DPJP",
+          text: `Selamat pagi, ${newPatientName}. Silakan ceritakan keluhan yang Anda rasakan saat ini.`,
           time: "00:05",
         },
         {
           speaker: "patient",
           speakerName: newPatientName,
-          text: newPatientChiefComplaint || "Saya merasakan keluhan sejak beberapa hari terakhir ini dokter...",
+          text: newPatientChiefComplaint || "Saya merasakan keluhan sejak 3 hari yang lalu dokter...",
           time: "00:15",
         },
       ],
@@ -183,40 +236,47 @@ function ConsultationPage() {
     setNewPatientChiefComplaint("");
   };
 
+  // Run NARASI AI Extraction with Evidence-Linking
   const handleRunAiExtraction = async () => {
     setIsExtracting(true);
-    setExtractionComplete(false);
 
     try {
-      // Call AI Extraction API endpoint
-      const response = await fetch("/api/ai/extract", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          dialogue: activeCase.dialogue.map((d) => `${d.speakerName}: ${d.text}`).join("\n"),
+      const result = await runNarasiAiExtraction({
+        data: {
+          dialogueLines: activeCase.dialogue,
           rawNotes: activeCase.rawNotes,
-          organId: activeCase.organId,
           patientName: activeCase.patientName,
-          patientMrn: activeCase.patientMrn,
-        }),
+        },
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data) {
-          applyAiExtractionResult({
-            ...result.data,
-            organId: (result.data.primaryOrgan as OrganId) || activeCase.organId,
-          });
+      if (result && result.success) {
+        applyAiExtractionResult({
+          diagnosis: result.diagnosis,
+          diagnosisIcd: result.diagnosisIcd,
+          severity: result.severity,
+          findings: result.findings,
+          recommendations: result.recommendations,
+          patientSummary: result.patientSummary,
+          vitalSigns: result.vitalSigns,
+          allergies: result.allergies,
+          medications: result.medications,
+          personalHistory: result.personalHistory,
+          familyHistory: result.familyHistory,
+          surgeries: result.surgeries,
+          reviewOfSystems: result.reviewOfSystems,
+          otherMedicalIssues: result.otherMedicalIssues,
+          organId: result.primaryOrgan,
+        });
+
+        if (result.evidenceList && result.evidenceList.length > 0) {
+          setExtractedEvidences(result.evidenceList);
         }
       }
     } catch (e) {
-      console.warn("AI extraction fallback to local structured model:", e);
+      console.warn("AI extraction fallback:", e);
     } finally {
-      // Ensure data is synced to DB
       await saveNowToDb();
       setIsExtracting(false);
-      setExtractionComplete(true);
     }
   };
 
@@ -226,38 +286,37 @@ function ConsultationPage() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // 🔒 ACCESS CONTROL GUARD: Require Registered DPJP Doctor
+  // Access Control Guard
   if (!isDoctorRegistered) {
     return (
-      <main className="max-w-[850px] mx-auto px-4 py-16 space-y-8 text-center font-serif">
-        <div className="bg-[var(--paper)] border border-[var(--line)] rounded-[32px] p-10 shadow-[var(--shadow)] space-y-6">
-          <div className="w-16 h-16 rounded-3xl bg-amber-500/15 border border-amber-500/30 text-amber-700 flex items-center justify-center mx-auto shadow-inner">
+      <main className="max-w-xl mx-auto px-4 py-16 text-center font-sans">
+        <div className="bg-white border-2 border-black p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
+          <div className="w-16 h-16 bg-black text-white flex items-center justify-center mx-auto font-mono font-bold text-2xl">
             <Lock size={32} />
           </div>
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
-              Akses Terkunci • Diperlukan Identitas Dokter DPJP
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--ink)]">
+            <span className="text-[10px] font-mono font-bold bg-black text-white px-3 py-1 uppercase">
+              AKSES DIPROTEKSI DOKTER DPJP
+            </span>
+            <h1 className="text-2xl font-black text-black uppercase">
               Login / Registrasi Dokter Diperlukan
             </h1>
-            <p className="text-xs sm:text-sm text-[var(--ink-soft)] max-w-lg mx-auto leading-relaxed">
-              Untuk membuka modul konsultasi klinis, merekam anamnesis, dan melakukan ekstraksi medis AI, Anda harus masuk atau mendaftarkan identitas Dokter Penanggung Jawab Pelayanan (DPJP) dengan SIP/STR resmi.
+            <p className="text-xs text-neutral-700 font-medium leading-relaxed">
+              Untuk membuka modul dikte suara konsultasi dan ekstraksi rekam medis AI, Anda harus masuk atau mendaftarkan identitas Dokter DPJP terverifikasi SATUSEHAT.
             </p>
           </div>
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 font-bold text-xs">
             <Link
               to="/register"
-              className="px-6 py-3 rounded-xl bg-[var(--terracotta)] text-white text-xs font-bold hover:bg-[#d95d4b] transition flex items-center gap-2 shadow-md"
+              className="w-full sm:w-auto px-6 py-3 bg-black hover:bg-neutral-800 text-white uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] transition"
             >
-              <Stethoscope size={16} />
-              <span>Login / Registrasi Dokter DPJP Sekarang</span>
+              Registrasi / Verifikasi Dokter SATUSEHAT
             </Link>
             <Link
-              to="/"
-              className="px-5 py-3 rounded-xl bg-white border border-[var(--line)] text-xs text-[var(--ink)] font-bold hover:bg-[var(--paper-soft)] transition"
+              to="/login"
+              className="w-full sm:w-auto px-6 py-3 border-2 border-black text-black uppercase tracking-wider hover:bg-neutral-100 transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
             >
-              Kembali ke Dashboard
+              Masuk Akun Dokter
             </Link>
           </div>
         </div>
@@ -266,69 +325,46 @@ function ConsultationPage() {
   }
 
   return (
-    <main className="max-w-[1400px] mx-auto px-4 py-8 space-y-8">
-      {/* Header & Case Preset Switcher */}
-      <section className="bg-[var(--paper)] border border-[var(--line)] rounded-[26px] p-6 shadow-[var(--shadow)] space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--line)] pb-5">
+    <main className="max-w-[1400px] mx-auto px-4 py-8 space-y-8 font-sans">
+      {/* Header Banner */}
+      <section className="bg-white border-2 border-black p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-black pb-5">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[rgba(235,124,107,0.12)] text-[var(--terracotta)] border border-[rgba(235,124,107,0.25)]">
-              <Mic size={13} className="animate-pulse" />
-              <span>Modul 1: Sesi Konsultasi Suara Dokter & Pasien</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 font-mono text-xs font-bold bg-black text-white uppercase tracking-widest">
+              <Mic size={14} className="animate-pulse" />
+              <span>NARASI — STASIUN DIKTE SUARA REALTIME & ELEVENLABS STT</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[var(--ink)]">
-              Rekaman Konsultasi & Ekstraksi AI
+            <h1 className="text-3xl sm:text-4xl font-black text-black uppercase">
+              Konsultasi Suara Realtime & Evidence-Linked AI
             </h1>
-            <p className="text-xs sm:text-sm text-[var(--ink-soft)] font-serif">
-              Merekam percakapan klinis secara real-time, mengekstrak istilah medis, dan menyimpannya langsung ke Database PostgreSQL Neon DB.
+            <p className="text-xs sm:text-sm text-neutral-700 font-medium">
+              Transkripsi percakapan otomatis masuk ke transkrip kanan secara langsung dengan deteksi suara cerdas (tanpa tombol manual).
             </p>
           </div>
 
-          {/* Database Persistence Status Badge & Actions */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <div className="px-3.5 py-2 rounded-xl bg-white border border-[var(--line)] shadow-xs flex items-center gap-2">
-              <Database size={15} className={dbSyncStatus === "saving" ? "text-amber-500 animate-spin" : "text-[#3b6b39]"} />
-              <div className="text-left">
-                <div className="text-[10px] uppercase font-bold tracking-wider text-[var(--ink-muted)]">
-                  Status Database Neon DB
-                </div>
-                <div className="text-xs font-bold text-[var(--ink)] flex items-center gap-1.5">
-                  <span className={`w-2 h-2 rounded-full ${dbSyncStatus === "saving" ? "bg-amber-400 animate-ping" : "bg-[#3b6b39]"}`} />
-                  {dbSyncStatus === "saving" ? "Menyimpan ke DB..." : "Tersinkronisasi ke PostgreSQL"}
-                </div>
-              </div>
+          <div className="flex flex-wrap items-center gap-2.5 font-bold text-xs">
+            <div className="px-3.5 py-2 bg-neutral-100 border-2 border-black flex items-center gap-2 font-mono">
+              <Database size={15} />
+              <span>STATUS: {dbSyncStatus === "saving" ? "MENYIMPAN..." : "TERSIMPAN AMAN"}</span>
             </div>
 
             <button
               type="button"
               onClick={() => setShowNewPatientModal(true)}
-              className="px-3.5 py-2 rounded-xl bg-[var(--terracotta)] text-white text-xs font-serif font-bold hover:bg-[#d95d4b] transition flex items-center gap-1.5 shadow-xs"
+              className="px-4 py-2.5 bg-black hover:bg-neutral-800 text-white font-mono uppercase tracking-wider transition shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]"
             >
-              <Plus size={14} />
-              <span>+ Pasien Baru (Blank Flow)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => saveNowToDb()}
-              className="px-3 py-2 rounded-xl bg-white border border-[var(--line)] text-xs font-serif font-bold text-[var(--ink)] hover:bg-[var(--paper-soft)] transition flex items-center gap-1.5 shadow-xs"
-              title="Paksa Sinkronisasi Sekarang"
-            >
-              <Save size={14} />
-              <span>Simpan DB</span>
+              + Pasien Baru
             </button>
           </div>
         </div>
 
-        {/* Case Selector */}
-        {cases.length > 0 ? (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-serif font-bold text-[var(--ink-soft)] uppercase tracking-wider block">
-                Daftar Pasien & Kasus Klinis Terdaftar:
-              </label>
-              <span className="text-xs font-mono text-[var(--ink-muted)]">{cases.length} Kasus Aktif</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Case List Selector */}
+        {cases.length > 0 && (
+          <div className="space-y-2 text-xs font-bold">
+            <label className="uppercase tracking-wider text-black block font-mono">
+              Pilih Pasien Aktif ({cases.length}):
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
               {cases.map((c) => {
                 const isSelected = c.id === activeCaseId;
                 return (
@@ -336,247 +372,215 @@ function ConsultationPage() {
                     key={c.id}
                     type="button"
                     onClick={() => selectCase(c.id)}
-                    className={`p-3.5 rounded-2xl border text-left transition relative ${
+                    className={`p-3 border-2 border-black text-left transition ${
                       isSelected
-                        ? "bg-[rgba(235,124,107,0.1)] border-[var(--terracotta)] shadow-sm"
-                        : "bg-white border-[var(--line)] hover:border-[var(--ink-muted)]"
+                        ? "bg-black text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)]"
+                        : "bg-white text-black hover:bg-neutral-100"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-1 mb-1">
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--paper-soft)] text-[var(--ink-soft)] font-bold">
-                        {c.patientMrn}
-                      </span>
-                      <span
-                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                          c.severity === "CRITICAL"
-                            ? "bg-red-100 text-red-700"
-                            : c.severity === "SEVERE"
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-emerald-100 text-emerald-800"
-                        }`}
-                      >
+                    <div className="flex items-center justify-between font-mono text-[10px] mb-1">
+                      <span className="bg-current text-current px-1">{c.patientMrn}</span>
+                      <span className={`px-1 font-bold ${isSelected ? "bg-white text-black" : "bg-black text-white"}`}>
                         {c.severity}
                       </span>
                     </div>
-                    <div className="font-serif font-bold text-sm text-[var(--ink)] line-clamp-1">{c.patientName}</div>
-                    <div className="text-xs text-[var(--ink-soft)] font-serif line-clamp-1">{c.title}</div>
+                    <div className="font-black text-sm uppercase truncate">{c.patientName}</div>
+                    <div className="text-[11px] font-mono truncate opacity-90">{c.title}</div>
                   </button>
                 );
               })}
             </div>
           </div>
-        ) : (
-          <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80 flex items-center justify-between gap-3 text-xs font-serif text-amber-900">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              <span>Sesi konsultasi blank flow aktif. Daftarkan pasien baru atau langsung mulai rekam percakapan dokter-pasien di bawah.</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowNewPatientModal(true)}
-              className="px-3 py-1.5 rounded-lg bg-[var(--terracotta)] text-white font-bold hover:bg-[#d95d4b] transition shrink-0"
-            >
-              + Input Data Pasien
-            </button>
-          </div>
         )}
       </section>
 
-      {/* Main Studio Grid: Audio Recorder Left, Live Dialogue Right */}
+      {/* Main Studio Workspace Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Voice Recording Console (5 cols) */}
-        <section className="lg:col-span-5 bg-[var(--paper)] border border-[var(--line)] rounded-[26px] p-6 shadow-[var(--shadow)] flex flex-col justify-between space-y-6">
+        {/* Left Column: Voice Recording Console & Live Stream Indicator (5 cols) */}
+        <section className="lg:col-span-5 bg-white border-2 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between space-y-6">
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-serif font-bold text-[var(--ink-soft)] uppercase tracking-wider">
-                Konsol Perekam Audio Pasien
-              </span>
-              <span className="text-xs font-mono font-bold text-[var(--terracotta)] bg-[rgba(235,124,107,0.12)] px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full ${isRecording ? "bg-red-500 animate-ping" : "bg-gray-400"}`} />
-                {isRecording ? "MEREKAM..." : "SIAP"} {formatTime(recordingSeconds)}
+            <div className="flex items-center justify-between font-mono text-xs font-bold border-b-2 border-black pb-3">
+              <span className="uppercase tracking-wider text-black">DIKTE SUARA REALTIME</span>
+              <span className="bg-black text-white px-2 py-0.5">
+                {isRecording ? "MEREKAM & TRANSMISI..." : "SIAP"} {formatTime(recordingSeconds)}
               </span>
             </div>
 
-            {/* Live Audio Waveform */}
-            <div className="h-32 bg-[var(--paper-soft)] rounded-2xl border border-[var(--line)] p-4 flex items-center justify-center gap-1 overflow-hidden relative">
-              {Array.from({ length: 36 }).map((_, i) => {
-                const height = isRecording
-                  ? Math.max(12, Math.sin((i + recordingSeconds * 5) * 0.4) * 80 + Math.random() * 40)
-                  : 8;
-                return (
-                  <div
-                    key={i}
-                    className="w-1.5 rounded-full transition-all duration-150"
-                    style={{
-                      height: `${height}%`,
-                      backgroundColor: isRecording ? "var(--terracotta)" : "var(--line)",
-                    }}
-                  />
-                );
-              })}
-              <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[10px] text-[var(--ink-muted)] font-mono">
-                <span>MIC: SPEECH RECOGNITION (id-ID)</span>
-                <span>STATE: {isRecording ? "AKTIF MENDENGAR" : "STANDBY"}</span>
+            {/* Auto Speaker Status Card (No Manual Button Required!) */}
+            <div className="p-3 border-2 border-black bg-neutral-100 space-y-1.5 text-xs font-mono font-bold">
+              <div className="flex items-center justify-between">
+                <span className="uppercase text-black text-[10px]">DETEKSI OTOMATIS PEMBICARA:</span>
+                <span className="bg-black text-white px-2 py-0.5 text-[10px]">
+                  ELEVENLABS / AI SPEECH ACTIVE
+                </span>
+              </div>
+              <div className="p-2 bg-white border border-black flex items-center justify-between">
+                <span className="text-black font-black uppercase text-sm">
+                  {detectedSpeaker === "doctor"
+                    ? `👨‍⚕️ ${doctorProfile?.name || "Dokter DPJP"}`
+                    : `👤 ${activeCase.patientName || "Pasien"}`}
+                </span>
+                <span className="text-[10px] text-neutral-600">AUTO CLASSIFIED</span>
               </div>
             </div>
 
-            {/* Live Speech Recognition Transcription Box */}
+            {/* Live Audio Visualizer */}
+            <div className="h-28 bg-neutral-50 border-2 border-black p-3 flex items-center justify-center gap-1 overflow-hidden relative">
+              {Array.from({ length: 32 }).map((_, i) => {
+                const height = isRecording
+                  ? Math.max(15, Math.sin((i + recordingSeconds * 5) * 0.4) * 80 + Math.random() * 40)
+                  : 10;
+                return (
+                  <div
+                    key={i}
+                    className="w-1.5 bg-black transition-all duration-150"
+                    style={{ height: `${height}%` }}
+                  />
+                );
+              })}
+              <div className="absolute bottom-1.5 left-3 right-3 flex items-center justify-between text-[10px] font-mono font-bold text-black">
+                <span>LANG: INDONESIAN (id-ID)</span>
+                <span>REALTIME STREAM → SISI KANAN</span>
+              </div>
+            </div>
+
+            {/* Live Transcription Box */}
             {isRecording && (
-              <div className="p-3 bg-red-50/70 border border-red-200 rounded-2xl space-y-1">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-red-700 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
-                  Live Transkripsi Suara (Web Speech API):
+              <div className="p-3 bg-neutral-100 border-2 border-black space-y-1 font-mono text-xs">
+                <div className="font-bold uppercase text-black flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-black animate-ping" />
+                  MENDENGARKAN & MEMASUKKAN TEKS...
                 </div>
-                <p className="text-xs font-serif text-red-950 italic">
-                  {liveTranscript || "Sedang mendengarkan ucapan pasien / dokter dalam Bahasa Indonesia..."}
+                <p className="italic font-medium text-black">
+                  "{liveTranscript || "Katakan sesuatu... Teks langsung masuk ke transkrip kanan!"}"
                 </p>
               </div>
             )}
 
-            {/* Patient & Doctor Meta Card */}
-            <div className="bg-white rounded-2xl p-4 border border-[var(--line)] space-y-3 text-xs font-serif shadow-xs">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[var(--sage-light)] text-[var(--sage)] flex items-center justify-center font-bold">
-                  <User size={18} />
-                </div>
-                <div>
-                  <div className="font-bold text-[var(--ink)] text-sm">{activeCase.patientName}</div>
-                  <div className="text-[var(--ink-soft)] text-xs">
-                    {activeCase.patientAge} • {activeCase.patientGender} • NIK: {activeCase.patientNik}
-                  </div>
-                </div>
+            {/* Patient Meta Card */}
+            <div className="border-2 border-black p-4 bg-white text-xs font-mono font-bold space-y-2">
+              <div className="flex items-center justify-between border-b border-black pb-2">
+                <span className="text-black uppercase">PASIEN: {activeCase.patientName}</span>
+                <span>RM: {activeCase.patientMrn}</span>
               </div>
-
-              <div className="border-t border-[var(--line)] pt-2.5 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[var(--lavender-light)] text-[var(--lavender)] flex items-center justify-center font-bold">
-                  <Stethoscope size={18} />
-                </div>
-                <div>
-                  <div className="font-bold text-[var(--ink)]">{activeCase.doctorName}</div>
-                  <div className="text-[var(--ink-soft)] text-[11px]">{activeCase.doctorSpecialty}</div>
-                </div>
+              <div className="text-neutral-700 font-sans">
+                {activeCase.patientAge} • {activeCase.patientGender} • DPJP: {activeCase.doctorName}
               </div>
             </div>
           </div>
 
-          {/* Recorder Controls & AI Extraction Action */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center gap-3">
+          {/* Action Buttons */}
+          <div className="space-y-3 pt-2 font-bold text-xs">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleStartStopRecording}
-                className={`flex-1 py-3.5 px-4 rounded-xl font-serif font-bold text-sm transition flex items-center justify-center gap-2 shadow-sm ${
+                className={`flex-1 py-3.5 px-4 border-2 border-black font-mono uppercase tracking-wider transition flex items-center justify-center gap-2 ${
                   isRecording
-                    ? "bg-red-600 hover:bg-red-700 text-white animate-pulse"
-                    : "bg-[var(--ink)] hover:bg-black text-white"
+                    ? "bg-black text-white animate-pulse"
+                    : "bg-black hover:bg-neutral-800 text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)]"
                 }`}
               >
                 {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
-                <span>{isRecording ? "Selesai & Simpan Suara" : "Mulai Rekam Percakapan"}</span>
+                <span>{isRecording ? "Selesai Dikte Suara" : "Mulai Dikte Suara Realtime"}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setRecordingSeconds(0)}
-                className="p-3.5 rounded-xl bg-white border border-[var(--line)] text-[var(--ink-soft)] hover:text-[var(--ink)] transition shadow-xs"
+                className="p-3.5 border-2 border-black bg-white hover:bg-neutral-100 transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                 title="Reset Timer"
               >
                 <RotateCcw size={18} />
               </button>
             </div>
 
-            {/* AI Reasoning Extraction Trigger Button */}
             <button
               type="button"
               onClick={handleRunAiExtraction}
               disabled={isExtracting}
-              className="w-full py-4 px-4 rounded-xl font-serif font-bold text-sm bg-gradient-to-r from-[var(--terracotta)] to-[#d95d4b] hover:opacity-95 text-white transition flex items-center justify-center gap-2.5 shadow-md disabled:opacity-50"
+              className="w-full py-4 px-4 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-mono uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]"
             >
               <Sparkles size={18} className={isExtracting ? "animate-spin" : ""} />
               <span>
-                {isExtracting
-                  ? "AI Menganalisis Percakapan & Menyimpan ke PostgreSQL..."
-                  : "Ekstraksi AI Jadi Dokumen Medis Resmi"}
+                {isExtracting ? "AI Menganalisis & Menyusun Rekam Medis..." : "EKSTRAKSI AI NARASI (SOAP & EVIDENCE)"}
               </span>
             </button>
           </div>
         </section>
 
-        {/* Right Column: Multi-turn Dialogue Transcript & Clinical Findings (7 cols) */}
-        <section className="lg:col-span-7 bg-[var(--paper)] border border-[var(--line)] rounded-[26px] p-6 shadow-[var(--shadow)] flex flex-col justify-between space-y-6">
-          <div className="space-y-4">
+        {/* Right Column: Multi-turn Dialogue Transcript & Realtime Direct Input (7 cols) */}
+        <section className="lg:col-span-7 bg-white border-2 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between space-y-6">
+          <div className="space-y-4 text-xs font-bold">
             {/* Tabs */}
-            <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between border-b-2 border-black pb-3">
+              <div className="flex items-center gap-2 font-mono">
                 <button
                   type="button"
                   onClick={() => setActiveTab("dialogue")}
-                  className={`text-xs font-serif font-bold px-3 py-1.5 rounded-xl transition ${
-                    activeTab === "dialogue"
-                      ? "bg-[var(--ink)] text-white"
-                      : "text-[var(--ink-soft)] hover:bg-white"
+                  className={`px-3 py-1.5 border-2 border-black uppercase transition ${
+                    activeTab === "dialogue" ? "bg-black text-white" : "bg-white text-black hover:bg-neutral-100"
                   }`}
                 >
-                  Transkrip Percakapan ({activeCase.dialogue.length})
+                  Transkrip Realtime ({activeCase.dialogue.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("evidence")}
+                  className={`px-3 py-1.5 border-2 border-black uppercase transition ${
+                    activeTab === "evidence" ? "bg-black text-white" : "bg-white text-black hover:bg-neutral-100"
+                  }`}
+                >
+                  Evidence-Link ({extractedEvidences.length})
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab("notes")}
-                  className={`text-xs font-serif font-bold px-3 py-1.5 rounded-xl transition ${
-                    activeTab === "notes"
-                      ? "bg-[var(--ink)] text-white"
-                      : "text-[var(--ink-soft)] hover:bg-white"
+                  className={`px-3 py-1.5 border-2 border-black uppercase transition ${
+                    activeTab === "notes" ? "bg-black text-white" : "bg-white text-black hover:bg-neutral-100"
                   }`}
                 >
-                  Catatan Anamnesis Dokter
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("vitals")}
-                  className={`text-xs font-serif font-bold px-3 py-1.5 rounded-xl transition ${
-                    activeTab === "vitals"
-                      ? "bg-[var(--ink)] text-white"
-                      : "text-[var(--ink-soft)] hover:bg-white"
-                  }`}
-                >
-                  Tanda Vital Pasien
+                  Anamnesis
                 </button>
               </div>
 
-              <span className="text-[11px] font-mono text-[var(--ink-muted)]">
-                ORGAN: {activeCase.organId.toUpperCase()}
+              <span className="font-mono text-[10px] bg-black text-white px-2 py-0.5 flex items-center gap-1">
+                <Zap size={12} className="animate-bounce" /> AUTO-INSERT ACTIVE
               </span>
             </div>
 
-            {/* Tab Contents */}
+            {/* TAB: TRANSKRIP REALTIME DIALOGUE */}
             {activeTab === "dialogue" && (
               <div className="space-y-3">
-                <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
                   {activeCase.dialogue.map((item, idx) => {
                     const isDoctor = item.speaker === "doctor";
+                    const isHighlighted = highlightedTranscriptIndex === idx;
+
                     return (
                       <div
                         key={idx}
-                        className={`p-4 rounded-2xl border text-xs font-serif space-y-1.5 relative group ${
-                          isDoctor
-                            ? "bg-[rgba(118,157,116,0.08)] border-[rgba(118,157,116,0.25)] ml-4"
-                            : "bg-white border-[var(--line)] mr-4 shadow-xs"
+                        className={`p-3.5 border-2 border-black space-y-1 transition ${
+                          isHighlighted
+                            ? "bg-black text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)]"
+                            : isDoctor
+                            ? "bg-neutral-100 text-black ml-4"
+                            : "bg-white text-black mr-4"
                         }`}
                       >
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="font-bold text-[var(--ink)] flex items-center gap-1.5">
-                            {isDoctor ? <Stethoscope size={13} className="text-[#3b6b39]" /> : <User size={13} className="text-[var(--terracotta)]" />}
-                            {item.speakerName}
+                        <div className="flex items-center justify-between text-[11px] font-mono">
+                          <span className="font-bold uppercase flex items-center gap-1.5">
+                            {isDoctor ? "👨‍⚕️ " : "👤 "} {item.speakerName}
                           </span>
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-[10px] text-[var(--ink-muted)]">{item.time}</span>
+                            <span>{item.time}</span>
                             <button
                               type="button"
                               onClick={() => handleDeleteDialogueItem(idx)}
-                              className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition"
-                              title="Hapus Baris"
+                              className="text-neutral-500 hover:text-black font-bold p-1"
+                              title="Hapus"
                             >
-                              <Trash2 size={12} />
+                              ✕
                             </button>
                           </div>
                         </div>
@@ -588,207 +592,160 @@ function ConsultationPage() {
                             updated[idx] = { ...updated[idx], text: e.target.value };
                             updateActiveCase({ dialogue: updated });
                           }}
-                          className="w-full text-[var(--ink-soft)] bg-transparent border-b border-transparent focus:border-[var(--line)] outline-none"
+                          className="w-full bg-transparent border-b border-current outline-none text-xs font-sans font-medium"
                         />
                       </div>
                     );
                   })}
                 </div>
 
-                {/* Add Custom Dialogue Row */}
-                <div className="p-3 bg-white border border-[var(--line)] rounded-2xl flex items-center gap-2 shadow-xs">
-                  <select
-                    value={newSpeaker}
-                    onChange={(e) => setNewSpeaker(e.target.value as any)}
-                    className="p-1.5 bg-[var(--paper-soft)] border border-[var(--line)] rounded-lg text-xs font-serif font-bold text-[var(--ink)] outline-none"
-                  >
-                    <option value="doctor">Dokter</option>
-                    <option value="patient">Pasien</option>
-                  </select>
+                {/* Add Manual Line Input */}
+                <div className="p-3 border-2 border-black bg-white flex items-center gap-2">
                   <input
                     type="text"
                     value={newSpeakerText}
                     onChange={(e) => setNewSpeakerText(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAddDialogueItem()}
-                    placeholder="Tambah baris percakapan baru..."
-                    className="flex-1 text-xs font-serif p-1.5 bg-transparent border-b border-[var(--line)] outline-none"
+                    placeholder="Tambah baris percakapan (Pembicara dideteksi otomatis)..."
+                    className="flex-1 text-xs font-sans p-1.5 border-b-2 border-black outline-none font-medium"
                   />
                   <button
                     type="button"
                     onClick={handleAddDialogueItem}
-                    className="px-3 py-1.5 rounded-lg bg-[var(--ink)] text-white text-xs font-serif font-bold hover:bg-black transition flex items-center gap-1"
+                    className="px-3 py-1.5 bg-black text-white text-xs font-mono font-bold uppercase"
                   >
-                    <Plus size={13} />
-                    <span>Tambah</span>
+                    + Tambah
                   </button>
                 </div>
               </div>
             )}
 
+            {/* TAB: EVIDENCE-LINKED VERIFICATION */}
+            {activeTab === "evidence" && (
+              <div className="space-y-3 font-mono text-xs">
+                <div className="p-3 bg-neutral-100 border-2 border-black space-y-1">
+                  <span className="font-bold uppercase text-black block">
+                    📌 Evidence-Linked Verification Engine
+                  </span>
+                  <p className="text-[11px] font-sans font-medium text-neutral-800">
+                    Klik item di bawah untuk menelusuri ke potongan ucapan sumbernya secara tepat.
+                  </p>
+                </div>
+
+                {extractedEvidences.length === 0 ? (
+                  <div className="p-8 border-2 border-dashed border-black text-center space-y-2">
+                    <p className="font-bold uppercase">Belum ada data Evidence-Link.</p>
+                    <p className="text-neutral-600 font-sans">
+                      Klik tombol "EKSTRAKSI AI NARASI" di sebelah kiri untuk menghasilkan pemetaan bukti ucapan.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5 max-h-[360px] overflow-y-auto pr-1">
+                    {extractedEvidences.map((ev, i) => (
+                      <div
+                        key={ev.id || i}
+                        onClick={() => {
+                          setActiveTab("dialogue");
+                          const foundIdx = activeCase.dialogue.findIndex((d) =>
+                            d.text.toLowerCase().includes(ev.sourceTranscriptText.toLowerCase())
+                          );
+                          if (foundIdx !== -1) setHighlightedTranscriptIndex(foundIdx);
+                        }}
+                        className="p-3.5 border-2 border-black bg-white hover:bg-neutral-100 cursor-pointer space-y-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition"
+                      >
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="font-bold uppercase bg-black text-white px-2 py-0.5">
+                            {ev.fieldLabel}
+                          </span>
+                          <span className="text-[10px] text-neutral-600">
+                            CONFIDENCE: {(ev.confidenceScore * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                        <div className="font-black text-sm font-sans text-black">{ev.extractedValue}</div>
+                        <div className="text-[11px] font-sans text-neutral-700 bg-neutral-100 p-2 border border-black italic">
+                          "Bukti Spoken Text: {ev.sourceTranscriptText}" ({ev.sourceSpeaker.toUpperCase()})
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB: NOTES */}
             {activeTab === "notes" && (
-              <div className="bg-white rounded-2xl p-5 border border-[var(--line)] space-y-3 text-xs font-serif shadow-xs">
-                <div className="font-bold text-sm text-[var(--ink)]">Catatan & Anamnesis Dokter</div>
+              <div className="border-2 border-black p-4 space-y-3 bg-white text-xs">
+                <span className="font-mono font-bold uppercase text-black block">Anamnesis & Catatan Dokter:</span>
                 <textarea
                   rows={6}
                   value={activeCase.rawNotes}
                   onChange={(e) => updateActiveCase({ rawNotes: e.target.value })}
-                  placeholder="Ketikkan catatan anamnesis dan pemeriksaan fisik dokter..."
-                  className="w-full p-3 bg-[var(--paper-soft)] border border-[var(--line)] rounded-xl text-xs font-serif text-[var(--ink)] leading-relaxed focus:outline-none focus:border-[var(--terracotta)]"
+                  placeholder="Ketik catatan medis tambahan..."
+                  className="w-full p-3 border-2 border-black font-sans font-medium text-black outline-none focus:bg-neutral-50"
                 />
-                <div className="p-3 rounded-xl bg-[var(--paper-soft)] border border-[var(--line)] space-y-1">
-                  <span className="font-bold text-[var(--ink)]">Modalitas Radiologi / Pemeriksaan:</span>
-                  <input
-                    type="text"
-                    value={activeCase.modality}
-                    onChange={(e) => updateActiveCase({ modality: e.target.value })}
-                    className="w-full text-xs font-serif bg-transparent border-b border-[var(--line)] outline-none"
-                  />
-                </div>
-              </div>
-            )}
-
-            {activeTab === "vitals" && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-serif">
-                <div className="p-3.5 rounded-2xl bg-white border border-[var(--line)] space-y-1 shadow-xs">
-                  <span className="text-[var(--ink-muted)] text-[10px] block uppercase font-bold">Tekanan Darah</span>
-                  <input
-                    type="text"
-                    value={activeCase.vitalSigns.bloodPressure}
-                    onChange={(e) =>
-                      updateActiveCase({
-                        vitalSigns: { ...activeCase.vitalSigns, bloodPressure: e.target.value },
-                      })
-                    }
-                    className="font-bold text-base text-[var(--ink)] w-full bg-transparent outline-none"
-                  />
-                </div>
-                <div className="p-3.5 rounded-2xl bg-white border border-[var(--line)] space-y-1 shadow-xs">
-                  <span className="text-[var(--ink-muted)] text-[10px] block uppercase font-bold">Detak Jantung (HR)</span>
-                  <input
-                    type="text"
-                    value={activeCase.vitalSigns.heartRate}
-                    onChange={(e) =>
-                      updateActiveCase({
-                        vitalSigns: { ...activeCase.vitalSigns, heartRate: e.target.value },
-                      })
-                    }
-                    className="font-bold text-base text-[var(--ink)] w-full bg-transparent outline-none"
-                  />
-                </div>
-                <div className="p-3.5 rounded-2xl bg-white border border-[var(--line)] space-y-1 shadow-xs">
-                  <span className="text-[var(--ink-muted)] text-[10px] block uppercase font-bold">Laju Pernafasan</span>
-                  <input
-                    type="text"
-                    value={activeCase.vitalSigns.respiratoryRate}
-                    onChange={(e) =>
-                      updateActiveCase({
-                        vitalSigns: { ...activeCase.vitalSigns, respiratoryRate: e.target.value },
-                      })
-                    }
-                    className="font-bold text-base text-[var(--ink)] w-full bg-transparent outline-none"
-                  />
-                </div>
-                <div className="p-3.5 rounded-2xl bg-white border border-[var(--line)] space-y-1 shadow-xs">
-                  <span className="text-[var(--ink-muted)] text-[10px] block uppercase font-bold">Saturasi O2 (SpO2)</span>
-                  <input
-                    type="text"
-                    value={activeCase.vitalSigns.spo2}
-                    onChange={(e) =>
-                      updateActiveCase({
-                        vitalSigns: { ...activeCase.vitalSigns, spo2: e.target.value },
-                      })
-                    }
-                    className="font-bold text-base text-[var(--ink)] w-full bg-transparent outline-none"
-                  />
-                </div>
-                <div className="p-3.5 rounded-2xl bg-white border border-[var(--line)] space-y-1 shadow-xs">
-                  <span className="text-[var(--ink-muted)] text-[10px] block uppercase font-bold">Suhu Tubuh</span>
-                  <input
-                    type="text"
-                    value={activeCase.vitalSigns.temperature}
-                    onChange={(e) =>
-                      updateActiveCase({
-                        vitalSigns: { ...activeCase.vitalSigns, temperature: e.target.value },
-                      })
-                    }
-                    className="font-bold text-base text-[var(--ink)] w-full bg-transparent outline-none"
-                  />
-                </div>
               </div>
             )}
           </div>
 
-          {/* Next Steps: Navigation to Report & 3D */}
-          <div className="border-t border-[var(--line)] pt-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-xs font-serif text-[var(--ink-soft)]">
-              {extractionComplete ? (
-                <span className="text-[#3b6b39] font-bold flex items-center gap-1.5">
-                  <CheckCircle2 size={15} /> Dokumen Terisi Lengkap & Tersimpan di Database!
-                </span>
-              ) : (
-                <span>Siap diubah menjadi dokumen formulir resmi.</span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <Link
-                to="/report"
-                className="flex-1 sm:flex-none py-3 px-6 rounded-xl font-serif font-bold text-sm bg-[var(--ink)] hover:bg-black text-white transition flex items-center justify-center gap-2 shadow-sm"
-              >
-                <FileText size={16} />
-                <span>Lihat Dokumen Formulir Resmi</span>
-                <ChevronRight size={16} />
-              </Link>
-            </div>
+          {/* Footer Action */}
+          <div className="border-t-2 border-black pt-4 flex items-center justify-between font-mono font-bold text-xs">
+            <span className="text-neutral-700">SIAP DITERBITKAN KE RESUME MEDIS</span>
+            <Link
+              to="/report"
+              className="px-6 py-3 bg-black hover:bg-neutral-800 text-white uppercase tracking-wider flex items-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] transition"
+            >
+              <span>Buka Resume Medis</span>
+              <ChevronRight size={16} />
+            </Link>
           </div>
         </section>
       </div>
 
-      {/* Modal: Tambah Pasien Baru (Blank Flow) */}
+      {/* Modal: Pasien Baru */}
       {showNewPatientModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-[var(--paper)] border border-[var(--line)] rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between border-b border-[var(--line)] pb-3">
-              <h2 className="font-serif font-bold text-xl text-[var(--ink)]">Daftarkan Pasien Baru (Blank Flow)</h2>
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-white border-2 border-black p-6 max-w-md w-full shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-4 text-xs font-bold font-sans">
+            <div className="flex items-center justify-between border-b-2 border-black pb-3 font-mono">
+              <span className="font-black text-sm uppercase">BUAT PASIEN BARU</span>
               <button
                 type="button"
                 onClick={() => setShowNewPatientModal(false)}
-                className="text-[var(--ink-soft)] hover:text-black text-sm font-bold"
+                className="font-bold text-black hover:opacity-70"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleCreateNewPatient} className="space-y-4 text-xs font-serif">
+            <form onSubmit={handleCreateNewPatient} className="space-y-3">
               <div className="space-y-1">
-                <label className="font-bold text-[var(--ink)] block">Nama Lengkap Pasien *</label>
+                <label className="uppercase text-black block">Nama Lengkap Pasien *</label>
                 <input
                   type="text"
                   required
                   value={newPatientName}
                   onChange={(e) => setNewPatientName(e.target.value)}
-                  placeholder="Contoh: Tn. Hendra Wijaya"
-                  className="w-full p-2.5 bg-white border border-[var(--line)] rounded-xl outline-none focus:border-[var(--terracotta)]"
+                  placeholder="Tn. Bambang Sutrisno"
+                  className="w-full p-2.5 border-2 border-black text-black font-medium focus:outline-none"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="font-bold text-[var(--ink)] block">Usia Pasien</label>
+                  <label className="uppercase text-black block">Tanggal Lahir</label>
                   <input
                     type="text"
-                    value={newPatientAge}
-                    onChange={(e) => setNewPatientAge(e.target.value)}
-                    placeholder="Contoh: 52 tahun"
-                    className="w-full p-2.5 bg-white border border-[var(--line)] rounded-xl outline-none focus:border-[var(--terracotta)]"
+                    value={newPatientDob}
+                    onChange={(e) => setNewPatientDob(e.target.value)}
+                    placeholder="DD MMMM YYYY"
+                    className="w-full p-2.5 border-2 border-black text-black font-medium focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-bold text-[var(--ink)] block">Jenis Kelamin</label>
+                  <label className="uppercase text-black block">Jenis Kelamin</label>
                   <select
                     value={newPatientGender}
                     onChange={(e) => setNewPatientGender(e.target.value as any)}
-                    className="w-full p-2.5 bg-white border border-[var(--line)] rounded-xl outline-none focus:border-[var(--terracotta)]"
+                    className="w-full p-2.5 border-2 border-black text-black font-medium bg-white focus:outline-none"
                   >
                     <option value="Laki-laki">Laki-laki (M)</option>
                     <option value="Perempuan">Perempuan (F)</option>
@@ -797,46 +754,29 @@ function ConsultationPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-[var(--ink)] block">Organ Utama Yang Dikeluhkan</label>
-                <select
-                  value={newPatientOrgan}
-                  onChange={(e) => setNewPatientOrgan(e.target.value as OrganId)}
-                  className="w-full p-2.5 bg-white border border-[var(--line)] rounded-xl outline-none focus:border-[var(--terracotta)]"
-                >
-                  <option value="heart">Jantung (Cardiovascular / Heart)</option>
-                  <option value="lungs">Paru-paru (Pulmonary / Lungs)</option>
-                  <option value="brain">Otak & Saraf (Brain / Neurology)</option>
-                  <option value="liver">Hati & Empedu (Liver / Hepato)</option>
-                  <option value="kidneys">Ginjal & Urinaria (Kidneys / Renal)</option>
-                  <option value="stomach">Lambung & GI (Stomach / Gastric)</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-[var(--ink)] block">Keluhan Utama / Alasan Kunjungan</label>
+                <label className="uppercase text-black block">Keluhan Utama</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={newPatientChiefComplaint}
                   onChange={(e) => setNewPatientChiefComplaint(e.target.value)}
-                  placeholder="Contoh: Batuk berdahak 3 minggu, sesak napas saat naik tangga..."
-                  className="w-full p-2.5 bg-white border border-[var(--line)] rounded-xl outline-none focus:border-[var(--terracotta)]"
+                  placeholder="Keluhan pasien..."
+                  className="w-full p-2.5 border-2 border-black text-black font-medium focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t-2 border-black font-mono">
                 <button
                   type="button"
                   onClick={() => setShowNewPatientModal(false)}
-                  className="px-4 py-2 rounded-xl border border-[var(--line)] text-[var(--ink-soft)] hover:bg-white transition font-bold"
+                  className="px-4 py-2 border-2 border-black text-black hover:bg-neutral-100 uppercase"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[var(--terracotta)] text-white hover:bg-[#d95d4b] transition font-bold shadow-xs flex items-center gap-1.5"
+                  className="px-5 py-2 bg-black text-white hover:bg-neutral-800 uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]"
                 >
-                  <Check size={14} />
-                  <span>Buat Kasus Pasien</span>
+                  Simpan & Mulai
                 </button>
               </div>
             </form>
