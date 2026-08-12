@@ -551,33 +551,59 @@ export function MedicalHistoryFormDocument({
           ========================================================================= */}
       <article className="clinical-report-doc pdf-form-document bg-white text-slate-900 p-8 sm:p-10 border-2 border-slate-900 shadow-2xl rounded-2xl font-sans text-[13px] leading-normal relative">
         
-        {/* Document Header */}
-        <header className="flex items-start justify-between border-b-2 border-slate-900 pb-5 mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-slate-950 text-white flex items-center justify-center font-bold text-2xl shadow-md shrink-0">
-              <Stethoscope size={30} className="text-emerald-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-extrabold tracking-tight uppercase text-slate-950 font-serif">
-                  MEDICAL HISTORY FORM
-                </h1>
-                <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-slate-900 text-white rounded">
-                  EHR-2026-NRS
-                </span>
+        {/* Official Hospital Letterhead (KOP SURAT RESMI FASKES) */}
+        <header className="border-b-4 border-slate-950 pb-4 mb-6 relative">
+          <div className="flex items-start justify-between gap-4">
+            {/* Left Logo & Hospital Information */}
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-slate-950 text-white flex items-center justify-center font-bold text-3xl shadow-md shrink-0 border-2 border-emerald-400">
+                <Stethoscope size={36} className="text-emerald-400" />
               </div>
-              <p className="text-xs font-medium text-slate-600 tracking-wide mt-0.5">
-                LEMBAR REKAM MEDIS & FORMULIR EVALUASI KLINIS TERPADU (SATUSEHAT FHIR READY)
-              </p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-slate-900 text-emerald-400 px-2 py-0.5 rounded">
+                    REPUBLIK INDONESIA — KEMENKES RI
+                  </span>
+                  <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-slate-100 text-slate-900 border border-slate-300 px-2 py-0.5 rounded">
+                    SATUSEHAT FHIR CONNECTED
+                  </span>
+                </div>
+                <h1 className="text-2xl font-black text-slate-950 uppercase tracking-tight font-serif mt-1">
+                  KLINIK UTAMA MED-AI ATELIER HEALTH
+                </h1>
+                <p className="text-[11px] font-mono text-slate-700 font-bold leading-tight">
+                  Pusat Layanan Spesialis & Evaluasi Klinis Terpadu Berbasis AI
+                </p>
+                <p className="text-[10px] text-slate-600 font-sans mt-0.5">
+                  Jl. Kesehatan Raya No. 88, Jakarta Selatan 12430 | Telp: (021) 789-2026 | Izin Faskes: 3171092-KARS
+                </p>
+              </div>
+            </div>
+
+            {/* Right Barcode & Document Metadata */}
+            <div className="text-right shrink-0 font-mono space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-950 text-white font-bold text-xs uppercase tracking-wider rounded border border-slate-800">
+                <QrCode size={14} className="text-emerald-400" />
+                <span>EHR-2026-NRS</span>
+              </div>
+              <div className="text-[10px] text-slate-800 font-bold">
+                NO. RM: <span className="font-extrabold text-slate-950">{formData.insurancePolicyNumber ? formData.insurancePolicyNumber.slice(0, 12) : "RM-2026-0891"}</span>
+              </div>
+              <div className="text-[10px] text-slate-600 font-medium">
+                TGL CETAK: {new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}
+              </div>
             </div>
           </div>
 
-          <div className="text-right text-[11px] font-mono text-slate-600 space-y-0.5">
-            <div className="inline-block px-2.5 py-0.5 border-2 border-slate-900 font-bold uppercase bg-slate-100 text-slate-900 mb-1 rounded">
-              FORMULIR EHR RESMI
-            </div>
-            <div>Faskes ID: 3171092-KARS</div>
-            <div>Tgl: {new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</div>
+          {/* Sub-header Title Banner */}
+          <div className="mt-4 pt-2.5 border-t border-slate-300 flex items-center justify-between text-[11px] font-mono font-bold uppercase text-slate-900">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck size={14} className="text-emerald-600" />
+              <span>LEMBAR REKAM MEDIS & EVALUASI KLINIS PASIEN (SOAP RESMI)</span>
+            </span>
+            <span className="text-slate-500 font-normal italic lowercase">
+              *rahasia medis (confidential medical record)
+            </span>
           </div>
         </header>
 
@@ -1436,9 +1462,17 @@ export function MedicalHistoryFormDocument({
               />
               <div className="text-[11px] text-slate-600 font-medium">{formData.doctorSpecialty}</div>
               <div className="text-[10px] font-mono font-bold text-slate-800">{formData.doctorSip}</div>
-            </div>
-          </div>
         </section>
+
+        {/* Official Printed Document Footer */}
+        <footer className="mt-8 pt-3 border-t border-slate-300 flex items-center justify-between text-[9px] font-mono text-slate-500 leading-tight">
+          <span>
+            Dokumen Rekam Medis Elektronik ini diterbitkan oleh KLINIK UTAMA MED-AI ATELIER HEALTH (Faskes ID: 3171092-KARS) dan sah secara hukum sesuai Permenkes RI No. 24 Tahun 2022 tentang Rekam Medis.
+          </span>
+          <span className="font-bold text-slate-700 shrink-0 ml-4">
+            SATUSEHAT FHIR READY
+          </span>
+        </footer>
 
       </article>
 
