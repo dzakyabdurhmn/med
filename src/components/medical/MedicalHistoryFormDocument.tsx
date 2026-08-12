@@ -19,6 +19,7 @@ import {
   Search,
   Database,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import type { OrganId } from "../../lib/anatomy-data";
 import { searchIcd10Codes } from "../../server/medical-db";
