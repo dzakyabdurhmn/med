@@ -1462,6 +1462,8 @@ export function MedicalHistoryFormDocument({
               />
               <div className="text-[11px] text-slate-600 font-medium">{formData.doctorSpecialty}</div>
               <div className="text-[10px] font-mono font-bold text-slate-800">{formData.doctorSip}</div>
+            </div>
+          </div>
         </section>
 
         {/* Official Printed Document Footer */}
