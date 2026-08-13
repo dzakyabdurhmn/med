@@ -5,6 +5,7 @@ import {
   ArrowRight,
   AlertCircle,
   Stethoscope,
+  UserCheck,
 } from "lucide-react";
 import { useMedicalStore } from "../store/medical-store";
 import { loginDoctorUser } from "../server/medical-db";
@@ -75,17 +76,17 @@ function DoctorLoginPage() {
   };
 
   return (
-    <main className="max-w-md mx-auto px-4 py-16 space-y-8 font-sans">
-      <div className="bg-white border-2 border-black rounded-none p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
+    <main className="max-w-[1400px] mx-auto px-4 py-8 space-y-8 font-sans">
+      <div className="max-w-md mx-auto bg-white border-2 border-black p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
         {/* Header */}
         <div className="text-center space-y-2 border-b-2 border-black pb-6">
-          <div className="w-14 h-14 bg-black text-white flex items-center justify-center mx-auto mb-2 font-mono font-bold text-xl">
-            <Stethoscope size={28} />
+          <div className="w-14 h-14 bg-black text-white flex items-center justify-center mx-auto font-mono font-bold text-2xl">
+            <UserCheck size={28} />
           </div>
-          <span className="text-[10px] font-mono font-bold uppercase tracking-widest bg-black text-white px-2.5 py-1">
+          <span className="text-[10px] font-mono font-bold uppercase tracking-widest bg-black text-white px-2.5 py-1 inline-block">
             PORTAL DOKTER DPJP
           </span>
-          <h1 className="text-2xl font-black tracking-tight text-black uppercase">
+          <h1 className="text-3xl font-black tracking-tight text-black uppercase">
             Masuk Akun Dokter
           </h1>
           <p className="text-xs text-neutral-700 font-medium">
@@ -104,7 +105,7 @@ function DoctorLoginPage() {
         {/* Form */}
         <form onSubmit={handleLogin} className="space-y-4 text-xs font-bold">
           <div className="space-y-1.5">
-            <label className="block uppercase tracking-wider text-black">
+            <label className="block uppercase tracking-wider text-black font-mono">
               Email Kedinasan ATAU NIK (16 Digit) *
             </label>
             <input
@@ -118,7 +119,7 @@ function DoctorLoginPage() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="block uppercase tracking-wider text-black">
+            <label className="block uppercase tracking-wider text-black font-mono">
               Kata Sandi / Password *
             </label>
             <input
@@ -134,7 +135,7 @@ function DoctorLoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-black text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)]"
+            className="w-full py-3.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-mono font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] cursor-pointer"
           >
             {isLoading ? (
               <span>Memverifikasi Kredensial...</span>
@@ -149,8 +150,8 @@ function DoctorLoginPage() {
         </form>
 
         {/* Footer CTAs */}
-        <div className="pt-4 border-t-2 border-black text-center space-y-3 text-xs font-bold">
-          <p className="text-neutral-600">Belum mendaftarkan lisensi SIP/STR dokter?</p>
+        <div className="pt-4 border-t-2 border-black text-center space-y-3 text-xs font-mono font-bold">
+          <p className="text-neutral-600 font-sans">Belum mendaftarkan lisensi SIP/STR dokter?</p>
           <Link
             to="/register"
             className="inline-block w-full py-2.5 bg-white border-2 border-black text-black hover:bg-neutral-100 transition uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"

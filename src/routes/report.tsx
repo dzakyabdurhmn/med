@@ -151,7 +151,7 @@ function ReportPage() {
     return (
       <main className="max-w-xl mx-auto px-4 py-16 text-center font-sans">
         <div className="bg-white border-2 border-black p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-          <div className="w-16 h-16 bg-black text-white flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 bg-black text-white flex items-center justify-center mx-auto font-mono font-bold text-2xl">
             <Lock size={32} />
           </div>
           <div className="space-y-2">
@@ -168,13 +168,13 @@ function ReportPage() {
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 font-mono font-bold text-xs">
             <Link
               to="/register"
-              className="w-full sm:w-auto px-6 py-3 bg-black hover:bg-neutral-800 text-white uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] transition"
+              className="w-full sm:w-auto px-6 py-3 bg-black hover:bg-neutral-800 text-white uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] transition"
             >
               Registrasi Dokter SATUSEHAT
             </Link>
             <Link
               to="/login"
-              className="w-full sm:w-auto px-6 py-3 border-2 border-black text-black uppercase hover:bg-neutral-100 transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+              className="w-full sm:w-auto px-6 py-3 border-2 border-black text-black uppercase tracking-wider hover:bg-neutral-100 transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
             >
               Masuk Akun Dokter
             </Link>
@@ -189,7 +189,7 @@ function ReportPage() {
     return (
       <main className="max-w-xl mx-auto px-4 py-16 text-center font-sans">
         <div className="bg-white border-2 border-black p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-          <div className="w-16 h-16 bg-black text-white flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 bg-black text-white flex items-center justify-center mx-auto font-mono font-bold text-2xl">
             <FilePlus2 size={32} />
           </div>
           <div className="space-y-2">
@@ -206,7 +206,7 @@ function ReportPage() {
           <div className="pt-2 flex justify-center font-mono font-bold text-xs">
             <Link
               to="/consultation"
-              className="px-6 py-3 bg-black hover:bg-neutral-800 text-white uppercase shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] transition flex items-center gap-2"
+              className="px-6 py-3 bg-black hover:bg-neutral-800 text-white uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] transition flex items-center gap-2"
             >
               <Mic size={16} />
               <span>Mulai Sesi Konsultasi Pasien</span>
@@ -218,10 +218,10 @@ function ReportPage() {
   }
 
   return (
-    <main className="max-w-[1280px] mx-auto px-4 py-8 space-y-6 font-sans">
+    <main className="max-w-[1400px] mx-auto px-4 py-8 space-y-8 font-sans">
       {/* AI Not Generated Warning Banner */}
       {activeCase && !activeCase.isAiGenerated && (
-        <div className="no-print bg-amber-50 border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-xs">
+        <div className="no-print bg-amber-50 border-2 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-xs">
           <div className="flex items-center gap-3">
             <Sparkles size={20} className="text-amber-600 animate-pulse shrink-0" />
             <div>
@@ -233,7 +233,7 @@ function ReportPage() {
             type="button"
             onClick={handleAutoGenerate}
             disabled={isGeneratingAi}
-            className="px-5 py-2.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-bold uppercase transition flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] shrink-0 cursor-pointer"
+            className="px-5 py-2.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-bold uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] shrink-0 cursor-pointer"
           >
             <Sparkles size={14} className={isGeneratingAi ? "animate-spin text-emerald-400" : "text-emerald-400"} />
             <span>{isGeneratingAi ? "Memproses AI..." : "Generate AI Sekarang"}</span>
@@ -242,11 +242,11 @@ function ReportPage() {
       )}
 
       {/* Top Action Toolbar (No-Print) */}
-      <section className="no-print bg-white border-2 border-black p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <section className="no-print bg-white border-2 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link
             to="/consultation"
-            className="p-2.5 border-2 border-black text-black hover:bg-neutral-100 transition flex items-center gap-1.5 text-xs font-mono font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            className="shrink-0 p-2.5 border-2 border-black text-black hover:bg-neutral-100 transition flex items-center gap-1.5 text-xs font-mono font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
           >
             <ArrowLeft size={15} />
             <span>Konsultasi</span>
@@ -273,7 +273,7 @@ function ReportPage() {
             type="button"
             onClick={handleAutoGenerate}
             disabled={isGeneratingAi}
-            className="px-4 py-2 border-2 border-black bg-black text-white hover:bg-neutral-800 uppercase transition shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 border-2 border-black bg-black text-white hover:bg-neutral-800 uppercase tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] flex items-center gap-1.5 cursor-pointer"
           >
             <Sparkles size={14} className={isGeneratingAi ? "animate-spin text-emerald-400" : "text-emerald-400"} />
             <span>{isGeneratingAi ? "Menyusun AI..." : "Ekstraksi Ulang AI"}</span>
@@ -282,7 +282,7 @@ function ReportPage() {
           <button
             type="button"
             onClick={() => saveNowToDb()}
-            className="px-3.5 py-2 border-2 border-black bg-white hover:bg-neutral-100 text-black uppercase transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1.5"
+            className="px-3.5 py-2 border-2 border-black bg-white hover:bg-neutral-100 text-black uppercase tracking-wider transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1.5"
           >
             <Save size={14} />
             <span>Simpan DB</span>
@@ -291,7 +291,7 @@ function ReportPage() {
           <button
             type="button"
             onClick={() => setShowSignatureModal(true)}
-            className={`px-4 py-2 border-2 border-black uppercase transition flex items-center gap-1.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] ${
+            className={`px-4 py-2 border-2 border-black uppercase tracking-wider transition flex items-center gap-1.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] ${
               isDoctorSigned ? "bg-neutral-100 text-black" : "bg-black text-white hover:bg-neutral-800"
             }`}
           >
@@ -302,7 +302,7 @@ function ReportPage() {
           <button
             type="button"
             onClick={handlePrint}
-            className="px-5 py-2 bg-black hover:bg-neutral-800 text-white uppercase transition flex items-center gap-1.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]"
+            className="px-5 py-2 bg-black hover:bg-neutral-800 text-white uppercase tracking-wider transition flex items-center gap-1.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]"
           >
             <Printer size={15} />
             <span>Cetak / PDF</span>
@@ -386,14 +386,14 @@ function ReportPage() {
               <button
                 type="button"
                 onClick={() => setShowSignatureModal(false)}
-                className="px-4 py-2 border-2 border-black text-black hover:bg-neutral-100 uppercase"
+                className="px-4 py-2 border-2 border-black text-black hover:bg-neutral-100 uppercase tracking-wider"
               >
                 Batal
               </button>
               <button
                 type="button"
                 onClick={saveSignature}
-                className="px-5 py-2 bg-black text-white hover:bg-neutral-800 uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] flex items-center gap-1.5"
+                className="px-5 py-2 bg-black text-white hover:bg-neutral-800 uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] flex items-center gap-1.5"
               >
                 <Check size={14} />
                 <span>Simpan Signature</span>

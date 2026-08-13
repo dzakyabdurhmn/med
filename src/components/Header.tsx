@@ -41,7 +41,7 @@ export default function Header() {
     <header className="no-print bg-white border-b-2 border-black sticky top-0 z-40 px-4 py-3 font-sans">
       <div className="max-w-[1400px] mx-auto flex flex-wrap items-center justify-between gap-4">
         {/* Brand Logo */}
-        <Link to="/" className="flex items-center gap-2 group">
+        <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
           <div className="w-8 h-8 bg-black text-white font-mono font-black text-sm flex items-center justify-center border-2 border-black">
             N
           </div>
@@ -55,75 +55,88 @@ export default function Header() {
           </div>
         </Link>
 
-        {/* Navigation Items */}
+        {/* Navigation Items - Show only accessible links */}
         <nav className="flex items-center gap-1 sm:gap-2 font-mono text-xs font-bold" aria-label="Main Navigation">
+          {/* Beranda - Always visible and active */}
           <Link
             to="/"
             activeOptions={{ exact: true }}
-            className="px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black"
+            className="px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black whitespace-nowrap"
           >
             <LayoutDashboard size={14} />
-            <span className="hidden sm:inline">Dashboard</span>
+            <span>Beranda</span>
           </Link>
 
-          <Link
-            to="/register"
-            className="px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black"
-          >
-            <UserCheck size={14} />
-            <span>Registrasi SATUSEHAT</span>
-          </Link>
 
-          <Link
-            to="/login"
-            className="px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black"
-          >
-            <LogIn size={14} />
-            <span>Login</span>
-          </Link>
+          {/* Show only when NOT logged in */}
+          {!isDoctorRegistered && (
+            <>
+              {/* Tentang - Only shown when NOT logged in */}
+              <Link
+                to="/about"
+                className="px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black whitespace-nowrap"
+              >
+                <ShieldCheck size={14} />
+                <span>Tentang</span>
+              </Link>
+              <Link
+                to="/register"
+                className="px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black whitespace-nowrap"
+              >
+                <UserCheck size={14} />
+                <span>Registrasi</span>
+              </Link>
 
-          <Link
-            to="/consultation"
-            className={`px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black ${
-              !isDoctorRegistered ? "opacity-60" : ""
-            }`}
-          >
-            {!isDoctorRegistered ? <Lock size={12} /> : <Mic size={14} />}
-            <span>Konsultasi Suara</span>
-          </Link>
+              <Link
+                to="/login"
+                className="px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black whitespace-nowrap"
+              >
+                <LogIn size={14} />
+                <span>Masuk</span>
+              </Link>
 
-          <Link
-            to="/report"
-            className={`px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black ${
-              (!isDoctorRegistered || !hasPatientCases) ? "opacity-60" : ""
-            }`}
-          >
-            {(!isDoctorRegistered || !hasPatientCases) ? <Lock size={12} /> : <FileText size={14} />}
-            <span>Resume Medis</span>
-          </Link>
+            </>
+          )}
 
-          <Link
-            to="/about"
-            className="px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black"
-          >
-            <ShieldCheck size={14} />
-            <span className="hidden md:inline">Tentang</span>
-          </Link>
+          {/* Show only when logged in */}
+          {isDoctorRegistered && (
+            <>
+              <Link
+                to="/consultation"
+                className="px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black whitespace-nowrap"
+              >
+                <Mic size={14} />
+                <span>Konsultasi</span>
+              </Link>
+
+              <Link
+                to="/report"
+                className={`px-3 py-1.5 border-2 border-transparent hover:border-black transition flex items-center gap-1.5 text-black [&.active]:bg-black [&.active]:text-white [&.active]:border-black whitespace-nowrap ${
+                  !hasPatientCases ? "opacity-50 pointer-events-none" : ""
+                }`}
+              >
+                <FileText size={14} />
+                <span>Resume</span>
+              </Link>
+
+              {/* Tentang - REMOVED from logged-in section */}
+            </>
+          )}
         </nav>
 
-        {/* Doctor Status Badge */}
-        <div className="flex items-center gap-2 font-mono text-xs font-bold">
+        {/* Action Button - Verifikasi atau Profil */}
+        <div className="flex items-center gap-2 font-mono text-xs font-bold flex-shrink-0">
           {isDoctorRegistered && doctorProfile ? (
             <div className="flex items-center gap-2 p-1 pl-3 bg-neutral-100 border-2 border-black">
               <div className="text-right leading-tight hidden md:block">
                 <div className="text-[11px] font-black text-black">{doctorProfile.name}</div>
-                <div className="text-[9px] text-neutral-600">DPJP VERIFIED</div>
+                <div className="text-[9px] text-neutral-600">Tervalidasi</div>
               </div>
               <button
                 type="button"
                 onClick={handleLogout}
                 className="p-1.5 bg-black text-white hover:bg-neutral-800 transition"
-                title="Keluar"
+                title="Keluar dari akun"
               >
                 <LogOut size={13} />
               </button>
@@ -131,10 +144,10 @@ export default function Header() {
           ) : (
             <Link
               to="/register"
-              className="px-3.5 py-1.5 bg-black text-white border-2 border-black uppercase hover:bg-neutral-800 transition flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]"
+              className="px-3.5 py-1.5 bg-black text-white border-2 border-black uppercase hover:bg-neutral-800 transition flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] whitespace-nowrap"
             >
               <Stethoscope size={14} />
-              <span>Verifikasi SATUSEHAT</span>
+              <span>Verifikasi</span>
             </Link>
           )}
         </div>

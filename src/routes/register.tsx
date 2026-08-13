@@ -277,35 +277,35 @@ function DoctorRegistrationPage() {
   };
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-10 space-y-8 font-sans">
+    <main className="max-w-[1400px] mx-auto px-4 py-8 space-y-8 font-sans">
       {/* Top Banner Header */}
-      <section className="bg-white border-2 border-black rounded-none p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b-2 border-black pb-6">
+      <section className="bg-white border-2 border-black p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-black pb-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 font-mono text-xs font-bold bg-black text-white uppercase tracking-widest">
               <UserCheck size={14} />
               <span>NARASI — REGISTRASI DOKTER DPJP</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-black text-black tracking-tight uppercase">
-              Onboarding Dokter & Verifikasi SATUSEHAT API
+              Onboarding Dokter &amp; Verifikasi SATUSEHAT
             </h1>
             <p className="text-xs sm:text-sm text-neutral-700 font-medium max-w-2xl leading-relaxed">
               Verifikasi kredensial NIK Dokter secara real-time dengan Platform Kemenkes RI SATUSEHAT API, daftarkan lisensi SIP/STR, dan siapkan tanda tangan digital.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Link
               to="/login"
-              className="px-4 py-2.5 bg-white border-2 border-black text-xs font-bold text-black hover:bg-neutral-100 transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+              className="px-4 py-2.5 bg-white border-2 border-black text-xs font-mono font-bold text-black hover:bg-neutral-100 transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] uppercase tracking-wider"
             >
-              Sudah Memiliki Akun? Login
+              Sudah Punya Akun? Login
             </Link>
           </div>
         </div>
 
         {/* Stepper Wizard Bar */}
-        <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs font-bold">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3 text-xs font-mono font-bold">
           {[
             { num: 1, label: "Verifikasi & Identitas" },
             { num: 2, label: "Bidang Spesialis" },
@@ -328,14 +328,14 @@ function DoctorRegistrationPage() {
                 }`}
               >
                 <div
-                  className={`w-6 h-6 rounded-none flex items-center justify-center font-mono font-bold text-xs ${
+                  className={`w-6 h-6 flex items-center justify-center font-mono font-bold text-xs ${
                     isActive ? "bg-white text-black" : "bg-black text-white"
                   }`}
                 >
                   {isDone ? "✓" : s.num}
                 </div>
                 <div className="hidden sm:block truncate">
-                  <div className="text-[9px] uppercase font-mono tracking-wider">Langkah {s.num}</div>
+                  <div className="text-[9px] uppercase tracking-wider">Langkah {s.num}</div>
                   <div className="text-xs font-bold uppercase truncate">{s.label}</div>
                 </div>
               </button>
@@ -346,17 +346,17 @@ function DoctorRegistrationPage() {
 
       {/* STEP 1: SATUSEHAT VERIFICATION & CREDENTIALS */}
       {step === 1 && (
-        <section className="bg-white border-2 border-black rounded-none p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
+        <section className="bg-white border-2 border-black p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
           <div className="flex items-center gap-3 border-b-2 border-black pb-4">
-            <div className="w-10 h-10 bg-black text-white flex items-center justify-center font-mono font-bold">
+            <div className="w-10 h-10 bg-black text-white flex items-center justify-center font-mono font-bold shrink-0">
               <ShieldCheck size={20} />
             </div>
             <div>
               <h2 className="text-xl font-black text-black uppercase">
-                Langkah 1: Verifikasi SATUSEHAT & Identitas Dokter
+                Langkah 1: Verifikasi SATUSEHAT &amp; Identitas Dokter
               </h2>
               <p className="text-xs text-neutral-700 font-medium">
-                Masukkan NIK untuk mengecek status terverifikasi di SATUSEHAT Kemenkes RI API STG.
+                Masukkan NIK untuk mengecek status terverifikasi di SATUSEHAT Kemenkes RI API.
               </p>
             </div>
           </div>
@@ -392,7 +392,7 @@ function DoctorRegistrationPage() {
                 type="button"
                 onClick={handleVerifySatuSehat}
                 disabled={isVerifyingSatusehat}
-                className="px-5 py-2.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-mono font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 shrink-0 self-end shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                className="px-5 py-2.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-mono font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 shrink-0 self-end shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
               >
                 {isVerifyingSatusehat ? (
                   <span>Mengirim Ke SATUSEHAT...</span>
@@ -434,10 +434,10 @@ function DoctorRegistrationPage() {
 
                 {satusehatResult.isVerified && (
                   <div className="pt-2 border-t border-dashed border-black text-[11px] grid grid-cols-2 gap-2">
-                    <div><strong>Nama Resmi:</strong> {satusehatResult.officialName}</div>
-                    <div><strong>Jenis Kelamin:</strong> {satusehatResult.gender}</div>
-                    <div><strong>Tgl Lahir:</strong> {satusehatResult.birthDate}</div>
-                    <div><strong>Kualifikasi:</strong> {satusehatResult.qualifications?.join(", ") || "Spesialis Medis"}</div>
+                    <div><span className="font-bold">Nama Resmi:</span> {satusehatResult.officialName}</div>
+                    <div><span className="font-bold">Jenis Kelamin:</span> {satusehatResult.gender}</div>
+                    <div><span className="font-bold">Tgl Lahir:</span> {satusehatResult.birthDate}</div>
+                    <div><span className="font-bold">Kualifikasi:</span> {satusehatResult.qualifications?.join(", ") || "Spesialis Medis"}</div>
                   </div>
                 )}
               </div>
@@ -448,7 +448,7 @@ function DoctorRegistrationPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold">
             <div className="space-y-1.5 sm:col-span-2">
               <label className="uppercase tracking-wider text-black block">
-                Nama Lengkap Dokter & Gelar Spesialis *
+                Nama Lengkap Dokter &amp; Gelar Spesialis *
               </label>
               <input
                 type="text"
@@ -515,13 +515,26 @@ function DoctorRegistrationPage() {
                 className="w-full px-4 py-3 border-2 border-black font-mono text-xs text-black bg-white focus:outline-none"
               />
             </div>
+
+            <div className="space-y-1.5">
+              <label className="uppercase tracking-wider text-black block">
+                Nomor Telepon / WhatsApp
+              </label>
+              <input
+                type="text"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="081234567890"
+                className="w-full px-4 py-3 border-2 border-black text-xs text-black bg-white focus:outline-none"
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t-2 border-black">
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="px-6 py-3 bg-black hover:bg-neutral-800 text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)]"
+              className="px-6 py-3 bg-black hover:bg-neutral-800 text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] cursor-pointer"
             >
               <span>Lanjut ke Pilih Spesialis</span>
               <ArrowRight size={15} />
@@ -532,9 +545,9 @@ function DoctorRegistrationPage() {
 
       {/* STEP 2: SPECIALTY SELECTION */}
       {step === 2 && (
-        <section className="bg-white border-2 border-black rounded-none p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
+        <section className="bg-white border-2 border-black p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
           <div className="flex items-center gap-3 border-b-2 border-black pb-4">
-            <div className="w-10 h-10 bg-black text-white flex items-center justify-center font-mono font-bold">
+            <div className="w-10 h-10 bg-black text-white flex items-center justify-center font-mono font-bold shrink-0">
               <Stethoscope size={20} />
             </div>
             <div>
@@ -542,7 +555,7 @@ function DoctorRegistrationPage() {
                 Langkah 2: Pilih Bidang Spesialisasi Medis
               </h2>
               <p className="text-xs text-neutral-700 font-medium">
-                Pilih bidang spesialisasi untuk mengonfigurasi formulir SOAP & parameter dokumentasi AI.
+                Pilih bidang spesialisasi untuk mengonfigurasi formulir SOAP &amp; parameter dokumentasi AI.
               </p>
             </div>
           </div>
@@ -591,14 +604,14 @@ function DoctorRegistrationPage() {
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="px-5 py-2.5 border-2 border-black text-black font-bold text-xs uppercase tracking-wider hover:bg-neutral-100 transition"
+              className="px-5 py-2.5 border-2 border-black text-black font-mono font-bold text-xs uppercase tracking-wider hover:bg-neutral-100 transition cursor-pointer"
             >
               Kembali
             </button>
             <button
               type="button"
               onClick={() => setStep(3)}
-              className="px-6 py-3 bg-black hover:bg-neutral-800 text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)]"
+              className="px-6 py-3 bg-black hover:bg-neutral-800 text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] cursor-pointer"
             >
               <span>Lanjut ke Tanda Tangan Digital</span>
               <ArrowRight size={15} />
@@ -609,14 +622,14 @@ function DoctorRegistrationPage() {
 
       {/* STEP 3: DIGITAL SIGNATURE & PIN */}
       {step === 3 && (
-        <section className="bg-white border-2 border-black rounded-none p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
+        <section className="bg-white border-2 border-black p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
           <div className="flex items-center gap-3 border-b-2 border-black pb-4">
-            <div className="w-10 h-10 bg-black text-white flex items-center justify-center font-mono font-bold">
+            <div className="w-10 h-10 bg-black text-white flex items-center justify-center font-mono font-bold shrink-0">
               <PenTool size={20} />
             </div>
             <div>
               <h2 className="text-xl font-black text-black uppercase">
-                Langkah 3: Tanda Tangan Digital & PIN Pengesahan
+                Langkah 3: Tanda Tangan Digital &amp; PIN Pengesahan
               </h2>
               <p className="text-xs text-neutral-700 font-medium">
                 Goreskan tanda tangan pada kanvas untuk validasi dokumen Resume Medis resmi.
@@ -632,20 +645,20 @@ function DoctorRegistrationPage() {
           )}
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between text-xs font-bold">
+            <div className="flex items-center justify-between text-xs font-mono font-bold">
               <label className="uppercase tracking-wider text-black">
                 Kanvas Tanda Tangan Elektronik Dokter DPJP:
               </label>
               <button
                 type="button"
                 onClick={clearCanvas}
-                className="text-xs text-black font-mono font-bold underline flex items-center gap-1 hover:opacity-80"
+                className="text-xs text-black font-bold underline flex items-center gap-1 hover:opacity-80 cursor-pointer"
               >
-                <RotateCcw size={12} /> Hapus & Ulangi
+                <RotateCcw size={12} /> Hapus &amp; Ulangi
               </button>
             </div>
 
-            <div className="border-2 border-black rounded-none p-1 bg-neutral-100 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+            <div className="border-2 border-black p-1 bg-neutral-100 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
               <canvas
                 ref={canvasRef}
                 width={700}
@@ -661,7 +674,7 @@ function DoctorRegistrationPage() {
               />
             </div>
 
-            <div className="pt-2 max-w-xs space-y-1.5 text-xs font-bold">
+            <div className="pt-2 max-w-xs space-y-1.5 text-xs font-mono font-bold">
               <label className="uppercase tracking-wider text-black flex items-center gap-1.5">
                 <Lock size={13} />
                 PIN Pengesahan Cepat (6 Digit)
@@ -681,7 +694,7 @@ function DoctorRegistrationPage() {
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="px-5 py-2.5 border-2 border-black text-black font-bold text-xs uppercase tracking-wider hover:bg-neutral-100 transition"
+              className="px-5 py-2.5 border-2 border-black text-black font-mono font-bold text-xs uppercase tracking-wider hover:bg-neutral-100 transition cursor-pointer"
             >
               Kembali
             </button>
@@ -689,10 +702,10 @@ function DoctorRegistrationPage() {
               type="button"
               onClick={handleSubmitRegistration}
               disabled={isSaving}
-              className="px-8 py-3.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]"
+              className="px-8 py-3.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-2 transition shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)] cursor-pointer"
             >
               <CheckCircle2 size={16} />
-              <span>{isSaving ? "Menyimpan ke Database..." : "Simpan & Aktifkan Dokter"}</span>
+              <span>{isSaving ? "Menyimpan ke Database..." : "Simpan &amp; Aktifkan Dokter"}</span>
             </button>
           </div>
         </section>
@@ -700,7 +713,7 @@ function DoctorRegistrationPage() {
 
       {/* STEP 4: READY TO PRACTICE */}
       {step === 4 && (
-        <section className="bg-white border-2 border-black rounded-none p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6 text-center">
+        <section className="bg-white border-2 border-black p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6 text-center">
           <div className="w-16 h-16 bg-black text-white flex items-center justify-center mx-auto font-mono font-bold text-2xl">
             ✓
           </div>
