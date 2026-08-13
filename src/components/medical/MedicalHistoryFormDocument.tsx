@@ -18,6 +18,7 @@ import {
   User,
   Search,
   Database,
+  ShieldCheck,
   X,
   ShieldCheck,
 } from "lucide-react";
@@ -44,7 +45,6 @@ export type MedicationItem = {
 };
 
 export type MedicalFormData = {
-  // Patient Info
   patientName: string;
   patientDob: string;
   patientGender: "M" | "F" | "Other";
@@ -55,25 +55,15 @@ export type MedicalFormData = {
   emergencyContactPhone: string;
   insuranceProvider: string;
   insurancePolicyNumber: string;
-
-  // Personal History Checklist
   personalHistory: Record<string, boolean>;
   personalHistoryCancerSpecify?: string;
   otherMedicalIssues: string;
-
-  // Medications Table
   medications: MedicationItem[];
-
-  // Surgeries & Procedures
   surgeries: Record<string, boolean>;
   surgeriesOtherSpecify?: string;
   allergies: string;
-
-  // Family History Checklist
   familyHistory: Record<string, boolean>;
   familyHistoryOtherSpecify?: string;
-
-  // Social History
   tobaccoUse: "Cigarettes" | "Vaping" | "Tobacco" | "Non-smoker";
   tobaccoRecentDate?: string;
   alcoholUse: "None" | "Occasional" | "Moderate" | "Heavy";
@@ -87,11 +77,7 @@ export type MedicalFormData = {
   occupation: string;
   livingSituation: "With roommates" | "With S/O" | "With family" | "Other";
   livingSituationOther?: string;
-
-  // Review of Systems (ROS)
   reviewOfSystems: Record<string, boolean>;
-
-  // Assessment & 3D Spatial
   diagnosis: string;
   diagnosisIcd: string;
   severity: "CRITICAL" | "SEVERE" | "MODERATE" | "MILD" | "NORMAL";
@@ -106,14 +92,10 @@ export type MedicalFormData = {
   recommendations: string;
   patientSummary: string;
   findings: ClinicalFindingItem[];
-
-  // Doctor Info
   doctorName: string;
   doctorSpecialty: string;
   doctorSip: string;
   modality: string;
-
-  // AI Extracted Keys metadata
   aiCheckedKeys?: string[];
 };
 
@@ -128,17 +110,12 @@ export const DEFAULT_FORM_DATA: MedicalFormData = {
   emergencyContactPhone: "",
   insuranceProvider: "BPJS Kesehatan (JKN-KIS)",
   insurancePolicyNumber: "",
-
   personalHistory: {},
   otherMedicalIssues: "",
-
   medications: [],
-
   surgeries: {},
   allergies: "Tidak ada riwayat alergi obat / makanan yang diketahui.",
-
   familyHistory: {},
-
   tobaccoUse: "Non-smoker",
   tobaccoRecentDate: "-",
   alcoholUse: "None",
@@ -149,9 +126,7 @@ export const DEFAULT_FORM_DATA: MedicalFormData = {
   socialDetriments: "No",
   occupation: "",
   livingSituation: "With family",
-
   reviewOfSystems: {},
-
   diagnosis: "",
   diagnosisIcd: "",
   severity: "NORMAL",
@@ -166,7 +141,6 @@ export const DEFAULT_FORM_DATA: MedicalFormData = {
   recommendations: "",
   patientSummary: "",
   findings: [],
-
   doctorName: "dr. Dokter Spesialis",
   doctorSpecialty: "DPJP Spesialis",
   doctorSip: "SIP: 503/SIP.D/2026",
@@ -202,27 +176,27 @@ export function MedicalHistoryFormDocument({
   const activeIncomingData = data || initialData || DEFAULT_FORM_DATA;
   const [formData, setFormData] = useState<MedicalFormData>(activeIncomingData);
   const [isEditing, setIsEditing] = useState(false);
-
-  // Internal signature state fallback
   const [internalSigned, setInternalSigned] = useState(false);
   const [internalTimestamp, setInternalTimestamp] = useState<string | null>(null);
+  const [showIcdModal, setShowIcdModal] = useState(false);
+  const [icdSearchQuery, setIcdSearchQuery] = useState("");
+  const [icdSearchResults, setIcdSearchResults] = useState<
+    Array<{ code: string; display: string; system: string; groupName?: string | null }>
+  >([]);
+  const [isSearchingIcd, setIsSearchingIcd] = useState(false);
 
   const isDoctorSigned = externalIsDoctorSigned ?? internalSigned;
   const signedAtTimestamp = externalSignedAtTimestamp ?? internalTimestamp;
+  const sigCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
 
-  // ICD-10 Search & Selection Modal State
-  const [showIcdModal, setShowIcdModal] = useState(false);
-  const [icdSearchQuery, setIcdSearchQuery] = useState("");
-  const [icdSearchResults, setIcdSearchResults] = useState<Array<{ code: string; display: string; system: string; groupName?: string | null }>>([]);
-  const [isSearchingIcd, setIsSearchingIcd] = useState(false);
-
+  // ==================== HANDLERS ====================
   const handleSearchIcd = async (queryStr: string) => {
     setIcdSearchQuery(queryStr);
     if (!queryStr.trim()) {
       setIcdSearchResults([]);
       return;
     }
-
     setIsSearchingIcd(true);
     try {
       const results = await searchIcd10Codes({ data: { query: queryStr, limit: 25 } });
@@ -242,16 +216,11 @@ export function MedicalHistoryFormDocument({
     setShowIcdModal(false);
   };
 
-  // Sync with prop changes safely
   useEffect(() => {
     if (data || initialData) {
       setFormData(data || initialData || DEFAULT_FORM_DATA);
     }
   }, [data, initialData]);
-
-  // Canvas drawing for Doctor Signature
-  const sigCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
 
   const updateField = <K extends keyof MedicalFormData>(key: K, value: MedicalFormData[K]) => {
     setFormData((prev) => {
@@ -265,26 +234,23 @@ export function MedicalHistoryFormDocument({
     setFormData((prev) => {
       const next = {
         ...prev,
-        vitalSigns: {
-          ...prev.vitalSigns,
-          [key]: value,
-        },
+        vitalSigns: { ...prev.vitalSigns, [key]: value },
       };
       onChange?.(next);
       return next;
     });
   };
 
-  const toggleCheckbox = (category: "personalHistory" | "surgeries" | "familyHistory" | "reviewOfSystems", key: string) => {
+  const toggleCheckbox = (
+    category: "personalHistory" | "surgeries" | "familyHistory" | "reviewOfSystems",
+    key: string
+  ) => {
     setFormData((prev) => {
       const current = prev || DEFAULT_FORM_DATA;
       const catObj = current[category] || {};
       const next = {
         ...current,
-        [category]: {
-          ...catObj,
-          [key]: !catObj[key],
-        },
+        [category]: { ...catObj, [key]: !catObj[key] },
       };
       onChange?.(next);
       return next;
@@ -336,18 +302,16 @@ export function MedicalHistoryFormDocument({
     });
   };
 
-  // Drawing handlers
+  // ==================== SIGNATURE DRAWING ====================
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = sigCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
     setIsDrawing(true);
     const rect = canvas.getBoundingClientRect();
     const x = "touches" in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
     const y = "touches" in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
-
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineWidth = 2.5;
@@ -361,11 +325,9 @@ export function MedicalHistoryFormDocument({
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
     const rect = canvas.getBoundingClientRect();
     const x = "touches" in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
     const y = "touches" in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
-
     ctx.lineTo(x, y);
     ctx.stroke();
   };
@@ -398,7 +360,6 @@ export function MedicalHistoryFormDocument({
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.beginPath();
     ctx.lineWidth = 2.5;
@@ -422,15 +383,14 @@ export function MedicalHistoryFormDocument({
     externalOnClearSignature?.();
   };
 
-  // Calculate total checked items
+  // ==================== HELPERS ====================
   const personalCheckedCount = Object.values(formData.personalHistory || {}).filter(Boolean).length;
   const rosCheckedCount = Object.values(formData.reviewOfSystems || {}).filter(Boolean).length;
   const familyCheckedCount = Object.values(formData.familyHistory || {}).filter(Boolean).length;
   const surgCheckedCount = Object.values(formData.surgeries || {}).filter(Boolean).length;
-
   const totalCheckedCount = personalCheckedCount + rosCheckedCount + familyCheckedCount + surgCheckedCount;
 
-  // Custom Checkbox Component with AI indication badge
+  // ==================== COMPONENTS ====================
   const CustomCheckbox = ({
     isChecked,
     label,
@@ -445,13 +405,13 @@ export function MedicalHistoryFormDocument({
     <button
       type="button"
       onClick={onToggle}
-      className={`group flex items-center justify-between p-2 rounded-xl border text-xs font-sans text-left transition-all duration-150 select-none ${
+      className={`group flex items-center justify-between p-2.5 rounded-xl border text-xs font-sans text-left transition-all duration-150 select-none w-full ${
         isChecked
           ? "bg-slate-900 text-white border-slate-900 shadow-sm"
           : "bg-white text-slate-700 border-slate-200 hover:border-slate-400 hover:bg-slate-50"
       }`}
     >
-      <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex items-center gap-2.5 min-w-0 flex-1">
         <div
           className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-all ${
             isChecked
@@ -465,7 +425,6 @@ export function MedicalHistoryFormDocument({
           {label}
         </span>
       </div>
-
       {isChecked && isAiKey && (
         <span className="shrink-0 ml-1.5 px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase rounded bg-emerald-400 text-slate-950 flex items-center gap-0.5">
           <Sparkles size={8} /> AI
@@ -474,11 +433,41 @@ export function MedicalHistoryFormDocument({
     </button>
   );
 
+  const SectionHeader = ({
+    title,
+    rightContent,
+    bgColor = "bg-slate-900",
+  }: {
+    title: string;
+    rightContent?: React.ReactNode;
+    bgColor?: string;
+  }) => (
+    <div
+      className={`${bgColor} text-white px-4 py-2 font-bold text-xs uppercase tracking-wider flex flex-wrap items-center justify-between gap-2 font-mono`}
+    >
+      <span>{title}</span>
+      {rightContent && <span className="text-[10px]">{rightContent}</span>}
+    </div>
+  );
+
+  const FormSection = ({
+    children,
+    className = "",
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <section className={`mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs ${className}`}>
+      {children}
+    </section>
+  );
+
+  // ==================== RENDER ====================
   return (
-    <main className="max-w-4xl mx-auto space-y-6 pb-12 font-sans">
-      {/* Top Toolbar (No-Print) */}
+    <main className="mx-auto space-y-6 pb-12 font-sans">
+      {/* Top Toolbar */}
       <div className="flow-stepper-bar no-print flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={onNewRecording}
@@ -487,26 +476,24 @@ export function MedicalHistoryFormDocument({
             <RotateCcw size={13} />
             <span>Mulai Kasus Baru</span>
           </button>
-
           <span className="step-chip completed text-xs font-mono font-bold flex items-center gap-1 text-emerald-800 bg-emerald-100 px-3 py-1 rounded-lg border border-emerald-300">
             <Check size={12} /> Konsultasi Suara
           </span>
-          <ChevronRight size={14} className="text-neutral-400" />
-          <span className="step-chip active text-xs font-mono font-bold text-black bg-black text-white px-3 py-1 rounded-lg">
+          <ChevronRight size={14} className="text-neutral-400 hidden sm:block" />
+          <span className="step-chip active text-xs font-mono font-bold text-white bg-black px-3 py-1 rounded-lg">
             ★ Medical History Form (EHR)
           </span>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap font-mono font-bold text-xs">
+        <div className="flex flex-wrap items-center gap-2 font-mono font-bold text-xs">
           <button
             type="button"
             onClick={onOpen3DStation}
             className="px-3.5 py-1.5 rounded-lg bg-neutral-100 text-black hover:bg-neutral-200 border-2 border-black flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition"
           >
             <Sparkles size={14} />
-            <span>🧬 Inspeksi 3D Anatomy</span>
+            <span>🧬 Inspeksi 3D</span>
           </button>
-
           <button
             type="button"
             onClick={() => setIsEditing(!isEditing)}
@@ -517,9 +504,8 @@ export function MedicalHistoryFormDocument({
             }`}
           >
             {isEditing ? <Save size={13} /> : <Edit3 size={13} />}
-            <span>{isEditing ? "Simpan Edit" : "Mode Edit Kolom"}</span>
+            <span>{isEditing ? "Simpan Edit" : "Mode Edit"}</span>
           </button>
-
           <button
             type="button"
             onClick={() => window.print()}
@@ -531,9 +517,9 @@ export function MedicalHistoryFormDocument({
         </div>
       </div>
 
-      {/* AI Extraction Banner (No-Print) */}
-      <div className="no-print bg-slate-900 text-white rounded-2xl p-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-2">
-        <div className="flex items-center justify-between">
+      {/* AI Banner */}
+      <div className="mt-5 no-print bg-slate-900 text-white rounded-2xl p-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 font-mono text-xs font-bold text-emerald-400 uppercase tracking-wider">
             <Sparkles size={16} className="animate-pulse" />
             <span>AI Clinical Intelligence Auto-Checklist</span>
@@ -543,90 +529,100 @@ export function MedicalHistoryFormDocument({
           </span>
         </div>
         <p className="text-xs text-slate-300 leading-relaxed font-sans">
-          Sistem AI NARASI mengekstraksi percakapan konsultasi secara real-time dan mengidentifikasi keluhan fisik pasien menjadi ceklist medis terstruktur di bawah ini. Anda dapat mengklik atau mengedit setiap kolom secara langsung.
+          Sistem AI NARASI mengekstraksi percakapan konsultasi secara real-time dan mengidentifikasi
+          keluhan fisik pasien menjadi ceklist medis terstruktur di bawah ini. Anda dapat mengklik atau
+          mengedit setiap kolom secara langsung.
         </p>
       </div>
 
-      {/* =========================================================================
-          THE OFFICIAL MEDICAL HISTORY & CLINICAL ASSESSMENT FORM (PREMIUM EHR)
-          ========================================================================= */}
-      <article className="clinical-report-doc pdf-form-document bg-white text-slate-900 p-8 sm:p-10 border-2 border-slate-900 shadow-2xl rounded-2xl font-sans text-[13px] leading-normal relative">
-        
-        {/* Official Hospital Letterhead (KOP SURAT RESMI FASKES) */}
-        <header className="border-b-4 border-slate-950 pb-4 mb-6 relative">
-          <div className="flex items-start justify-between gap-4">
-            {/* Left Logo & Hospital Information */}
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-slate-950 text-white flex items-center justify-center font-bold text-3xl shadow-md shrink-0 border-2 border-emerald-400">
-                <Stethoscope size={36} className="text-emerald-400" />
+      {/* ================================================================
+          FORM UTAMA
+          ================================================================ */}
+      <article className="clinical-report-doc pdf-form-document bg-white text-slate-900 p-6 sm:p-8 md:p-10 border-2 border-slate-900 shadow-2xl rounded-2xl font-sans text-[13px] leading-normal relative">
+        {/* HEADER */}
+        <header className="border-b-4 border-slate-950 pb-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-950 text-white flex items-center justify-center font-bold text-3xl shadow-md shrink-0 border-2 border-emerald-400">
+                <Stethoscope size={32} className="text-emerald-400" />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-slate-900 text-emerald-400 px-2 py-0.5 rounded">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[9px] sm:text-[10px] font-mono font-bold tracking-widest uppercase bg-slate-900 text-emerald-400 px-2 py-0.5 rounded">
                     REPUBLIK INDONESIA — KEMENKES RI
                   </span>
-                  <span className="text-[10px] font-mono font-bold tracking-widest uppercase bg-slate-100 text-slate-900 border border-slate-300 px-2 py-0.5 rounded">
-                    SATUSEHAT FHIR CONNECTED
+                  <span className="text-[9px] sm:text-[10px] font-mono font-bold tracking-widest uppercase bg-slate-100 text-slate-900 border border-slate-300 px-2 py-0.5 rounded">
+                    SATUSEHAT FHIR
                   </span>
                 </div>
-                <h1 className="text-2xl font-black text-slate-950 uppercase tracking-tight font-serif mt-1">
-                  KLINIK UTAMA MED-AI ATELIER HEALTH
+                <h1 className="text-xl sm:text-2xl font-black text-slate-950 uppercase tracking-tight font-serif mt-1 leading-tight">
+                  KLINIK UTAMA MED-AI ATELIER
                 </h1>
-                <p className="text-[11px] font-mono text-slate-700 font-bold leading-tight">
+                <p className="text-[10px] sm:text-[11px] font-mono text-slate-700 font-bold leading-tight">
                   Pusat Layanan Spesialis & Evaluasi Klinis Terpadu Berbasis AI
                 </p>
-                <p className="text-[10px] text-slate-600 font-sans mt-0.5">
-                  Jl. Kesehatan Raya No. 88, Jakarta Selatan 12430 | Telp: (021) 789-2026 | Izin Faskes: 3171092-KARS
+                <p className="text-[9px] sm:text-[10px] text-slate-600 font-sans mt-0.5">
+                  Jl. Kesehatan Raya No. 88, Jakarta Selatan 12430 | Telp: (021) 789-2026
                 </p>
               </div>
             </div>
 
-            {/* Right Barcode & Document Metadata */}
-            <div className="text-right shrink-0 font-mono space-y-1">
+            <div className="text-right shrink-0 font-mono space-y-1 w-full sm:w-auto">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-950 text-white font-bold text-xs uppercase tracking-wider rounded border border-slate-800">
                 <QrCode size={14} className="text-emerald-400" />
                 <span>EHR-2026-NRS</span>
               </div>
               <div className="text-[10px] text-slate-800 font-bold">
-                NO. RM: <span className="font-extrabold text-slate-950">{formData.insurancePolicyNumber ? formData.insurancePolicyNumber.slice(0, 12) : "RM-2026-0891"}</span>
+                NO. RM:{" "}
+                <span className="font-extrabold text-slate-950">
+                  {formData.insurancePolicyNumber
+                    ? formData.insurancePolicyNumber.slice(0, 12)
+                    : "RM-2026-0891"}
+                </span>
               </div>
               <div className="text-[10px] text-slate-600 font-medium">
-                TGL CETAK: {new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}
+                TGL CETAK:{" "}
+                {new Date().toLocaleDateString("id-ID", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
               </div>
             </div>
           </div>
 
-          {/* Sub-header Title Banner */}
-          <div className="mt-4 pt-2.5 border-t border-slate-300 flex items-center justify-between text-[11px] font-mono font-bold uppercase text-slate-900">
+          <div className="mt-4 pt-2.5 border-t border-slate-300 flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-[11px] font-mono font-bold uppercase text-slate-900">
             <span className="flex items-center gap-1.5">
               <ShieldCheck size={14} className="text-emerald-600" />
-              <span>LEMBAR REKAM MEDIS & EVALUASI KLINIS PASIEN (SOAP RESMI)</span>
+              <span>LEMBAR REKAM MEDIS & EVALUASI KLINIS PASIEN (SOAP)</span>
             </span>
-            <span className="text-slate-500 font-normal italic lowercase">
-              *rahasia medis (confidential medical record)
+            <span className="text-slate-500 font-normal italic lowercase text-[9px] sm:text-[10px]">
+              *rahasia medis (confidential)
             </span>
           </div>
         </header>
 
-        {/* =====================================================================
+        {/* ================================================================
             SECTION 1: PATIENT INFORMATION
-            ===================================================================== */}
-        <section className="mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs">
-          <div className="bg-slate-900 text-white px-4 py-1.5 font-bold text-xs uppercase tracking-wider flex items-center justify-between font-mono">
-            <div className="flex items-center gap-2">
-              <User size={14} className="text-emerald-400" />
-              <span>1. Identitas Pasien (Patient Information)</span>
-            </div>
-            <span className="text-[10px] text-slate-300">
-              No. RM: {formData.insurancePolicyNumber ? formData.insurancePolicyNumber.slice(0, 12) : "RM-2026-0891"}
-            </span>
-          </div>
-
+            ================================================================ */}
+        <FormSection>
+          <SectionHeader
+            title="1. Identitas Pasien (Patient Information)"
+            rightContent={
+              <span className="text-slate-300">
+                No. RM:{" "}
+                {formData.insurancePolicyNumber
+                  ? formData.insurancePolicyNumber.slice(0, 12)
+                  : "RM-2026-0891"}
+              </span>
+            }
+          />
           <div className="p-4 bg-slate-50/50 space-y-3 text-xs">
-            {/* Grid Row 1 */}
-            <div className="grid grid-cols-12 gap-3">
-              <div className="col-span-12 sm:col-span-6 bg-white p-2.5 rounded-lg border border-slate-300">
-                <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">Nama Pasien / Patient Name</span>
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+              <div className="sm:col-span-6 bg-white p-3 rounded-lg border border-slate-300">
+                <label className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">
+                  Nama Pasien / Patient Name
+                </label>
                 <input
                   type="text"
                   value={formData.patientName}
@@ -635,9 +631,10 @@ export function MedicalHistoryFormDocument({
                   className="font-serif font-bold text-slate-900 text-sm w-full bg-transparent outline-none border-b border-transparent focus:border-slate-900"
                 />
               </div>
-
-              <div className="col-span-6 sm:col-span-3 bg-white p-2.5 rounded-lg border border-slate-300">
-                <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">Tgl Lahir / DOB</span>
+              <div className="sm:col-span-3 bg-white p-3 rounded-lg border border-slate-300">
+                <label className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">
+                  Tgl Lahir / DOB
+                </label>
                 <input
                   type="text"
                   value={formData.patientDob}
@@ -646,9 +643,10 @@ export function MedicalHistoryFormDocument({
                   className="font-mono text-xs w-full bg-transparent outline-none border-b border-transparent focus:border-slate-900"
                 />
               </div>
-
-              <div className="col-span-6 sm:col-span-3 bg-white p-2.5 rounded-lg border border-slate-300">
-                <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">Jenis Kelamin / Gender</span>
+              <div className="sm:col-span-3 bg-white p-3 rounded-lg border border-slate-300">
+                <label className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">
+                  Jenis Kelamin / Gender
+                </label>
                 <select
                   value={formData.patientGender}
                   onChange={(e) => updateField("patientGender", e.target.value as any)}
@@ -661,10 +659,11 @@ export function MedicalHistoryFormDocument({
               </div>
             </div>
 
-            {/* Grid Row 2 */}
-            <div className="grid grid-cols-12 gap-3">
-              <div className="col-span-12 sm:col-span-8 bg-white p-2.5 rounded-lg border border-slate-300">
-                <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">Alamat Pasien / Address</span>
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+              <div className="sm:col-span-8 bg-white p-3 rounded-lg border border-slate-300">
+                <label className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">
+                  Alamat Pasien / Address
+                </label>
                 <input
                   type="text"
                   value={formData.patientAddress}
@@ -673,9 +672,10 @@ export function MedicalHistoryFormDocument({
                   className="text-xs w-full bg-transparent outline-none border-b border-transparent focus:border-slate-900"
                 />
               </div>
-
-              <div className="col-span-12 sm:col-span-4 bg-white p-2.5 rounded-lg border border-slate-300">
-                <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">No. Telepon / Phone</span>
+              <div className="sm:col-span-4 bg-white p-3 rounded-lg border border-slate-300">
+                <label className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">
+                  No. Telepon / Phone
+                </label>
                 <input
                   type="text"
                   value={formData.patientPhone}
@@ -686,69 +686,70 @@ export function MedicalHistoryFormDocument({
               </div>
             </div>
 
-            {/* Grid Row 3: Emergency & Insurance */}
-            <div className="grid grid-cols-12 gap-3 pt-1">
-              <div className="col-span-12 sm:col-span-6 bg-white p-2.5 rounded-lg border border-slate-300">
-                <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">Kontak Darurat / Emergency Contact</span>
-                <div className="flex items-center gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1">
+              <div className="sm:col-span-6 bg-white p-3 rounded-lg border border-slate-300">
+                <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                  Kontak Darurat / Emergency Contact
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
                   <input
                     type="text"
                     value={formData.emergencyContactName}
                     onChange={(e) => updateField("emergencyContactName", e.target.value)}
                     placeholder="Nama Kerabat"
-                    className="font-semibold text-xs w-1/2 bg-transparent outline-none border-b border-transparent focus:border-slate-900"
+                    className="font-semibold text-xs flex-1 min-w-[80px] bg-transparent outline-none border-b border-transparent focus:border-slate-900"
                   />
                   <input
                     type="text"
                     value={formData.emergencyContactRelationship}
                     onChange={(e) => updateField("emergencyContactRelationship", e.target.value)}
                     placeholder="Hubungan"
-                    className="text-xs w-1/4 bg-transparent outline-none border-b border-transparent focus:border-slate-900 text-slate-500"
+                    className="text-xs flex-1 min-w-[60px] bg-transparent outline-none border-b border-transparent focus:border-slate-900 text-slate-500"
                   />
                   <input
                     type="text"
                     value={formData.emergencyContactPhone}
                     onChange={(e) => updateField("emergencyContactPhone", e.target.value)}
                     placeholder="No. HP"
-                    className="font-mono text-xs w-1/4 bg-transparent outline-none border-b border-transparent focus:border-slate-900"
+                    className="font-mono text-xs flex-1 min-w-[80px] bg-transparent outline-none border-b border-transparent focus:border-slate-900"
                   />
                 </div>
               </div>
-
-              <div className="col-span-12 sm:col-span-6 bg-white p-2.5 rounded-lg border border-slate-300">
-                <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">Penjamin / Insurance Provider & Policy</span>
-                <div className="flex items-center gap-2">
+              <div className="sm:col-span-6 bg-white p-3 rounded-lg border border-slate-300">
+                <label className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                  Penjamin / Insurance Provider & Policy
+                </label>
+                <div className="flex flex-wrap items-center gap-2">
                   <input
                     type="text"
                     value={formData.insuranceProvider}
                     onChange={(e) => updateField("insuranceProvider", e.target.value)}
                     placeholder="BPJS / Asuransi"
-                    className="font-semibold text-xs w-1/2 bg-transparent outline-none border-b border-transparent focus:border-slate-900"
+                    className="font-semibold text-xs flex-1 min-w-[100px] bg-transparent outline-none border-b border-transparent focus:border-slate-900"
                   />
                   <input
                     type="text"
                     value={formData.insurancePolicyNumber}
                     onChange={(e) => updateField("insurancePolicyNumber", e.target.value)}
                     placeholder="No. Polis / Kartu"
-                    className="font-mono text-xs w-1/2 bg-transparent outline-none border-b border-transparent focus:border-slate-900 font-bold text-slate-900"
+                    className="font-mono text-xs flex-1 min-w-[100px] bg-transparent outline-none border-b border-transparent focus:border-slate-900 font-bold text-slate-900"
                   />
                 </div>
               </div>
             </div>
           </div>
-        </section>
+        </FormSection>
 
-        {/* =====================================================================
-            SECTION 2: PERSONAL HISTORY CHECKLIST (AI Auto-Fill)
-            ===================================================================== */}
-        <section className="mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs">
-          <div className="bg-slate-900 text-white px-4 py-1.5 font-bold text-xs uppercase tracking-wider flex items-center justify-between font-mono">
-            <span>2. Riwayat Penyakit Pribadi (Personal History)</span>
-            <span className="text-[10px] font-normal text-emerald-400">
-              {personalCheckedCount} Indikasi Ditemukan AI
-            </span>
-          </div>
-
+        {/* ================================================================
+            SECTION 2: PERSONAL HISTORY
+            ================================================================ */}
+        <FormSection>
+          <SectionHeader
+            title="2. Riwayat Penyakit Pribadi (Personal History)"
+            rightContent={
+              <span className="text-emerald-400">{personalCheckedCount} Indikasi Ditemukan AI</span>
+            }
+          />
           <div className="p-4 bg-slate-50/50 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {[
@@ -781,11 +782,10 @@ export function MedicalHistoryFormDocument({
               ))}
             </div>
 
-            {/* Other Medical Issues Free-text input */}
             <div className="bg-white p-3 rounded-lg border border-slate-300 space-y-1">
-              <span className="font-bold text-xs uppercase tracking-wider text-slate-700 block">
+              <label className="font-bold text-xs uppercase tracking-wider text-slate-700 block">
                 Catatan Anamnesis / Other Medical Issues:
-              </span>
+              </label>
               <textarea
                 rows={2}
                 value={formData.otherMedicalIssues}
@@ -795,32 +795,39 @@ export function MedicalHistoryFormDocument({
               />
             </div>
           </div>
-        </section>
+        </FormSection>
 
-        {/* =====================================================================
-            SECTION 3: MEDICATIONS / TREATMENTS
-            ===================================================================== */}
-        <section className="mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs">
-          <div className="bg-slate-900 text-white px-4 py-1.5 font-bold text-xs uppercase tracking-wider flex items-center justify-between font-mono">
-            <span>3. Resep & Terapi Obat Aktif (Current Medications)</span>
-            <button
-              type="button"
-              onClick={handleAddMedication}
-              className="no-print text-[11px] font-bold text-slate-950 bg-emerald-400 px-2.5 py-0.5 rounded hover:bg-emerald-300 transition flex items-center gap-1"
-            >
-              <Plus size={12} /> Tambah Obat
-            </button>
-          </div>
-
+        {/* ================================================================
+            SECTION 3: MEDICATIONS
+            ================================================================ */}
+        <FormSection>
+          <SectionHeader
+            title="3. Resep & Terapi Obat Aktif (Current Medications)"
+            rightContent={
+              <button
+                type="button"
+                onClick={handleAddMedication}
+                className="no-print text-[11px] font-bold text-slate-950 bg-emerald-400 px-2.5 py-0.5 rounded hover:bg-emerald-300 transition flex items-center gap-1"
+              >
+                <Plus size={12} /> Tambah Obat
+              </button>
+            }
+          />
           <div className="overflow-x-auto bg-white">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-slate-100 border-b-2 border-slate-900 text-slate-900 font-mono">
-                  <th className="p-2.5 border-r border-slate-300 font-bold w-[28%]">Nama Obat / Terapi</th>
-                  <th className="p-2.5 border-r border-slate-300 font-bold w-[16%]">Dosis</th>
-                  <th className="p-2.5 border-r border-slate-300 font-bold w-[22%]">Frekuensi</th>
-                  <th className="p-2.5 border-r border-slate-300 font-bold w-[24%]">Indikasi Medis</th>
-                  <th className="p-2.5 font-bold w-[10%] text-center no-print">Aksi</th>
+                  <th className="p-2.5 border-r border-slate-300 font-bold min-w-[120px]">
+                    Nama Obat / Terapi
+                  </th>
+                  <th className="p-2.5 border-r border-slate-300 font-bold min-w-[80px]">Dosis</th>
+                  <th className="p-2.5 border-r border-slate-300 font-bold min-w-[100px]">
+                    Frekuensi
+                  </th>
+                  <th className="p-2.5 border-r border-slate-300 font-bold min-w-[120px]">
+                    Indikasi Medis
+                  </th>
+                  <th className="p-2.5 font-bold text-center no-print min-w-[50px]">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -855,7 +862,9 @@ export function MedicalHistoryFormDocument({
                         <input
                           type="text"
                           value={med.frequency}
-                          onChange={(e) => handleMedicationChange(med.id, "frequency", e.target.value)}
+                          onChange={(e) =>
+                            handleMedicationChange(med.id, "frequency", e.target.value)
+                          }
                           placeholder="1x1 tablet / hari"
                           className="w-full text-slate-900 bg-transparent outline-none border-b border-transparent focus:border-slate-900"
                         />
@@ -864,7 +873,9 @@ export function MedicalHistoryFormDocument({
                         <input
                           type="text"
                           value={med.purpose}
-                          onChange={(e) => handleMedicationChange(med.id, "purpose", e.target.value)}
+                          onChange={(e) =>
+                            handleMedicationChange(med.id, "purpose", e.target.value)
+                          }
                           placeholder="Indikasi Terapi"
                           className="w-full text-slate-900 bg-transparent outline-none border-b border-transparent focus:border-slate-900"
                         />
@@ -885,15 +896,14 @@ export function MedicalHistoryFormDocument({
               </tbody>
             </table>
           </div>
-        </section>
+        </FormSection>
 
-        {/* =====================================================================
+        {/* ================================================================
             SECTION 4: SURGERIES & ALLERGIES
-            ===================================================================== */}
-        <section className="grid grid-cols-1 sm:grid-cols-12 gap-4 mb-6">
-          {/* Surgeries / Procedures */}
-          <div className="col-span-12 sm:col-span-7 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs bg-slate-50/50">
-            <div className="bg-slate-900 text-white px-3.5 py-1.5 font-bold text-xs uppercase tracking-wider font-mono">
+            ================================================================ */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-6">
+          <div className="md:col-span-7 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs bg-slate-50/50">
+            <div className="bg-slate-900 text-white px-3.5 py-2 font-bold text-xs uppercase tracking-wider font-mono">
               4A. Riwayat Operasi (Surgeries)
             </div>
             <div className="p-3 grid grid-cols-2 gap-2">
@@ -918,16 +928,14 @@ export function MedicalHistoryFormDocument({
             </div>
           </div>
 
-          {/* Allergies Box */}
-          <div className="col-span-12 sm:col-span-5 rounded-xl border-2 border-red-900 overflow-hidden shadow-xs bg-red-50/30 flex flex-col justify-between">
-            <div className="bg-red-900 text-white px-3.5 py-1.5 font-bold text-xs uppercase tracking-wider font-mono flex items-center justify-between">
+          <div className="md:col-span-5 rounded-xl border-2 border-red-900 overflow-hidden shadow-xs bg-red-50/30 flex flex-col justify-between">
+            <div className="bg-red-900 text-white px-3.5 py-2 font-bold text-xs uppercase tracking-wider font-mono flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <AlertTriangle size={14} className="text-yellow-400" />
                 4B. Riwayat Alergi (Allergies)
               </span>
               <span className="text-[10px] text-red-200">Wajib Diisi</span>
             </div>
-
             <div className="p-3 space-y-2 flex-1">
               <div className="flex flex-wrap gap-1 no-print">
                 {[
@@ -944,9 +952,15 @@ export function MedicalHistoryFormDocument({
                     onClick={() => {
                       const current = formData.allergies || "";
                       if (al === "Tanpa Alergi") {
-                        updateField("allergies", "Tidak ada riwayat alergi obat / makanan yang diketahui.");
+                        updateField(
+                          "allergies",
+                          "Tidak ada riwayat alergi obat / makanan yang diketahui."
+                        );
                       } else if (!current.includes(al)) {
-                        updateField("allergies", current ? `${current}, Alergi: ${al}` : `Alergi: ${al}`);
+                        updateField(
+                          "allergies",
+                          current ? `${current}, Alergi: ${al}` : `Alergi: ${al}`
+                        );
                       }
                     }}
                     className="px-2 py-0.5 rounded bg-white border border-red-300 hover:bg-red-100 text-[10px] font-semibold text-red-950 transition"
@@ -955,7 +969,6 @@ export function MedicalHistoryFormDocument({
                   </button>
                 ))}
               </div>
-
               <textarea
                 rows={3}
                 value={formData.allergies}
@@ -965,17 +978,18 @@ export function MedicalHistoryFormDocument({
               />
             </div>
           </div>
-        </section>
+        </div>
 
-        {/* =====================================================================
+        {/* ================================================================
             SECTION 5: FAMILY HISTORY
-            ===================================================================== */}
-        <section className="mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs">
-          <div className="bg-slate-900 text-white px-4 py-1.5 font-bold text-xs uppercase tracking-wider flex items-center justify-between font-mono">
-            <span>5. Riwayat Kesehatan Keluarga (Family History)</span>
-            <span className="text-[10px] text-slate-300">{familyCheckedCount} Teridentifikasi</span>
-          </div>
-
+            ================================================================ */}
+        <FormSection>
+          <SectionHeader
+            title="5. Riwayat Kesehatan Keluarga (Family History)"
+            rightContent={
+              <span className="text-slate-300">{familyCheckedCount} Teridentifikasi</span>
+            }
+          />
           <div className="p-4 bg-slate-50/50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
             {[
               { key: "cancer", label: "Kanker / Cancer" },
@@ -996,20 +1010,17 @@ export function MedicalHistoryFormDocument({
               />
             ))}
           </div>
-        </section>
+        </FormSection>
 
-        {/* =====================================================================
+        {/* ================================================================
             SECTION 6: SOCIAL HISTORY
-            ===================================================================== */}
-        <section className="mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs">
-          <div className="bg-slate-900 text-white px-4 py-1.5 font-bold text-xs uppercase tracking-wider font-mono">
-            6. Gaya Hidup & Faktor Sosial (Social History)
-          </div>
-
+            ================================================================ */}
+        <FormSection>
+          <SectionHeader title="6. Gaya Hidup & Faktor Sosial (Social History)" />
           <div className="p-4 bg-slate-50/50 space-y-3 text-xs">
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center bg-white p-3 rounded-lg border border-slate-200">
-              <span className="col-span-12 sm:col-span-3 font-bold text-slate-900">Merokok (Tobacco Use):</span>
-              <div className="col-span-12 sm:col-span-9 flex items-center gap-4 flex-wrap">
+              <span className="sm:col-span-3 font-bold text-slate-900">Merokok (Tobacco):</span>
+              <div className="sm:col-span-9 flex flex-wrap items-center gap-4">
                 {["Non-smoker", "Cigarettes", "Vaping", "Tobacco"].map((item) => (
                   <label key={item} className="flex items-center gap-1.5 cursor-pointer font-medium">
                     <input
@@ -1026,8 +1037,8 @@ export function MedicalHistoryFormDocument({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center bg-white p-3 rounded-lg border border-slate-200">
-              <span className="col-span-12 sm:col-span-3 font-bold text-slate-900">Konsumsi Alkohol:</span>
-              <div className="col-span-12 sm:col-span-9 flex items-center gap-4 flex-wrap">
+              <span className="sm:col-span-3 font-bold text-slate-900">Konsumsi Alkohol:</span>
+              <div className="sm:col-span-9 flex flex-wrap items-center gap-4">
                 {["None", "Occasional", "Moderate", "Heavy"].map((item) => (
                   <label key={item} className="flex items-center gap-1.5 cursor-pointer font-medium">
                     <input
@@ -1043,23 +1054,22 @@ export function MedicalHistoryFormDocument({
               </div>
             </div>
 
-            <div className="grid grid-cols-12 gap-3">
-              <div className="col-span-12 sm:col-span-6 bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+              <div className="sm:col-span-6 bg-white p-3 rounded-lg border border-slate-200 flex flex-wrap items-center justify-between gap-2">
                 <span className="font-bold text-slate-900">Pekerjaan (Occupation):</span>
                 <input
                   type="text"
                   value={formData.occupation || "Wiraswasta"}
                   onChange={(e) => updateField("occupation", e.target.value)}
-                  className="font-medium text-xs bg-slate-50 px-2 py-1 rounded border border-slate-300 text-right outline-none"
+                  className="font-medium text-xs bg-slate-50 px-2 py-1 rounded border border-slate-300 outline-none flex-1 min-w-[100px]"
                 />
               </div>
-
-              <div className="col-span-12 sm:col-span-6 bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between">
+              <div className="sm:col-span-6 bg-white p-3 rounded-lg border border-slate-200 flex flex-wrap items-center justify-between gap-2">
                 <span className="font-bold text-slate-900">Tempat Tinggal:</span>
                 <select
                   value={formData.livingSituation}
                   onChange={(e) => updateField("livingSituation", e.target.value as any)}
-                  className="font-medium text-xs bg-slate-50 px-2 py-1 rounded border border-slate-300 outline-none"
+                  className="font-medium text-xs bg-slate-50 px-2 py-1 rounded border border-slate-300 outline-none flex-1 min-w-[100px]"
                 >
                   <option value="With family">Bersama Keluarga (With family)</option>
                   <option value="With S/O">Bersama Pasangan (With S/O)</option>
@@ -1069,19 +1079,20 @@ export function MedicalHistoryFormDocument({
               </div>
             </div>
           </div>
-        </section>
+        </FormSection>
 
-        {/* =====================================================================
-            SECTION 7: REVIEW OF SYSTEMS (ROS - 3x2 MATRIX GRID)
-            ===================================================================== */}
-        <section className="mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs">
-          <div className="bg-slate-900 text-white px-4 py-1.5 font-bold text-xs uppercase tracking-wider flex items-center justify-between font-mono">
-            <span>7. Skrining Gejala Organ (Review of Systems - ROS)</span>
-            <span className="text-[10px] text-emerald-400 font-bold">{rosCheckedCount} Gejala Positif</span>
-          </div>
-
+        {/* ================================================================
+            SECTION 7: REVIEW OF SYSTEMS
+            ================================================================ */}
+        <FormSection>
+          <SectionHeader
+            title="7. Skrining Gejala Organ (Review of Systems - ROS)"
+            rightContent={
+              <span className="text-emerald-400 font-bold">{rosCheckedCount} Gejala Positif</span>
+            }
+          />
           <div className="p-4 bg-slate-50/50 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* General */}
               <div className="bg-white p-3 rounded-xl border border-slate-300 space-y-2">
                 <span className="font-bold uppercase text-[11px] font-mono text-slate-900 border-b border-slate-200 pb-1 block">
@@ -1215,29 +1226,30 @@ export function MedicalHistoryFormDocument({
               </div>
             </div>
           </div>
-        </section>
+        </FormSection>
 
-        {/* =====================================================================
-            SECTION 8: CLINICAL ASSESSMENT & VITAL SIGNS
-            ===================================================================== */}
-        <section className="mb-6 rounded-xl border-2 border-slate-900 overflow-hidden shadow-xs">
-          <div className="bg-slate-900 text-white px-4 py-1.5 font-bold text-xs uppercase tracking-wider flex items-center justify-between font-mono">
-            <span>8. Diagnosa Medis & Tanda Vital (Primary Assessment)</span>
-            <select
-              value={formData.severity}
-              onChange={(e) => updateField("severity", e.target.value as any)}
-              className="text-[10px] bg-emerald-400 text-slate-950 font-extrabold uppercase px-2.5 py-0.5 rounded outline-none cursor-pointer"
-            >
-              <option value="CRITICAL">CRITICAL</option>
-              <option value="SEVERE">SEVERE</option>
-              <option value="MODERATE">MODERATE</option>
-              <option value="MILD">MILD</option>
-              <option value="NORMAL">NORMAL</option>
-            </select>
-          </div>
-
+        {/* ================================================================
+            SECTION 8: CLINICAL ASSESSMENT
+            ================================================================ */}
+        <FormSection>
+          <SectionHeader
+            title="8. Diagnosa Medis & Tanda Vital (Primary Assessment)"
+            rightContent={
+              <select
+                value={formData.severity}
+                onChange={(e) => updateField("severity", e.target.value as any)}
+                className="text-[10px] bg-emerald-400 text-slate-950 font-extrabold uppercase px-2.5 py-0.5 rounded outline-none cursor-pointer"
+              >
+                <option value="CRITICAL">CRITICAL</option>
+                <option value="SEVERE">SEVERE</option>
+                <option value="MODERATE">MODERATE</option>
+                <option value="MILD">MILD</option>
+                <option value="NORMAL">NORMAL</option>
+              </select>
+            }
+          />
           <div className="p-4 bg-slate-50/50 space-y-4">
-            {/* Quick ICD-10 Presets & Database Search Button (No-Print) */}
+            {/* ICD-10 Presets */}
             <div className="flex flex-wrap items-center justify-between gap-2 no-print bg-white p-2.5 rounded-xl border border-slate-300">
               <div className="flex flex-wrap items-center gap-1 text-[10px] font-mono">
                 <span className="font-bold text-slate-500 uppercase mr-1">Preset ICD-10:</span>
@@ -1260,13 +1272,12 @@ export function MedicalHistoryFormDocument({
                       updateField("diagnosisIcd", preset.code);
                       updateField("diagnosis", preset.name);
                     }}
-                    className="px-2 py-0.5 rounded bg-slate-900 text-emerald-400 font-bold hover:bg-slate-800 transition"
+                    className="px-2 py-0.5 rounded bg-slate-900 text-emerald-400 font-bold hover:bg-slate-800 transition whitespace-nowrap"
                   >
                     {preset.code} ({preset.label})
                   </button>
                 ))}
               </div>
-
               <button
                 type="button"
                 onClick={() => {
@@ -1275,17 +1286,19 @@ export function MedicalHistoryFormDocument({
                     handleSearchIcd(formData.diagnosis);
                   }
                 }}
-                className="px-3 py-1 bg-slate-900 text-white rounded-lg font-mono text-[11px] font-bold hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm"
+                className="px-3 py-1 bg-slate-900 text-white rounded-lg font-mono text-[11px] font-bold hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm whitespace-nowrap"
               >
                 <Search size={13} className="text-emerald-400" />
-                <span>Cari Database ICD-10 DB</span>
+                <span>Cari ICD-10</span>
               </button>
             </div>
 
-            {/* Diagnosis & ICD-10 */}
-            <div className="grid grid-cols-12 gap-3">
-              <div className="col-span-12 sm:col-span-9 bg-white p-3 rounded-xl border border-slate-300 space-y-1">
-                <span className="text-[10px] font-bold uppercase text-slate-500 block">Diagnosa Klinis Utama</span>
+            {/* Diagnosis */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+              <div className="sm:col-span-9 bg-white p-3 rounded-xl border border-slate-300 space-y-1">
+                <label className="text-[10px] font-bold uppercase text-slate-500 block">
+                  Diagnosa Klinis Utama
+                </label>
                 <input
                   type="text"
                   value={formData.diagnosis}
@@ -1294,9 +1307,10 @@ export function MedicalHistoryFormDocument({
                   className="font-serif font-black text-slate-950 text-base w-full bg-transparent outline-none border-b border-transparent focus:border-slate-900"
                 />
               </div>
-
-              <div className="col-span-12 sm:col-span-3 bg-white p-3 rounded-xl border border-slate-300 space-y-1">
-                <span className="text-[10px] font-bold uppercase text-slate-500 block">Kode ICD-10</span>
+              <div className="sm:col-span-3 bg-white p-3 rounded-xl border border-slate-300 space-y-1">
+                <label className="text-[10px] font-bold uppercase text-slate-500 block">
+                  Kode ICD-10
+                </label>
                 <input
                   type="text"
                   value={formData.diagnosisIcd}
@@ -1307,7 +1321,7 @@ export function MedicalHistoryFormDocument({
               </div>
             </div>
 
-            {/* Vital Signs Cards */}
+            {/* Vital Signs */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 font-mono">
               <div className="bg-white p-2.5 rounded-xl border border-slate-300 text-center space-y-0.5">
                 <span className="text-[10px] text-slate-500 uppercase block font-bold">Tensi (BP)</span>
@@ -1318,7 +1332,6 @@ export function MedicalHistoryFormDocument({
                   className="font-black text-sm text-slate-950 text-center w-full bg-transparent outline-none"
                 />
               </div>
-
               <div className="bg-white p-2.5 rounded-xl border border-slate-300 text-center space-y-0.5">
                 <span className="text-[10px] text-slate-500 uppercase block font-bold">Nadi (HR)</span>
                 <input
@@ -1328,7 +1341,6 @@ export function MedicalHistoryFormDocument({
                   className="font-black text-sm text-slate-950 text-center w-full bg-transparent outline-none"
                 />
               </div>
-
               <div className="bg-white p-2.5 rounded-xl border border-slate-300 text-center space-y-0.5">
                 <span className="text-[10px] text-slate-500 uppercase block font-bold">Nafas (RR)</span>
                 <input
@@ -1338,9 +1350,8 @@ export function MedicalHistoryFormDocument({
                   className="font-black text-sm text-slate-950 text-center w-full bg-transparent outline-none"
                 />
               </div>
-
               <div className="bg-white p-2.5 rounded-xl border border-slate-300 text-center space-y-0.5">
-                <span className="text-[10px] text-slate-500 uppercase block font-bold">Saturasi (SpO2)</span>
+                <span className="text-[10px] text-slate-500 uppercase block font-bold">SpO2</span>
                 <input
                   type="text"
                   value={formData.vitalSigns.spo2}
@@ -1348,9 +1359,8 @@ export function MedicalHistoryFormDocument({
                   className="font-black text-sm text-slate-950 text-center w-full bg-transparent outline-none"
                 />
               </div>
-
               <div className="bg-white p-2.5 rounded-xl border border-slate-300 text-center space-y-0.5">
-                <span className="text-[10px] text-slate-500 uppercase block font-bold">Suhu (Temp)</span>
+                <span className="text-[10px] text-slate-500 uppercase block font-bold">Suhu</span>
                 <input
                   type="text"
                   value={formData.vitalSigns.temperature}
@@ -1360,12 +1370,12 @@ export function MedicalHistoryFormDocument({
               </div>
             </div>
 
-            {/* Recommendations & Patient Summary */}
+            {/* Recommendations & Summary */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
               <div className="bg-white p-3 rounded-xl border border-slate-300 space-y-1">
-                <span className="font-bold uppercase text-[11px] text-slate-700 block">
+                <label className="font-bold uppercase text-[11px] text-slate-700 block">
                   Tata Laksana Medis & Anjuran DPJP:
-                </span>
+                </label>
                 <textarea
                   rows={3}
                   value={formData.recommendations}
@@ -1374,11 +1384,10 @@ export function MedicalHistoryFormDocument({
                   className="w-full p-2 bg-slate-50 border border-slate-200 rounded font-serif text-slate-900 text-xs focus:outline-none focus:border-slate-900"
                 />
               </div>
-
               <div className="bg-white p-3 rounded-xl border border-slate-300 space-y-1">
-                <span className="font-bold uppercase text-[11px] text-slate-700 block">
+                <label className="font-bold uppercase text-[11px] text-slate-700 block">
                   Ringkasan Untuk Pasien (Bahasa Awam):
-                </span>
+                </label>
                 <textarea
                   rows={3}
                   value={formData.patientSummary}
@@ -1389,33 +1398,33 @@ export function MedicalHistoryFormDocument({
               </div>
             </div>
           </div>
-        </section>
+        </FormSection>
 
-        {/* =====================================================================
-            SECTION 9: DOCTOR SIGNATURE & OFFICIAL VALIDATION SEAL
-            ===================================================================== */}
-        <section className="pt-4 border-t-2 border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs">
-          <div className="flex items-center gap-4">
+        {/* ================================================================
+            SECTION 9: SIGNATURE
+            ================================================================ */}
+        <section className="pt-4 border-t-2 border-slate-900 flex flex-col lg:flex-row items-center justify-between gap-6 text-xs">
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
             <div className="w-16 h-16 bg-slate-100 border-2 border-slate-900 rounded-xl flex items-center justify-center p-1 shrink-0">
               <QrCode size={48} className="text-slate-950" />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 text-center sm:text-left">
               <div className="inline-flex items-center gap-1 text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded border border-emerald-300">
                 <BadgeCheck size={12} /> VERIFIKASI DIGITAL SATUSEHAT
               </div>
               <p className="text-[11px] font-medium text-slate-600 max-w-xs leading-tight">
-                Dokumen ini ditandatangani secara elektronik dan tersimpan secara sah dalam jaringan Rekam Medis Elektronik Nasional.
+                Dokumen ini ditandatangani secara elektronik dan tersimpan secara sah dalam jaringan
+                Rekam Medis Elektronik Nasional.
               </p>
             </div>
           </div>
 
-          <div className="text-center sm:text-right space-y-2 w-full sm:w-auto">
+          <div className="text-center lg:text-right space-y-2 w-full lg:w-auto">
             <div className="text-[11px] font-mono font-bold text-slate-700">
               Dokter Penanggung Jawab Pelayanan (DPJP)
             </div>
 
-            {/* Signature Area */}
-            <div className="relative inline-block bg-slate-50 border-2 border-slate-900 rounded-xl p-2 min-w-[240px]">
+            <div className="relative inline-block bg-slate-50 border-2 border-slate-900 rounded-xl p-2 min-w-[240px] w-full sm:w-auto">
               <canvas
                 ref={sigCanvasRef}
                 width={240}
@@ -1427,10 +1436,9 @@ export function MedicalHistoryFormDocument({
                 onTouchStart={startDrawing}
                 onTouchMove={draw}
                 onTouchEnd={stopDrawing}
-                className="cursor-crosshair bg-white border border-slate-200 rounded touch-none"
+                className="cursor-crosshair bg-white border border-slate-200 rounded touch-none w-full h-auto"
               />
-
-              <div className="flex items-center justify-between pt-1 font-mono text-[10px] no-print">
+              <div className="flex flex-wrap items-center justify-between pt-1 font-mono text-[10px] no-print gap-1">
                 <button
                   type="button"
                   onClick={handleUseRegisteredSignature}
@@ -1446,7 +1454,6 @@ export function MedicalHistoryFormDocument({
                   Hapus
                 </button>
               </div>
-
               {isDoctorSigned && signedAtTimestamp && (
                 <div className="mt-1 text-[9px] font-mono font-bold text-emerald-800 bg-emerald-50 py-0.5 px-1.5 rounded border border-emerald-200 text-center">
                   ✓ TTD Sah: {signedAtTimestamp}
@@ -1459,7 +1466,7 @@ export function MedicalHistoryFormDocument({
                 type="text"
                 value={formData.doctorName}
                 onChange={(e) => updateField("doctorName", e.target.value)}
-                className="font-serif font-black text-sm text-slate-950 text-center sm:text-right w-full bg-transparent outline-none"
+                className="font-serif font-black text-sm text-slate-950 text-center lg:text-right w-full bg-transparent outline-none"
               />
               <div className="text-[11px] text-slate-600 font-medium">{formData.doctorSpecialty}</div>
               <div className="text-[10px] font-mono font-bold text-slate-800">{formData.doctorSip}</div>
@@ -1467,26 +1474,27 @@ export function MedicalHistoryFormDocument({
           </div>
         </section>
 
-        {/* Official Printed Document Footer */}
-        <footer className="mt-8 pt-3 border-t border-slate-300 flex items-center justify-between text-[9px] font-mono text-slate-500 leading-tight">
-          <span>
-            Dokumen Rekam Medis Elektronik ini diterbitkan oleh KLINIK UTAMA MED-AI ATELIER HEALTH (Faskes ID: 3171092-KARS) dan sah secara hukum sesuai Permenkes RI No. 24 Tahun 2022 tentang Rekam Medis.
+        {/* Footer */}
+        <footer className="mt-8 pt-3 border-t border-slate-300 flex flex-wrap items-center justify-between gap-2 text-[9px] font-mono text-slate-500 leading-tight">
+          <span className="text-center sm:text-left">
+            Dokumen Rekam Medis Elektronik ini diterbitkan oleh KLINIK UTAMA MED-AI ATELIER HEALTH
+            (Faskes ID: 3171092-KARS) dan sah secara hukum sesuai Permenkes RI No. 24 Tahun 2022
+            tentang Rekam Medis.
           </span>
-          <span className="font-bold text-slate-700 shrink-0 ml-4">
-            SATUSEHAT FHIR READY
-          </span>
+          <span className="font-bold text-slate-700 shrink-0">SATUSEHAT FHIR READY</span>
         </footer>
-
       </article>
 
-      {/* Digital ICD-10 Search Modal */}
+      {/* ICD-10 Modal */}
       {showIcdModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs no-print">
-          <div className="bg-white border-2 border-slate-900 rounded-2xl p-6 max-w-xl w-full shadow-2xl space-y-4 font-sans text-xs">
-            <div className="flex items-center justify-between border-b-2 border-slate-900 pb-3 font-mono">
+          <div className="bg-white border-2 border-slate-900 rounded-2xl p-4 sm:p-6 max-w-xl w-full shadow-2xl space-y-4 font-sans text-xs max-h-[90vh] overflow-y-auto">
+            <div className="flex flex-wrap items-center justify-between border-b-2 border-slate-900 pb-3 font-mono gap-2">
               <div className="flex items-center gap-2">
                 <Database size={18} className="text-emerald-600" />
-                <h3 className="font-black text-sm uppercase text-slate-950">Pencarian Kode ICD-10 Database</h3>
+                <h3 className="font-black text-sm uppercase text-slate-950">
+                  Pencarian Kode ICD-10
+                </h3>
               </div>
               <button
                 type="button"
@@ -1502,7 +1510,7 @@ export function MedicalHistoryFormDocument({
                 type="text"
                 value={icdSearchQuery}
                 onChange={(e) => handleSearchIcd(e.target.value)}
-                placeholder="Ketikkan diagnosa atau kode ICD-10 (mis. I10, J06, Gastritis, SKA, Diabetes)..."
+                placeholder="Ketikkan diagnosa atau kode ICD-10 (mis. I10, J06, Gastritis)..."
                 className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border-2 border-slate-900 rounded-xl font-medium text-slate-950 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400"
                 autoFocus
               />
@@ -1516,7 +1524,9 @@ export function MedicalHistoryFormDocument({
                 </div>
               ) : icdSearchResults.length === 0 ? (
                 <div className="p-6 text-center text-slate-500 italic font-serif">
-                  {icdSearchQuery ? "Tidak ditemukan kode ICD-10 yang cocok." : "Ketik kata kunci untuk mencari di database ICD-10."}
+                  {icdSearchQuery
+                    ? "Tidak ditemukan kode ICD-10 yang cocok."
+                    : "Ketik kata kunci untuk mencari di database ICD-10."}
                 </div>
               ) : (
                 icdSearchResults.map((item) => (
@@ -1524,10 +1534,10 @@ export function MedicalHistoryFormDocument({
                     key={item.code + item.display}
                     type="button"
                     onClick={() => selectIcdCodeItem(item.code, item.display)}
-                    className="w-full p-3 text-left hover:bg-emerald-50 transition flex items-center justify-between group"
+                    className="w-full p-3 text-left hover:bg-emerald-50 transition flex flex-wrap items-center justify-between gap-2 group"
                   >
-                    <div>
-                      <div className="font-mono font-black text-slate-950 text-sm group-hover:text-emerald-700 flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-mono font-black text-slate-950 text-sm group-hover:text-emerald-700 flex flex-wrap items-center gap-2">
                         <span>{item.code}</span>
                         {item.groupName && (
                           <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-300 font-sans font-normal">
@@ -1535,10 +1545,12 @@ export function MedicalHistoryFormDocument({
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-700 font-medium">{item.display}</div>
+                      <div className="text-xs text-slate-700 font-medium truncate">
+                        {item.display}
+                      </div>
                     </div>
                     <span className="shrink-0 px-2 py-1 text-[10px] font-mono font-bold bg-slate-900 text-white rounded group-hover:bg-emerald-600">
-                      Pilih Code
+                      Pilih
                     </span>
                   </button>
                 ))

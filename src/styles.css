@@ -81,23 +81,8 @@ button[class*="from-amber-600"],
 button[class*="from-[var(--terracotta)]"],
 button[class*="bg-red-600"],
 button[class*="bg-red-700"],
-button[class*="bg-[#3b6b39]"],
-a[class*="bg-black"],
-a[class*="bg-neutral-950"],
-a[class*="bg-neutral-900"],
-a[class*="bg-neutral-800"],
-a[class*="bg-zinc-950"],
-a[class*="bg-zinc-900"],
-a[class*="bg-zinc-800"],
-a[class*="bg-gray-950"],
-a[class*="bg-gray-900"],
-a[class*="bg-gray-800"],
-a[class*="bg-slate-950"],
-a[class*="bg-slate-900"],
-a[class*="bg-slate-800"],
-a[class*="bg-[var(--ink)]"],
-a[class*="from-[var(--terracotta)]"],
-a[class*="bg-[var(--terracotta)]"] {
+button[class*="bg-[#3b6b39]"]
+{
   color: #ffffff !important;
 }
 
@@ -130,7 +115,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 /* App Shell Layout */
 .app-shell {
   min-height: 100vh;
-  padding: 18px 24px 28px;
   overflow-x: hidden;
 }
 
@@ -1159,7 +1143,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 
 /* Responsive Media Queries */
 @media (max-width: 1350px) {
-  .app-shell { padding: 14px; }
   .topbar { grid-template-columns: 1fr auto auto; gap: 14px; }
   .brand em { display: none; }
   .search-box { display: none; }
@@ -1175,7 +1158,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 
 @media (max-width: 760px) {
-  .app-shell { padding: 10px; }
   .topbar { height: 58px; grid-template-columns: 1fr auto; }
   .main-nav { display: none; }
   .workspace { display: block; margin-top: 10px; }

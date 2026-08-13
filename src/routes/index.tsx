@@ -54,19 +54,19 @@ function MedicalDashboardPage() {
   };
 
   return (
-    <div className="space-y-8 pb-16 font-sans">
+    <main className="max-w-[1400px] mx-auto px-4 py-8 space-y-8 font-sans">
       {/* Hero Banner */}
-      <section className="bg-white border-2 border-black p-8 sm:p-10 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] space-y-6">
+      <section className="bg-white border-2 border-black p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
         <div className="inline-flex items-center gap-2 px-3 py-1 font-mono text-xs font-bold bg-black text-white uppercase tracking-widest">
           <Sparkles size={14} className="animate-pulse" />
           <span>NARASI — ASISTEN DOKUMENTASI KLINIS AI RESMI</span>
         </div>
 
-        <h1 className="text-3xl sm:text-5xl font-black text-black uppercase tracking-tight leading-tight">
+        <h1 className="text-3xl sm:text-4xl font-black text-black uppercase tracking-tight leading-tight">
           Otomatisasi Rekam Medis Dari Percakapan Suara Dokter & Pasien
         </h1>
 
-        <p className="text-sm sm:text-base text-neutral-800 font-medium max-w-3xl leading-relaxed">
+        <p className="text-xs sm:text-sm text-neutral-800 font-medium max-w-3xl leading-relaxed">
           Verifikasi identitas Dokter DPJP via API SATUSEHAT Kemenkes, transkripsikan percakapan konsultasi klinis secara real-time, dan hasilkan Resume Medis terintegrasi database PostgreSQL.
         </p>
 
@@ -355,6 +355,6 @@ function MedicalDashboardPage() {
         isOpen={isOnboardingOpen}
         onClose={() => setIsOnboardingOpen(false)}
       />
-    </div>
+    </main>
   );
 }
