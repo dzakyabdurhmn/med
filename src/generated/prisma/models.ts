@@ -11,6 +11,8 @@
 export type * from './models/User.ts'
 export type * from './models/PatientProfile.ts'
 export type * from './models/MedicalReport.ts'
+export type * from './models/Transcript.ts'
+export type * from './models/TranscriptSegment.ts'
 export type * from './models/ReportOrganHighlight.ts'
 export type * from './models/VerificationRecord.ts'
 export type * from './models/MedicalGlossary.ts'

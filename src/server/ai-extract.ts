@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import type { OrganId } from "../lib/anatomy-data";
 import type { ClinicalFindingItem, MedicationItem } from "../components/medical/MedicalHistoryFormDocument";
 import { lookupIcd10CodeByKeyword } from "./medical-db";
 
@@ -18,7 +17,7 @@ export type NarasiAiExtractionResult = {
   diagnosis: string;
   diagnosisIcd: string;
   severity: "CRITICAL" | "SEVERE" | "MODERATE" | "MILD" | "NORMAL";
-  primaryOrgan: OrganId;
+  primaryOrgan?: string;
   subjectiveNotes: string;
   objectiveNotes: string;
   findings: ClinicalFindingItem[];
@@ -199,7 +198,7 @@ Kembalikan respon HANYA DALAM FORMAT JSON BERIKUT tanpa teks lain:
               diagnosis: parsed.diagnosis || "Evaluasi Klinis Terstruktur",
               diagnosisIcd: diagnosisIcd || "Z00.0",
               severity: parsed.severity || "NORMAL",
-              primaryOrgan: (parsed.primaryOrgan as OrganId) || "lungs",
+              primaryOrgan: parsed.primaryOrgan || "lungs",
               subjectiveNotes: parsed.subjectiveNotes || "Pasien berkonsultasi mengenai keluhan fisik.",
               objectiveNotes: parsed.objectiveNotes || "Pemeriksaan fisik dalam batas normal.",
               findings: [
@@ -210,7 +209,7 @@ Kembalikan respon HANYA DALAM FORMAT JSON BERIKUT tanpa teks lain:
                   finding: parsed.subjectiveNotes || "Keluhan klinis teridentifikasi.",
                   layman: parsed.patientSummary || "Penjelasan untuk pasien.",
                   hotspotId: "hs-1",
-                  organId: (parsed.primaryOrgan as OrganId) || "lungs",
+                  organId: parsed.primaryOrgan || "lungs",
                 },
               ],
               evidenceList: parsed.evidenceList || [],
@@ -252,7 +251,7 @@ Kembalikan respon HANYA DALAM FORMAT JSON BERIKUT tanpa teks lain:
 
     const textLower = (patientSpeech + " " + (rawNotes || "")).toLowerCase();
 
-    let primaryOrgan: OrganId = "lungs";
+    let primaryOrgan: string = "lungs";
     let diagnosis = "Infeksi Saluran Pernapasan Akut (ISPA) / Bronkitis Akut";
     let diagnosisIcd = "J06.9";
     let severity: "CRITICAL" | "SEVERE" | "MODERATE" | "MILD" | "NORMAL" = "MODERATE";

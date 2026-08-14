@@ -7,9 +7,9 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import Footer from '../components/Footer'
 import Header from '../components/Header'
+import NotFound from '../components/NotFound'
 
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
-import StoreDevtools from '../lib/demo-store-devtools'
 import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
@@ -32,14 +32,27 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'MED-AI Atelier 3D — Clinical Anatomy & AI Medical Report Assistant',
+        title: 'NARASI — Asisten Dokumentasi Klinis AI & Rekam Medis GEMASTIK 2026',
       },
       {
         name: 'description',
-        content: 'Interactive 3D medical anatomy viewer and AI-powered clinical report assistant for GEMASTIK 2026.',
+        content: 'Asisten dokumentasi rekam medis otomatis berbasis AI terintegrasi SATUSEHAT untuk GEMASTIK 2026.',
       },
     ],
     links: [
+      {
+        rel: 'preconnect',
+        href: 'https://fonts.googleapis.com',
+      },
+      {
+        rel: 'preconnect',
+        href: 'https://fonts.gstatic.com',
+        crossOrigin: 'anonymous',
+      },
+      {
+        rel: 'stylesheet',
+        href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+      },
       {
         rel: 'stylesheet',
         href: appCss,
@@ -47,15 +60,16 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
   }),
   shellComponent: RootDocument,
+  notFoundComponent: NotFound,
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="id" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body className="antialiased [overflow-wrap:anywhere] selection:bg-[#eb7c6b]/20 selection:text-[#2f2a27]">
+      <body className="antialiased bg-[#FAFAF5] text-[#474744] [overflow-wrap:anywhere] selection:bg-[#F6D8DC] selection:text-[#9E1B2E]">
         <div className="app-shell">
           <Header />
           {children}
@@ -71,7 +85,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               render: <TanStackRouterDevtoolsPanel />,
             },
             TanStackQueryDevtools,
-            StoreDevtools,
           ]}
         />
         <Scripts />

@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Printer,
-  Database,
   Save,
   ArrowLeft,
   PenTool,
@@ -12,6 +11,7 @@ import {
   FilePlus2,
   Check,
   Sparkles,
+  X,
 } from "lucide-react";
 import { useMedicalStore } from "../store/medical-store";
 import { MedicalHistoryFormDocument } from "../components/medical/MedicalHistoryFormDocument";
@@ -37,6 +37,11 @@ function ReportPage() {
     isDoctorRegistered,
     doctorProfile,
   } = useMedicalStore();
+
+  const [isHydrated, setIsHydrated] = useState(false);
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const hasPatientCases = cases.length > 0;
 
@@ -102,7 +107,7 @@ function ReportPage() {
 
     ctx.beginPath();
     ctx.moveTo(x, y);
-    ctx.strokeStyle = "#000000";
+    ctx.strokeStyle = "#191918";
     ctx.lineWidth = 2.5;
     ctx.lineCap = "round";
     setIsDrawing(true);
@@ -146,35 +151,50 @@ function ReportPage() {
     window.print();
   };
 
-  // 🔒 ACCESS CONTROL GATE 1: Require Registered DPJP Doctor
+  // SSR Hydration Guard
+  if (!isHydrated) {
+    return (
+      <main className="container-warm section-warm flex justify-center py-16">
+        <div className="card-warm p-8 max-w-xl w-full text-center space-y-4">
+          <div className="animate-pulse flex flex-col items-center gap-3">
+            <div className="w-12 h-12 bg-[#E5E1CE] rounded-[2px]" />
+            <div className="h-4 w-48 bg-[#E5E1CE] rounded-[2px]" />
+            <div className="h-3 w-64 bg-[#E5E1CE] rounded-[2px]" />
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // ACCESS CONTROL GATE 1: Require Registered DPJP Doctor
   if (!isDoctorRegistered) {
     return (
-      <main className="max-w-xl mx-auto px-4 py-16 text-center font-sans">
-        <div className="bg-white border-2 border-black p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-          <div className="w-16 h-16 bg-black text-white flex items-center justify-center mx-auto font-mono font-bold text-2xl">
-            <Lock size={32} />
+      <main className="container-warm section-warm flex justify-center">
+        <div className="card-warm p-8 max-w-xl w-full text-center space-y-6">
+          <div className="w-16 h-16 bg-[#FCEEEF] text-[#9E1B2E] border border-[#F6D8DC] rounded-[2px] flex items-center justify-center mx-auto">
+            <Lock size={28} />
           </div>
           <div className="space-y-2">
-            <span className="text-[10px] font-mono font-bold bg-black text-white px-3 py-1 uppercase">
+            <span className="badge-warm badge-warm-brand">
               AKSES DIPROTEKSI DOKTER DPJP
             </span>
-            <h1 className="text-2xl font-black text-black uppercase">
+            <h1 className="text-2xl font-medium text-[#191918]">
               Login / Registrasi Dokter Diperlukan
             </h1>
-            <p className="text-xs text-neutral-700 font-medium leading-relaxed">
+            <p className="text-sm text-[#474744] leading-relaxed">
               Lembar Resume Medis EHR resmi Kemenkes/SATUSEHAT hanya dapat diakses dan ditandatangani oleh Dokter Penanggung Jawab Pelayanan (DPJP).
             </p>
           </div>
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 font-mono font-bold text-xs">
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to="/register"
-              className="w-full sm:w-auto px-6 py-3 bg-black hover:bg-neutral-800 text-white uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] transition"
+              className="btn-warm btn-warm-primary btn-warm-base w-full sm:w-auto"
             >
               Registrasi Dokter SATUSEHAT
             </Link>
             <Link
               to="/login"
-              className="w-full sm:w-auto px-6 py-3 border-2 border-black text-black uppercase tracking-wider hover:bg-neutral-100 transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+              className="btn-warm btn-warm-outline btn-warm-base w-full sm:w-auto"
             >
               Masuk Akun Dokter
             </Link>
@@ -184,29 +204,29 @@ function ReportPage() {
     );
   }
 
-  // 🔒 ACCESS CONTROL GATE 2: Require Patient Case
+  // ACCESS CONTROL GATE 2: Require Patient Case
   if (!hasPatientCases) {
     return (
-      <main className="max-w-xl mx-auto px-4 py-16 text-center font-sans">
-        <div className="bg-white border-2 border-black p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-          <div className="w-16 h-16 bg-black text-white flex items-center justify-center mx-auto font-mono font-bold text-2xl">
-            <FilePlus2 size={32} />
+      <main className="container-warm section-warm flex justify-center">
+        <div className="card-warm p-8 max-w-xl w-full text-center space-y-6">
+          <div className="w-16 h-16 bg-[#F3F2E7] text-[#191918] border border-[#E3E2D8] rounded-[2px] flex items-center justify-center mx-auto">
+            <FilePlus2 size={28} />
           </div>
           <div className="space-y-2">
-            <span className="text-[10px] font-mono font-bold bg-black text-white px-3 py-1 uppercase">
+            <span className="badge-warm">
               BELUM ADA PASIEN AKTIF
             </span>
-            <h1 className="text-2xl font-black text-black uppercase">
+            <h1 className="text-2xl font-medium text-[#191918]">
               Mulai Sesi Konsultasi Terlebih Dahulu
             </h1>
-            <p className="text-xs text-neutral-700 font-medium leading-relaxed">
+            <p className="text-sm text-[#474744] leading-relaxed">
               Dokumen Resume Medis dihasilkan secara otomatis dari sesi dikte percakapan dokter-pasien.
             </p>
           </div>
-          <div className="pt-2 flex justify-center font-mono font-bold text-xs">
+          <div className="pt-2 flex justify-center">
             <Link
               to="/consultation"
-              className="px-6 py-3 bg-black hover:bg-neutral-800 text-white uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] transition flex items-center gap-2"
+              className="btn-warm btn-warm-primary btn-warm-base"
             >
               <Mic size={16} />
               <span>Mulai Sesi Konsultasi Pasien</span>
@@ -218,94 +238,92 @@ function ReportPage() {
   }
 
   return (
-    <main className="max-w-[1400px] mx-auto px-4 py-8 space-y-8 font-sans">
+    <main className="container-warm section-warm space-y-8">
       {/* AI Not Generated Warning Banner */}
       {activeCase && !activeCase.isAiGenerated && (
-        <div className="no-print bg-amber-50 border-2 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-mono text-xs">
+        <div className="no-print card-warm p-5 bg-[#FEF0E0] border-[#FCE0C0] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Sparkles size={20} className="text-amber-600 animate-pulse shrink-0" />
+            <Sparkles size={20} className="text-[#A64E0B] shrink-0" />
             <div>
-              <span className="font-extrabold uppercase text-amber-950 block">Resume Medis Belum Di-generate AI</span>
-              <span className="text-amber-900 font-sans">Dokumen rekam medis belum diekstraksi dari hasil konsultasi suara & catatan klinis pasien.</span>
+              <span className="text-sm font-medium text-[#A64E0B] block">Resume Medis Belum Di-generate AI</span>
+              <span className="text-xs text-[#6A6A64]">Dokumen rekam medis belum diekstraksi dari hasil konsultasi suara &amp; catatan klinis pasien.</span>
             </div>
           </div>
           <button
             type="button"
             onClick={handleAutoGenerate}
             disabled={isGeneratingAi}
-            className="px-5 py-2.5 bg-black hover:bg-neutral-800 disabled:opacity-50 text-white font-bold uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] shrink-0 cursor-pointer"
+            className="btn-warm btn-warm-primary btn-warm-sm shrink-0"
           >
-            <Sparkles size={14} className={isGeneratingAi ? "animate-spin text-emerald-400" : "text-emerald-400"} />
+            <Sparkles size={14} className={isGeneratingAi ? "animate-spin text-white" : "text-white"} />
             <span>{isGeneratingAi ? "Memproses AI..." : "Generate AI Sekarang"}</span>
           </button>
         </div>
       )}
 
       {/* Top Action Toolbar (No-Print) */}
-      <section className="no-print bg-white border-2 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <section className="no-print card-warm p-4 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <Link
             to="/consultation"
-            className="shrink-0 p-2.5 border-2 border-black text-black hover:bg-neutral-100 transition flex items-center gap-1.5 text-xs font-mono font-bold uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            className="btn-warm btn-warm-outline btn-warm-sm shrink-0"
           >
-            <ArrowLeft size={15} />
+            <ArrowLeft size={14} />
             <span>Konsultasi</span>
           </Link>
 
           <div>
-            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-black">
-              RESUME MEDIS RESMI (EHR KEMENKES SATUSEHAT)
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-black uppercase">
+            <span className="eyebrow-warm mb-0">RESUME MEDIS RESMI (EHR KEMENKES SATUSEHAT)</span>
+            <h1 className="text-xl sm:text-2xl font-medium text-[#191918]">
               Lembar Formulir Rekam Medis
             </h1>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5 font-mono text-xs font-bold">
-          <div className="px-3 py-2 bg-neutral-100 border-2 border-black flex items-center gap-2">
-            <Database size={14} />
-            <span>STATUS: {dbSyncStatus === "saving" ? "MENYIMPAN..." : "TERSIMPAN AMAN"}</span>
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
+          <div className="col-span-2 sm:col-span-1 badge-warm badge-warm-success px-3 py-1.5 text-xs justify-center">
+            <ShieldCheck size={13} />
+            <span>STATUS ARSIP: {dbSyncStatus === "saving" ? "MENYIMPAN..." : "TERSIMPAN AMAN"}</span>
           </div>
 
           <button
             type="button"
             onClick={handleAutoGenerate}
             disabled={isGeneratingAi}
-            className="px-4 py-2 border-2 border-black bg-black text-white hover:bg-neutral-800 uppercase tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] flex items-center gap-1.5 cursor-pointer"
+            className="btn-warm btn-warm-primary btn-warm-sm justify-center"
           >
-            <Sparkles size={14} className={isGeneratingAi ? "animate-spin text-emerald-400" : "text-emerald-400"} />
-            <span>{isGeneratingAi ? "Menyusun AI..." : "Ekstraksi Ulang AI"}</span>
+            <Sparkles size={14} className={isGeneratingAi ? "animate-spin text-white" : "text-white"} />
+            <span>{isGeneratingAi ? "Menyusun AI..." : "Ekstraksi AI"}</span>
           </button>
 
           <button
             type="button"
             onClick={() => saveNowToDb()}
-            className="px-3.5 py-2 border-2 border-black bg-white hover:bg-neutral-100 text-black uppercase tracking-wider transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1.5"
+            className="btn-warm btn-warm-outline btn-warm-sm justify-center"
           >
             <Save size={14} />
-            <span>Simpan DB</span>
+            <span>Arsip Medis</span>
           </button>
 
           <button
             type="button"
             onClick={() => setShowSignatureModal(true)}
-            className={`px-4 py-2 border-2 border-black uppercase tracking-wider transition flex items-center gap-1.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] ${
-              isDoctorSigned ? "bg-neutral-100 text-black" : "bg-black text-white hover:bg-neutral-800"
+            className={`btn-warm btn-warm-sm justify-center ${
+              isDoctorSigned ? "btn-warm-outline bg-[#F3F2E7]" : "btn-warm-primary"
             }`}
           >
             <PenTool size={14} />
-            <span>{isDoctorSigned ? "Dokumen Ditandatangani" : "Tanda Tangan Dokter"}</span>
+            <span>{isDoctorSigned ? "Ditandatangani" : "Tanda Tangan DPJP"}</span>
           </button>
 
           <button
             type="button"
             onClick={handlePrint}
-            className="px-5 py-2 bg-black hover:bg-neutral-800 text-white uppercase tracking-wider transition flex items-center gap-1.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]"
+            className="btn-warm btn-warm-primary btn-warm-sm justify-center col-span-2 sm:col-span-1"
           >
-            <Printer size={15} />
-            <span>Cetak / PDF</span>
+            <Printer size={14} />
+            <span>Cetak PDF</span>
           </button>
         </div>
       </section>
@@ -324,80 +342,82 @@ function ReportPage() {
 
       {/* Digital Doctor Signature Modal */}
       {showSignatureModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 no-print">
-          <div className="bg-white border-2 border-black p-6 max-w-md w-full shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-4 font-sans text-xs font-bold">
-            <div className="flex items-center justify-between border-b-2 border-black pb-3 font-mono">
+        <div className="fixed inset-0 z-50 bg-[#000000]/50 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+          <div className="card-warm p-6 max-w-md w-full border-[#D1D0C6] space-y-5">
+            <div className="flex items-center justify-between border-b border-[#ECEBDF] pb-3">
               <div className="flex items-center gap-2">
-                <ShieldCheck size={18} />
-                <h3 className="font-black text-base uppercase text-black">TANDA TANGAN DOKTER DPJP</h3>
+                <ShieldCheck size={18} className="text-[#9E1B2E]" />
+                <span className="text-base font-medium text-[#191918]">Tanda Tangan Dokter DPJP</span>
               </div>
               <button
                 type="button"
                 onClick={() => setShowSignatureModal(false)}
-                className="text-black font-bold text-base"
+                className="text-[#6A6A64] hover:text-[#191918] p-1"
               >
-                ✕
+                <X size={16} />
               </button>
             </div>
 
-            <div className="space-y-1 font-mono">
-              <label className="uppercase text-black block">Nama Dokter DPJP:</label>
-              <input
-                type="text"
-                value={signatureName}
-                onChange={(e) => {
-                  setSignatureName(e.target.value);
-                  updateMedicalFormData({ doctorName: e.target.value });
-                }}
-                className="w-full px-3 py-2 border-2 border-black text-black font-sans font-bold"
-              />
-            </div>
-
-            <div className="space-y-1 font-mono">
-              <div className="flex items-center justify-between">
-                <label className="uppercase text-black">Goreskan Tanda Tangan:</label>
-                <button
-                  type="button"
-                  onClick={clearCanvas}
-                  className="text-neutral-700 hover:text-black underline text-[10px]"
-                >
-                  Reset
-                </button>
-              </div>
-
-              <div className="border-2 border-black bg-white">
-                <canvas
-                  ref={canvasRef}
-                  width={380}
-                  height={140}
-                  onMouseDown={startDrawing}
-                  onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                  onMouseLeave={stopDrawing}
-                  onTouchStart={startDrawing}
-                  onTouchMove={draw}
-                  onTouchEnd={stopDrawing}
-                  className="w-full h-[140px] cursor-crosshair touch-none"
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs uppercase tracking-[0.05em] text-[#474744] block">Nama Dokter DPJP:</label>
+                <input
+                  type="text"
+                  value={signatureName}
+                  onChange={(e) => {
+                    setSignatureName(e.target.value);
+                    updateMedicalFormData({ doctorName: e.target.value });
+                  }}
+                  className="input-warm"
                 />
               </div>
-            </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t-2 border-black font-mono">
-              <button
-                type="button"
-                onClick={() => setShowSignatureModal(false)}
-                className="px-4 py-2 border-2 border-black text-black hover:bg-neutral-100 uppercase tracking-wider"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={saveSignature}
-                className="px-5 py-2 bg-black text-white hover:bg-neutral-800 uppercase tracking-wider shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)] flex items-center gap-1.5"
-              >
-                <Check size={14} />
-                <span>Simpan Signature</span>
-              </button>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs uppercase tracking-[0.05em] text-[#474744] block">Goreskan Tanda Tangan:</label>
+                  <button
+                    type="button"
+                    onClick={clearCanvas}
+                    className="text-[#9E1B2E] hover:underline text-[11px] uppercase tracking-wider"
+                  >
+                    Reset
+                  </button>
+                </div>
+
+                <div className="border border-[#E3E2D8] bg-[#FFFFFF] rounded-[2px]">
+                  <canvas
+                    ref={canvasRef}
+                    width={380}
+                    height={140}
+                    onMouseDown={startDrawing}
+                    onMouseMove={draw}
+                    onMouseUp={stopDrawing}
+                    onMouseLeave={stopDrawing}
+                    onTouchStart={startDrawing}
+                    onTouchMove={draw}
+                    onTouchEnd={stopDrawing}
+                    className="w-full h-[140px] cursor-crosshair touch-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#ECEBDF]">
+                <button
+                  type="button"
+                  onClick={() => setShowSignatureModal(false)}
+                  className="btn-warm btn-warm-outline btn-warm-sm"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={saveSignature}
+                  className="btn-warm btn-warm-primary btn-warm-sm"
+                >
+                  <Check size={14} />
+                  <span>Simpan Signature</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

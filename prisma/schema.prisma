@@ -95,7 +95,9 @@ model MedicalReport {
   rawMedicalNotes        String                 @db.Text
   radiologyModality      String?                // "CT Scan", "MRI", "X-Ray", "EKG", "Echocardiogram"
   clinicalFindings       String                 @db.Text
-  aiDiagnosis            String                 @db.Text
+  aiSuggestedFindings    String                 @db.Text
+  suggestedIcd10Codes    String?                @db.Text // JSON or comma-separated candidate ICD-10 suggestions
+  evidenceRef            String?                @db.Text // Reference link to speech audio segment
   clinicalRecommendations String                @db.Text
   patientFriendlySummary String                 @db.Text
   aiConfidenceScore      Float?                 @default(0.95)
@@ -104,6 +106,7 @@ model MedicalReport {
   // 3D Visual Highlights
   primaryOrgan           String?                // "heart", "brain", "lungs", etc.
   organHighlights        ReportOrganHighlight[]
+  transcripts            Transcript[]
 
   // Doctor Verification & Timestamps
   verifiedAt             DateTime?
@@ -111,6 +114,31 @@ model MedicalReport {
   auditLogs              AuditLog[]
   createdAt              DateTime               @default(now())
   updatedAt              DateTime               @updatedAt
+}
+
+model Transcript {
+  id          String              @id @default(cuid())
+  reportId    String?
+  report      MedicalReport?      @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  audioUrl    String?
+  duration    Float?
+  language    String              @default("id-ID")
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  segments    TranscriptSegment[]
+}
+
+model TranscriptSegment {
+  id                      String     @id @default(cuid())
+  transcriptId            String
+  transcript              Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+  speaker                 String     // "Dokter", "Pasien", "Unknown"
+  text                    String     @db.Text
+  startTime               Float?
+  endTime                 Float?
+  confidence              Float?
+  referensi_ucapan_sumber String?    @db.Text // Traceability reference for evidence-linking
+  createdAt               DateTime   @default(now())
 }
 
 model ReportOrganHighlight {

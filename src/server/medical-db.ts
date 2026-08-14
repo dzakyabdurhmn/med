@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { MedicalFormData } from "../components/medical/MedicalHistoryFormDocument";
-import type { OrganId } from "../lib/anatomy-data";
 
 /**
  * Doctor Registration Server Function (Prisma DB + SATUSEHAT Verification)
@@ -194,14 +193,15 @@ export const saveReportToDb = createServerFn({
   .validator(
     (input: {
       formData: MedicalFormData;
-      organId: OrganId;
+      organId?: string;
       isSigned: boolean;
       signatureDataUrl: string | null;
+      dialogueLines?: { speaker: string; speakerName: string; text: string; time: string }[];
     }) => input
   )
   .handler(async ({ data }) => {
     const { prisma } = await import("../db");
-    const { formData, organId, isSigned, signatureDataUrl } = data;
+    const { formData, organId, isSigned, signatureDataUrl, dialogueLines } = data;
 
     try {
       if (!formData.patientName) {
@@ -272,11 +272,25 @@ export const saveReportToDb = createServerFn({
           rawMedicalNotes: formData.rawNotes || formData.otherMedicalIssues || "",
           radiologyModality: formData.modality || "Pemeriksaan Klinis",
           clinicalFindings: JSON.stringify(formData.findings || []),
-          aiDiagnosis: formData.diagnosis ? `${formData.diagnosis} (${formData.diagnosisIcd})` : "Dalam Evaluasi",
+          aiSuggestedFindings: formData.diagnosis ? `${formData.diagnosis} (${formData.diagnosisIcd})` : "Dalam Evaluasi",
+          suggestedIcd10Codes: formData.diagnosisIcd ? `${formData.diagnosisIcd} - ${formData.diagnosis}` : "Kode ICD-10 Kandidat AI",
+          evidenceRef: `REF-EVIDENCE-${Date.now()}`,
           clinicalRecommendations: formData.recommendations || "",
           patientFriendlySummary: formData.patientSummary || "",
           primaryOrgan: organId,
           verifiedAt: isSigned ? new Date() : null,
+          transcripts: {
+            create: {
+              language: "id-ID",
+              segments: {
+                create: (dialogueLines || []).map((d, i) => ({
+                  speaker: d.speaker === "doctor" ? "Dokter" : "Pasien",
+                  text: d.text,
+                  referensi_ucapan_sumber: `REF-SEG-${i + 1}-${d.speaker.toUpperCase()}-${Date.now()}`,
+                })),
+              },
+            },
+          },
           verificationRecord: isSigned
             ? {
                 create: {
@@ -290,7 +304,7 @@ export const saveReportToDb = createServerFn({
             : undefined,
           organHighlights: {
             create: (formData.findings || []).map((f) => ({
-              organId: f.organId || organId,
+              organId: f.organId || organId || "general",
               hotspotId: f.hotspotId,
               label: f.label,
               severity: f.severity as any,
@@ -303,6 +317,7 @@ export const saveReportToDb = createServerFn({
           patient: { include: { patientProfile: true } },
           doctor: true,
           organHighlights: true,
+          transcripts: { include: { segments: true } },
           verificationRecord: true,
         },
       });

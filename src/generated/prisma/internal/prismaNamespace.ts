@@ -400,6 +400,8 @@ export const ModelName = {
   User: 'User',
   PatientProfile: 'PatientProfile',
   MedicalReport: 'MedicalReport',
+  Transcript: 'Transcript',
+  TranscriptSegment: 'TranscriptSegment',
   ReportOrganHighlight: 'ReportOrganHighlight',
   VerificationRecord: 'VerificationRecord',
   MedicalGlossary: 'MedicalGlossary',
@@ -420,7 +422,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "patientProfile" | "medicalReport" | "reportOrganHighlight" | "verificationRecord" | "medicalGlossary" | "auditLog" | "medicalCode"
+    modelProps: "user" | "patientProfile" | "medicalReport" | "transcript" | "transcriptSegment" | "reportOrganHighlight" | "verificationRecord" | "medicalGlossary" | "auditLog" | "medicalCode"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -643,6 +645,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.MedicalReportCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.MedicalReportCountAggregateOutputType> | number
+        }
+      }
+    }
+    Transcript: {
+      payload: Prisma.$TranscriptPayload<ExtArgs>
+      fields: Prisma.TranscriptFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TranscriptFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TranscriptFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptPayload>
+        }
+        findFirst: {
+          args: Prisma.TranscriptFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TranscriptFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptPayload>
+        }
+        findMany: {
+          args: Prisma.TranscriptFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptPayload>[]
+        }
+        create: {
+          args: Prisma.TranscriptCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptPayload>
+        }
+        createMany: {
+          args: Prisma.TranscriptCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TranscriptCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptPayload>[]
+        }
+        delete: {
+          args: Prisma.TranscriptDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptPayload>
+        }
+        update: {
+          args: Prisma.TranscriptUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptPayload>
+        }
+        deleteMany: {
+          args: Prisma.TranscriptDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TranscriptUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TranscriptUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptPayload>[]
+        }
+        upsert: {
+          args: Prisma.TranscriptUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptPayload>
+        }
+        aggregate: {
+          args: Prisma.TranscriptAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTranscript>
+        }
+        groupBy: {
+          args: Prisma.TranscriptGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TranscriptGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TranscriptCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TranscriptCountAggregateOutputType> | number
+        }
+      }
+    }
+    TranscriptSegment: {
+      payload: Prisma.$TranscriptSegmentPayload<ExtArgs>
+      fields: Prisma.TranscriptSegmentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TranscriptSegmentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TranscriptSegmentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>
+        }
+        findFirst: {
+          args: Prisma.TranscriptSegmentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TranscriptSegmentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>
+        }
+        findMany: {
+          args: Prisma.TranscriptSegmentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>[]
+        }
+        create: {
+          args: Prisma.TranscriptSegmentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>
+        }
+        createMany: {
+          args: Prisma.TranscriptSegmentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TranscriptSegmentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>[]
+        }
+        delete: {
+          args: Prisma.TranscriptSegmentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>
+        }
+        update: {
+          args: Prisma.TranscriptSegmentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>
+        }
+        deleteMany: {
+          args: Prisma.TranscriptSegmentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TranscriptSegmentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TranscriptSegmentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>[]
+        }
+        upsert: {
+          args: Prisma.TranscriptSegmentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TranscriptSegmentPayload>
+        }
+        aggregate: {
+          args: Prisma.TranscriptSegmentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTranscriptSegment>
+        }
+        groupBy: {
+          args: Prisma.TranscriptSegmentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TranscriptSegmentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TranscriptSegmentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TranscriptSegmentCountAggregateOutputType> | number
         }
       }
     }
@@ -1106,7 +1256,9 @@ export const MedicalReportScalarFieldEnum = {
   rawMedicalNotes: 'rawMedicalNotes',
   radiologyModality: 'radiologyModality',
   clinicalFindings: 'clinicalFindings',
-  aiDiagnosis: 'aiDiagnosis',
+  aiSuggestedFindings: 'aiSuggestedFindings',
+  suggestedIcd10Codes: 'suggestedIcd10Codes',
+  evidenceRef: 'evidenceRef',
   clinicalRecommendations: 'clinicalRecommendations',
   patientFriendlySummary: 'patientFriendlySummary',
   aiConfidenceScore: 'aiConfidenceScore',
@@ -1118,6 +1270,34 @@ export const MedicalReportScalarFieldEnum = {
 } as const
 
 export type MedicalReportScalarFieldEnum = (typeof MedicalReportScalarFieldEnum)[keyof typeof MedicalReportScalarFieldEnum]
+
+
+export const TranscriptScalarFieldEnum = {
+  id: 'id',
+  reportId: 'reportId',
+  audioUrl: 'audioUrl',
+  duration: 'duration',
+  language: 'language',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TranscriptScalarFieldEnum = (typeof TranscriptScalarFieldEnum)[keyof typeof TranscriptScalarFieldEnum]
+
+
+export const TranscriptSegmentScalarFieldEnum = {
+  id: 'id',
+  transcriptId: 'transcriptId',
+  speaker: 'speaker',
+  text: 'text',
+  startTime: 'startTime',
+  endTime: 'endTime',
+  confidence: 'confidence',
+  referensi_ucapan_sumber: 'referensi_ucapan_sumber',
+  createdAt: 'createdAt'
+} as const
+
+export type TranscriptSegmentScalarFieldEnum = (typeof TranscriptSegmentScalarFieldEnum)[keyof typeof TranscriptSegmentScalarFieldEnum]
 
 
 export const ReportOrganHighlightScalarFieldEnum = {
@@ -1498,6 +1678,8 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   patientProfile?: Prisma.PatientProfileOmit
   medicalReport?: Prisma.MedicalReportOmit
+  transcript?: Prisma.TranscriptOmit
+  transcriptSegment?: Prisma.TranscriptSegmentOmit
   reportOrganHighlight?: Prisma.ReportOrganHighlightOmit
   verificationRecord?: Prisma.VerificationRecordOmit
   medicalGlossary?: Prisma.MedicalGlossaryOmit

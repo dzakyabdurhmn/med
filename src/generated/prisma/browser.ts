@@ -33,6 +33,16 @@ export type PatientProfile = Prisma.PatientProfileModel
  */
 export type MedicalReport = Prisma.MedicalReportModel
 /**
+ * Model Transcript
+ * 
+ */
+export type Transcript = Prisma.TranscriptModel
+/**
+ * Model TranscriptSegment
+ * 
+ */
+export type TranscriptSegment = Prisma.TranscriptSegmentModel
+/**
  * Model ReportOrganHighlight
  * 
  */

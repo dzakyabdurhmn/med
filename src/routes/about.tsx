@@ -1,182 +1,152 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
-  Activity,
   ShieldCheck,
-  Zap,
-  Box,
   ArrowRight,
   Sparkles,
-  Cpu,
-  Database,
-  Globe,
-  Code2,
-  Layers,
-  Brain,
+  FileText,
+  Stethoscope,
+  BookOpen,
+  Award,
+  UserCheck,
+  Activity,
 } from 'lucide-react'
 
 export const Route = createFileRoute('/about')({
-  component: About,
+  component: AboutPage,
 })
 
-function About() {
+function AboutPage() {
   return (
-    <main className="max-w-[1400px] mx-auto px-4 py-8 space-y-8 font-sans">
+    <main className="container-warm section-warm space-y-12">
       {/* Hero Banner */}
-      <section className="bg-white border-2 border-black p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 font-mono text-xs font-bold bg-black text-white uppercase tracking-widest mx-auto">
-          <Sparkles size={14} className="animate-pulse" />
-          <span>Karya Inovasi GEMASTIK 2026</span>
+      <section className="card-warm p-8 space-y-6 text-center max-w-4xl mx-auto">
+        <div className="badge-warm badge-warm-brand mx-auto">
+          <Sparkles size={13} className="text-[#9E1B2E]" />
+          <span>Karya Inovasi Klinis GEMASTIK 2026</span>
         </div>
 
         <div className="space-y-3">
-          <h1 className="text-3xl sm:text-5xl font-black text-black uppercase tracking-tight leading-tight">
-            MED-AI 3D Anatomy Atelier
+          <h1 className="text-3xl sm:text-4xl font-medium text-[#191918] tracking-tight leading-tight">
+            Metodologi Klinis &amp; Landasan Akademik NARASI
           </h1>
-          <p className="text-sm sm:text-base font-medium text-neutral-700 italic">
-            "Menghubungkan Catatan Medis Klinis dengan Pemahaman Spasial 3D Berbasis AI"
+          <p className="text-base text-[#6A6A64] italic">
+            "Standardisasi Dokumentasi Rekam Medis Elektronik &amp; Analisis Konsultasi Dokter-Pasien"
           </p>
         </div>
 
-        <p className="text-xs sm:text-sm text-neutral-700 font-medium max-w-3xl mx-auto leading-relaxed">
-          Platform interaktif berestetika atelier yang mengintegrasikan penalaran Large Language Model (NVIDIA DeepSeek)
-          dengan simulasi 3D real-time WebGL (Three.js) untuk menjembatani komunikasi antara dokter dan pasien.
+        <p className="text-sm text-[#474744] leading-relaxed max-w-2xl mx-auto">
+          NARASI dirancang sebagai sistem pendukung keputusan klinis (*Clinical Decision Support System*) dan dokumentasi rekam medis otomatis yang memadukan analisis percakapan klinis Bahasa Indonesia dengan standar pelayanan kesehatan Kemenkes RI.
         </p>
       </section>
 
-      {/* 3 Core Value Pillars */}
+      {/* 3 Core Clinical Pillars */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white border-2 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-3 hover:bg-neutral-50 transition">
-          <div className="w-12 h-12 bg-black text-white flex items-center justify-center font-black">
-            <Zap size={24} />
+        <div className="card-warm p-6 space-y-4">
+          <div className="w-10 h-10 bg-[#FCEEEF] text-[#9E1B2E] border border-[#F6D8DC] rounded-[2px] flex items-center justify-center">
+            <Stethoscope size={20} />
           </div>
-          <h3 className="text-lg font-black uppercase text-black">NVIDIA AI Reasoning Engine</h3>
-          <p className="text-xs font-sans text-neutral-700 font-medium leading-relaxed">
-            Mengekstrak temuan klinis, derajat keparahan (severity), diagnosis banding, dan penjelasan awam dari
-            catatan mentah radiologi / resume medis secara otomatis dan terstruktur.
+          <h3 className="text-lg font-medium text-[#191918]">Metodologi SOAP &amp; Triase Klinis</h3>
+          <p className="text-xs text-[#474744] leading-relaxed">
+            Penataan catatan medis terstruktur berdasarkan format Subjektif, Objektif, Asesmen, dan Plan (SOAP) serta klasifikasi derajat keparahan kondisi pasien secara sistematis.
           </p>
         </div>
 
-        <div className="bg-white border-2 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-3 hover:bg-neutral-50 transition">
-          <div className="w-12 h-12 bg-black text-white flex items-center justify-center font-black">
-            <Box size={24} />
+        <div className="card-warm p-6 space-y-4">
+          <div className="w-10 h-10 bg-[#FCEEEF] text-[#9E1B2E] border border-[#F6D8DC] rounded-[2px] flex items-center justify-center">
+            <BookOpen size={20} />
           </div>
-          <h3 className="text-lg font-black uppercase text-black">Interactive 3D WebGL (Three.js)</h3>
-          <p className="text-xs font-sans text-neutral-700 font-medium leading-relaxed">
-            9 sistem organ biologis lengkap dengan depth prepass, clipping plane cross-section, dynamic lighting,
-            dan highlight landmark patologi beranimasi.
+          <h3 className="text-lg font-medium text-[#191918]">Kodifikasi ICD-10 WHO</h3>
+          <p className="text-xs text-[#474744] leading-relaxed">
+            Penyajian rekomendasi kode diagnosis internasional (ICD-10) berbasis bukti percakapan untuk mendukung ketepatan klasifikasi penyakit dan efisiensi Resume Medis.
           </p>
         </div>
 
-        <div className="bg-white border-2 border-black p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-3 hover:bg-neutral-50 transition">
-          <div className="w-12 h-12 bg-black text-white flex items-center justify-center font-black">
-            <ShieldCheck size={24} />
+        <div className="card-warm p-6 space-y-4">
+          <div className="w-10 h-10 bg-[#FCEEEF] text-[#9E1B2E] border border-[#F6D8DC] rounded-[2px] flex items-center justify-center">
+            <ShieldCheck size={20} />
           </div>
-          <h3 className="text-lg font-black uppercase text-black">Human-In-The-Loop Verification</h3>
-          <p className="text-xs font-sans text-neutral-700 font-medium leading-relaxed">
-            Menjamin keamanan klinis dengan alur verifikasi dan tanda tangan digital dokter spesialis sebelum hasil resume
-            dipublikasikan kepada pasien (kepatuhan UU PDP No. 27/2022).
+          <h3 className="text-lg font-medium text-[#191918]">Etika &amp; Kerahasiaan KODEKI</h3>
+          <p className="text-xs text-[#474744] leading-relaxed">
+            Perlindungan privasi data medis pasien sesuai UU Perlindungan Data Pribadi No. 27/2022 dan Permenkes No. 24/2022 tentang Rekam Medis Elektronik.
           </p>
         </div>
       </section>
 
-      {/* System Architecture Details */}
-      <section className="bg-white border-2 border-black p-6 sm:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-        <div className="flex items-center gap-3 border-b-2 border-black pb-4">
-          <div className="w-10 h-10 bg-black text-white flex items-center justify-center shrink-0">
-            <Code2 size={20} />
+      {/* Clinical Governance Section */}
+      <section className="card-warm p-6 sm:p-8 space-y-6">
+        <div className="flex items-center gap-3 border-b border-[#ECEBDF] pb-4">
+          <div className="w-10 h-10 bg-[#F3F2E7] text-[#191918] border border-[#E3E2D8] rounded-[2px] flex items-center justify-center shrink-0">
+            <Award size={20} />
           </div>
-          <h2 className="text-2xl font-black uppercase text-black">Arsitektur & Spesifikasi Teknis</h2>
+          <div>
+            <h2 className="text-2xl font-medium text-[#191918]">Standar Mutu &amp; Keamanan Layanan Klinis</h2>
+            <p className="text-xs text-[#6A6A64]">Prinsip tata kelola medis dalam proses dokumentasi rekam medis pasien</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Frontend */}
-          <div className="border-2 border-black p-5 space-y-3 bg-neutral-50">
+          {/* Clinical Verification Card */}
+          <div className="p-5 bg-[#F3F2E7] border border-[#E3E2D8] rounded-[2px] space-y-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-black text-white flex items-center justify-center shrink-0">
-                <Globe size={16} />
-              </div>
-              <h4 className="font-black uppercase text-sm text-black">Frontend & Visualisasi 3D</h4>
+              <UserCheck size={18} className="text-[#9E1B2E]" />
+              <h4 className="font-medium text-sm text-[#191918]">Verifikasi Dokter DPJP (Human-in-the-Loop)</h4>
             </div>
-            <ul className="space-y-2 text-xs font-sans font-medium text-neutral-700 list-disc pl-5">
-              <li>
-                <span className="font-bold text-black">Framework:</span> TanStack Start (Full-stack React) &amp; TanStack Router
-              </li>
-              <li>
-                <span className="font-bold text-black">3D Engine:</span> Three.js WebGL Renderer, OrbitControls, GLTFLoader dengan Draco &amp; Meshopt
-              </li>
-              <li>
-                <span className="font-bold text-black">Desain:</span> NARASI Design System — Brutalist &amp; Monospace Aesthetic
-              </li>
-              <li>
-                <span className="font-bold text-black">Animasi:</span> Native CSS + React transitions untuk performa optimal
-              </li>
-            </ul>
+            <p className="text-xs text-[#474744] leading-relaxed">
+              Sistem bersifat sebagai asisten yang memberikan usulan temuan klinis. Keputusan diagnosis akhir, penulisan resep, dan pengesahan dokumen sepenuhnya berada di bawah otoritas klinis Dokter DPJP.
+            </p>
           </div>
 
-          {/* Backend */}
-          <div className="border-2 border-black p-5 space-y-3 bg-neutral-50">
+          {/* Evidence Linking Card */}
+          <div className="p-5 bg-[#F3F2E7] border border-[#E3E2D8] rounded-[2px] space-y-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-black text-white flex items-center justify-center shrink-0">
-                <Database size={16} />
-              </div>
-              <h4 className="font-black uppercase text-sm text-black">Backend, AI &amp; Database</h4>
+              <Activity size={18} className="text-[#9E1B2E]" />
+              <h4 className="font-medium text-sm text-[#191918]">Jejak Bukti Transkripsi Klinis</h4>
             </div>
-            <ul className="space-y-2 text-xs font-sans font-medium text-neutral-700 list-disc pl-5">
-              <li>
-                <span className="font-bold text-black">AI Engine:</span> NVIDIA OpenAI-compatible API (DeepSeek-V4 Pro)
-              </li>
-              <li>
-                <span className="font-bold text-black">Database ORM:</span> Prisma Client dengan PostgreSQL / SQLite
-              </li>
-              <li>
-                <span className="font-bold text-black">Keamanan Data:</span> Sesuai UU Perlindungan Data Pribadi No. 27/2022 &amp; Standar Rekam Medis
-              </li>
-              <li>
-                <span className="font-bold text-black">Validasi Input:</span> Zod Type-safe Validation Schemas
-              </li>
-            </ul>
+            <p className="text-xs text-[#474744] leading-relaxed">
+              Setiap kandidat kode ICD-10 dan temuan SOAP yang dihasilkan terhubung langsung dengan bukti ucapan dalam konsultasi, menjamin transparansi dan kemudahan audit rekam medis.
+            </p>
           </div>
         </div>
 
-        {/* Additional Tech Stack Row */}
-        <div className="border-2 border-black p-5 bg-white space-y-3">
+        {/* Standards Grid */}
+        <div className="p-5 bg-[#FFFEF2] border border-[#ECEBDF] rounded-[2px] space-y-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-black text-white flex items-center justify-center shrink-0">
-              <Layers size={16} />
-            </div>
-            <h4 className="font-black uppercase text-sm text-black">Tech Stack Overview</h4>
+            <FileText size={18} className="text-[#9E1B2E]" />
+            <h4 className="font-medium text-sm text-[#191918]">Acuan Regulasi &amp; Pedoman Klinis Nasional</h4>
           </div>
           <div className="flex flex-wrap gap-2">
-            {['React', 'TypeScript', 'Tailwind CSS', 'Three.js', 'Prisma', 'PostgreSQL', 'Zod', 'TanStack Router'].map((tech) => (
+            {[
+              'Permenkes RI No. 24/2022 (Rekam Medis)',
+              'UU Pelindungan Data Pribadi No. 27/2022',
+              'Klasifikasi Penyakit ICD-10 WHO',
+              'Kode Etik Kedokteran Indonesia (KODEKI)',
+              'Standar Resume Medis Pelayanan Kesehatan',
+            ].map((std) => (
               <span
-                key={tech}
-                className="px-3 py-1.5 border-2 border-black text-xs font-mono font-bold bg-white text-black"
+                key={std}
+                className="badge-warm badge-warm-brand"
               >
-                {tech}
+                {std}
               </span>
             ))}
           </div>
         </div>
 
-        <div className="pt-2 flex flex-wrap items-center justify-between gap-4 border-t-2 border-black pt-4">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold">
-            <Brain size={16} className="text-black" />
-            <span className="uppercase text-black">AI-Powered Medical Documentation</span>
+        {/* Footer CTA inside Card */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#ECEBDF] pt-4">
+          <div className="flex items-center gap-2 text-xs text-[#6A6A64]">
+            <Stethoscope size={16} className="text-[#9E1B2E]" />
+            <span className="uppercase tracking-wider">Dokumentasi Klinis Berstandar Kemenkes RI</span>
           </div>
           <Link
-            to="/"
-            className="px-6 py-3 bg-black hover:bg-neutral-800 text-white font-mono font-bold text-xs uppercase tracking-wider transition shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] flex items-center gap-2 cursor-pointer"
+            to="/consultation"
+            className="btn-warm btn-warm-primary btn-warm-base"
           >
-            <span>Buka 3D Atelier &amp; Visualizer</span>
+            <span>Mulai Konsultasi Medis</span>
             <ArrowRight size={16} />
           </Link>
         </div>
       </section>
-
-      {/* Footer Note */}
-      <div className="text-center text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-widest border-t-2 border-black pt-6">
-        <span>NARASI — Asisten Dokumentasi Klinis AI • GEMASTIK 2026</span>
-      </div>
     </main>
   )
 }

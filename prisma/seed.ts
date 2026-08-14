@@ -79,8 +79,12 @@ async function main() {
         'Pasien Tn. Budi (58 th) mengeluh sesak nafas saat aktivitas dan nyeri dada atipikal. Pemeriksaan ekokardiografi menunjukkan kalsifikasi katup aorta dengan area pembukaan berkurang (AVA 0.9 cm²), gradien puncak 48 mmHg. Terlihat hipertrofi konsentrik pada ventrikel kiri dengan ketebalan dinding septum 14 mm. Fraksi ejeksi (LVEF) 54%. Regurgitasi mitral derajat ringan.',
       clinicalFindings:
         'Kalsifikasi signifikan pada kuspis katup aorta dengan pembukaan terbatas. Hipertrofi ventrikel kiri kompensatorik. Fungsi sistolik ventrikel kiri masih terjaga.',
-      aiDiagnosis:
-        'Severe Calcific Aortic Valve Stenosis dengan Left Ventricular Hypertrophy (LVH) Kompensatorik.',
+      aiSuggestedFindings:
+        'Kalsifikasi kuspis katup aorta dengan pembukaan terbatas dan Hipertrofi Ventrikel Kiri (LVH) kompensatorik.',
+      suggestedIcd10Codes:
+        'I35.0 (Aortic valve stenosis), I51.7 (Cardiomegaly / LVH)',
+      evidenceRef:
+        'SEG-AUDIO-001#00:01:24',
       clinicalRecommendations:
         'Konsultasi Bedah Toraks Kardiovaskular untuk evaluasi TAVR/SAVR. Kontrol tekanan darah ketat target < 130/80 mmHg. Hindari aktivitas fisik kompetitif.',
       patientFriendlySummary:
@@ -89,6 +93,43 @@ async function main() {
       disclaimerAccepted: true,
       primaryOrgan: 'heart',
       verifiedAt: new Date(),
+      transcripts: {
+        create: [
+          {
+            audioUrl: '/audio/consultation-0089.mp3',
+            duration: 184.5,
+            language: 'id-ID',
+            segments: {
+              create: [
+                {
+                  speaker: 'Pasien',
+                  text: 'Dada saya rasanya agak sesak kalau jalan agak cepat, Dok, terus kadang ada nyeri tumpul di tengah dada.',
+                  startTime: 12.0,
+                  endTime: 24.5,
+                  confidence: 0.98,
+                  referensi_ucapan_sumber: 'AUDIO-SESI-0089-SEG-01',
+                },
+                {
+                  speaker: 'Dokter',
+                  text: 'Sudah berapa lama dirasakan sesaknya, Pak Budi? Apakah ada riwayat darah tinggi sebelumnya?',
+                  startTime: 25.0,
+                  endTime: 34.0,
+                  confidence: 0.99,
+                  referensi_ucapan_sumber: 'AUDIO-SESI-0089-SEG-02',
+                },
+                {
+                  speaker: 'Pasien',
+                  text: 'Sudah sekitar dua bulanan, Dok. Iya, ada darah tinggi dan minum obat tidak teratur.',
+                  startTime: 34.5,
+                  endTime: 42.0,
+                  confidence: 0.97,
+                  referensi_ucapan_sumber: 'AUDIO-SESI-0089-SEG-03',
+                },
+              ],
+            },
+          },
+        ],
+      },
       organHighlights: {
         create: [
           {

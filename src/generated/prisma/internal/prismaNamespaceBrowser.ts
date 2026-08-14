@@ -54,6 +54,8 @@ export const ModelName = {
   User: 'User',
   PatientProfile: 'PatientProfile',
   MedicalReport: 'MedicalReport',
+  Transcript: 'Transcript',
+  TranscriptSegment: 'TranscriptSegment',
   ReportOrganHighlight: 'ReportOrganHighlight',
   VerificationRecord: 'VerificationRecord',
   MedicalGlossary: 'MedicalGlossary',
@@ -128,7 +130,9 @@ export const MedicalReportScalarFieldEnum = {
   rawMedicalNotes: 'rawMedicalNotes',
   radiologyModality: 'radiologyModality',
   clinicalFindings: 'clinicalFindings',
-  aiDiagnosis: 'aiDiagnosis',
+  aiSuggestedFindings: 'aiSuggestedFindings',
+  suggestedIcd10Codes: 'suggestedIcd10Codes',
+  evidenceRef: 'evidenceRef',
   clinicalRecommendations: 'clinicalRecommendations',
   patientFriendlySummary: 'patientFriendlySummary',
   aiConfidenceScore: 'aiConfidenceScore',
@@ -140,6 +144,34 @@ export const MedicalReportScalarFieldEnum = {
 } as const
 
 export type MedicalReportScalarFieldEnum = (typeof MedicalReportScalarFieldEnum)[keyof typeof MedicalReportScalarFieldEnum]
+
+
+export const TranscriptScalarFieldEnum = {
+  id: 'id',
+  reportId: 'reportId',
+  audioUrl: 'audioUrl',
+  duration: 'duration',
+  language: 'language',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TranscriptScalarFieldEnum = (typeof TranscriptScalarFieldEnum)[keyof typeof TranscriptScalarFieldEnum]
+
+
+export const TranscriptSegmentScalarFieldEnum = {
+  id: 'id',
+  transcriptId: 'transcriptId',
+  speaker: 'speaker',
+  text: 'text',
+  startTime: 'startTime',
+  endTime: 'endTime',
+  confidence: 'confidence',
+  referensi_ucapan_sumber: 'referensi_ucapan_sumber',
+  createdAt: 'createdAt'
+} as const
+
+export type TranscriptSegmentScalarFieldEnum = (typeof TranscriptSegmentScalarFieldEnum)[keyof typeof TranscriptSegmentScalarFieldEnum]
 
 
 export const ReportOrganHighlightScalarFieldEnum = {

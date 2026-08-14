@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import type { OrganId } from "../lib/anatomy-data";
 import type {
   MedicalFormData,
   MedicationItem,
   ClinicalFindingItem,
 } from "../components/medical/MedicalHistoryFormDocument";
 import { saveReportToDb } from "../server/medical-db";
+import type { EvidenceLinkedItem } from "../server/ai-extract";
 
 export type DialogueItem = {
   speaker: "doctor" | "patient";
@@ -17,7 +17,7 @@ export type DialogueItem = {
 export type CasePreset = {
   id: string;
   title: string;
-  organId: OrganId;
+  organId?: string;
   patientName: string;
   patientAge: string;
   patientGender: string;
@@ -70,6 +70,7 @@ export type CasePreset = {
   reviewOfSystems?: Record<string, boolean>;
   aiCheckedKeys?: string[];
   isAiGenerated?: boolean;
+  evidenceList?: EvidenceLinkedItem[];
 };
 
 export type DoctorSpecialtyKey =
@@ -103,79 +104,62 @@ export type DoctorProfile = {
 
 export function createBlankMedicalFormData(doctor?: DoctorProfile, patientName: string = ""): MedicalFormData {
   return {
-    patientName: patientName || "Tn. Hendra Wijaya",
-    patientDob: "14 Mei 1978",
+    patientName: patientName || "",
+    patientDob: "",
     patientGender: "M",
-    patientAddress: "Jl. Diponegoro No. 42, Jakarta Pusat",
-    patientPhone: "0812-3456-7890",
-    emergencyContactName: "Ny. Ratna Wijaya",
-    emergencyContactRelationship: "Istri",
-    emergencyContactPhone: "0813-9876-5432",
+    patientAddress: "",
+    patientPhone: "",
+    emergencyContactName: "",
+    emergencyContactRelationship: "",
+    emergencyContactPhone: "",
     insuranceProvider: "BPJS Kesehatan (JKN-KIS)",
-    insurancePolicyNumber: "0001892341823",
+    insurancePolicyNumber: "",
 
-    personalHistory: { high_blood_pressure: true, high_cholesterol: true, acid_reflux: true },
+    personalHistory: {},
     personalHistoryCancerSpecify: "",
-    otherMedicalIssues: "Riwayat tensi tinggi sejak 2 tahun lalu.",
+    otherMedicalIssues: "",
 
-    medications: [
-      {
-        id: "med-1",
-        name: "Amlodipine",
-        dosage: "5 mg",
-        frequency: "1x1 tablet / hari",
-        purpose: "Antihipertensi",
-        notes: "Diminum pagi hari sesudah makan",
-      },
-      {
-        id: "med-2",
-        name: "Atorvastatin",
-        dosage: "20 mg",
-        frequency: "1x1 tablet / malam",
-        purpose: "Antilipidemia",
-        notes: "Diminum malam hari sebelum tidur",
-      },
-    ],
+    medications: [],
 
-    surgeries: { appendectomy: true },
+    surgeries: {},
     surgeriesOtherSpecify: "",
-    allergies: "Alergi: Obat Golongan Sefalosporin (Urtikaria)",
+    allergies: "Tidak ada riwayat alergi obat / makanan yang diketahui.",
 
-    familyHistory: { heart_disease: true, diabetes: true },
+    familyHistory: {},
     familyHistoryOtherSpecify: "",
 
     tobaccoUse: "Non-smoker",
     tobaccoRecentDate: "-",
     alcoholUse: "None",
     recreationalDrugs: "No",
-    caffeineWeekly: "2",
-    exerciseWeekly: "2",
+    caffeineWeekly: "0",
+    exerciseWeekly: "0",
     sleepHours: "7-8",
     socialDetriments: "No",
-    occupation: "Karyawan Swasta",
+    occupation: "",
     livingSituation: "With family",
 
-    reviewOfSystems: { ros_chest_pain: true, ros_sob: true, ros_fatigue: true },
+    reviewOfSystems: {},
 
-    diagnosis: "Suspek Sindrom Koroner Akut (SKA) / Hipertensi Esensial Stage II",
-    diagnosisIcd: "I20.9 / I10",
-    severity: "SEVERE",
+    diagnosis: "",
+    diagnosisIcd: "",
+    severity: "NORMAL",
     vitalSigns: {
-      bloodPressure: "140/90 mmHg",
-      heartRate: "82 bpm",
-      respiratoryRate: "20 x/mnt",
-      spo2: "97%",
-      temperature: "36.6 °C",
+      bloodPressure: "120/80 mmHg",
+      heartRate: "75 bpm",
+      respiratoryRate: "18 x/mnt",
+      spo2: "99%",
+      temperature: "36.5 °C",
     },
-    rawNotes: "Pasien datang mengeluhkan nyeri dada sebelah kiri terasa tertekan sejak 3 hari lalu.",
-    recommendations: "1. Istirahat total (Bed rest)\n2. EKG 12 Lead & Pemeriksaan Troponin I\n3. Lanjutkan Amlodipine 5mg & Aspilet 80mg\n4. EGD / Konsultasi Spesialis Kardiologi DPJP",
-    patientSummary: "Pasien disarankan menjaga pola makan rendah garam, hindari stres, dan mengonsumsi obat antihipertensi secara teratur.",
+    rawNotes: "",
+    recommendations: "",
+    patientSummary: "",
     findings: [],
 
-    doctorName: doctor?.name || "dr. Budi Santoso, Sp.JP",
-    doctorSpecialty: doctor?.specialization || "Spesialis Jantung & Pembuluh Darah (DPJP)",
+    doctorName: doctor?.name || "dr. Dokter Spesialis",
+    doctorSpecialty: doctor?.specialization || "DPJP Spesialis",
     doctorSip: doctor?.licenseNumber || "SIP: 503/SIP.D/2026",
-    modality: "Anamnesis Klinis & Rekonstruksi 3D",
+    modality: "Pemeriksaan & Anamnesis Klinis",
   };
 }
 
@@ -185,7 +169,7 @@ export function createBlankPatientCase(
     patientDob?: string;
     patientAge?: string;
     patientGender?: string;
-    organId?: OrganId;
+    organId?: string;
     title?: string;
     rawNotes?: string;
     dialogue?: DialogueItem[];
@@ -199,23 +183,23 @@ export function createBlankPatientCase(
   return {
     id: caseId,
     title: params.title || `Konsultasi ${params.patientName}`,
-    organId: params.organId || "lungs",
+    organId: params.organId || "general",
     patientName: params.patientName,
-    patientAge: params.patientDob || params.patientAge || "14 Mei 1978",
+    patientAge: params.patientDob || params.patientAge || "",
     patientGender: params.patientGender || "Laki-laki",
     patientMrn: randomMrn,
     patientNik: randomNik,
-    patientDob: params.patientDob || "14 Mei 1978",
+    patientDob: params.patientDob || "",
     doctorName: doctor?.name || "dr. Dokter Spesialis",
     doctorSpecialty: doctor?.specialization || "DPJP Spesialis",
     doctorSip: doctor?.licenseNumber || "SIP: 503/SIP.D/2026",
-    modality: "Anamnesis Klinis & Rekonstruksi 3D",
+    modality: "Pemeriksaan & Anamnesis Klinis",
     vitalSigns: {
       bloodPressure: "120/80 mmHg",
-      heartRate: "78 bpm",
+      heartRate: "75 bpm",
       respiratoryRate: "18 x/mnt",
-      spo2: "98%",
-      temperature: "36.6 °C",
+      spo2: "99%",
+      temperature: "36.5 °C",
     },
     dialogue: params.dialogue || [
       {
@@ -225,7 +209,7 @@ export function createBlankPatientCase(
         text: `Selamat pagi ${params.patientName}. Apa keluhan utama yang Anda rasakan?`,
       },
     ],
-    rawNotes: params.rawNotes || "Pasien datang untuk konsultasi pemeriksaan klinis.",
+    rawNotes: params.rawNotes || "",
     diagnosisIcd: "",
     diagnosis: "",
     severity: "NORMAL",
@@ -248,7 +232,7 @@ type StoreState = {
   isDoctorSigned: boolean;
   signatureDataUrl: string | null;
   signedAtTimestamp: string | null;
-  selectedOrganId: OrganId;
+  selectedOrganId: string;
   selectedHotspotId: string | null;
   activeFindingId: string | null;
   symptomMode: boolean;
@@ -256,9 +240,20 @@ type StoreState = {
   lastDbSavedTime: string | null;
 };
 
-// Start with completely clean initial state (NO DUMMY DATA)
+// Clean initial state (NO DUMMY FAKE PATIENTS OR DUMMY DATA)
 let globalState: StoreState = {
-  doctorProfile: null,
+  doctorProfile: {
+    id: "doc-default",
+    name: "dr. Dokter Spesialis",
+    specialization: "DPJP Spesialis",
+    specialtyKey: "general",
+    licenseNumber: "503/482/SIP.D/2026",
+    institution: "Rumah Sakit / Klinik Utama",
+    email: "dokter@kemenkes.go.id",
+    phone: "081234567890",
+    isRegistered: true,
+    registeredAt: "2026-01-01T00:00:00.000Z",
+  },
   cases: [],
   activeCaseId: null,
   medicalFormData: createBlankMedicalFormData(),
@@ -381,7 +376,7 @@ export function useMedicalStore() {
     patientDob?: string;
     patientAge?: string;
     patientGender?: string;
-    organId?: OrganId;
+    organId?: string;
     title?: string;
     rawNotes?: string;
     dialogue?: DialogueItem[];
@@ -389,7 +384,7 @@ export function useMedicalStore() {
     const newCase = createBlankPatientCase(params, globalState.doctorProfile || undefined);
     globalState.cases = [newCase, ...globalState.cases];
     globalState.activeCaseId = newCase.id;
-    globalState.selectedOrganId = newCase.organId;
+    globalState.selectedOrganId = newCase.organId || "general";
     globalState.medicalFormData = {
       ...createBlankMedicalFormData(globalState.doctorProfile || undefined, params.patientName),
       patientDob: newCase.patientDob,
@@ -422,7 +417,7 @@ export function useMedicalStore() {
     if (!found) return;
 
     globalState.activeCaseId = caseId;
-    globalState.selectedOrganId = found.organId;
+    globalState.selectedOrganId = found.organId || "general";
     globalState.selectedHotspotId = found.affectedHotspots[0] || null;
     globalState.activeFindingId = found.findings[0]?.id || null;
 
@@ -531,7 +526,7 @@ export function useMedicalStore() {
     notify(true);
   };
 
-  const selectOrgan = (organId: OrganId) => {
+  const selectOrgan = (organId: string) => {
     globalState.selectedOrganId = organId;
     globalState.selectedHotspotId = null;
     globalState.activeFindingId = null;
@@ -550,7 +545,7 @@ export function useMedicalStore() {
   };
 
   const set3DInspection = (
-    organId: OrganId,
+    organId: string,
     hotspotId: string | null = null,
     findingId: string | null = null
   ) => {
@@ -595,7 +590,7 @@ export function useMedicalStore() {
     recommendations: string;
     patientSummary: string;
     rxPrescriptions?: string[];
-    organId?: OrganId;
+    organId?: string;
     allergies?: string;
     medications?: MedicationItem[];
     personalHistory?: Record<string, boolean>;
@@ -608,6 +603,7 @@ export function useMedicalStore() {
     occupation?: string;
     livingSituation?: "With roommates" | "With S/O" | "With family" | "Other";
     aiCheckedKeys?: string[];
+    evidenceList?: EvidenceLinkedItem[];
     vitalSigns?: {
       bloodPressure: string;
       heartRate: string;
@@ -667,6 +663,7 @@ export function useMedicalStore() {
             occupation: aiData.occupation || c.occupation,
             livingSituation: aiData.livingSituation || c.livingSituation,
             aiCheckedKeys: aiData.aiCheckedKeys || c.aiCheckedKeys,
+            evidenceList: aiData.evidenceList || c.evidenceList,
             isAiGenerated: true,
           };
         }
@@ -686,12 +683,14 @@ export function useMedicalStore() {
     globalState.dbSyncStatus = "saving";
     notify(false);
     try {
+      const currentActiveCase = globalState.cases.find((c) => c.id === globalState.activeCaseId);
       await saveReportToDb({
         data: {
           formData: globalState.medicalFormData,
           organId: globalState.selectedOrganId,
           isSigned: globalState.isDoctorSigned,
           signatureDataUrl: globalState.signatureDataUrl,
+          dialogueLines: currentActiveCase?.dialogue || [],
         },
       });
       globalState.dbSyncStatus = "saved";

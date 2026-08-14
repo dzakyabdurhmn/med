@@ -44,7 +44,9 @@ export type MedicalReportMinAggregateOutputType = {
   rawMedicalNotes: string | null
   radiologyModality: string | null
   clinicalFindings: string | null
-  aiDiagnosis: string | null
+  aiSuggestedFindings: string | null
+  suggestedIcd10Codes: string | null
+  evidenceRef: string | null
   clinicalRecommendations: string | null
   patientFriendlySummary: string | null
   aiConfidenceScore: number | null
@@ -65,7 +67,9 @@ export type MedicalReportMaxAggregateOutputType = {
   rawMedicalNotes: string | null
   radiologyModality: string | null
   clinicalFindings: string | null
-  aiDiagnosis: string | null
+  aiSuggestedFindings: string | null
+  suggestedIcd10Codes: string | null
+  evidenceRef: string | null
   clinicalRecommendations: string | null
   patientFriendlySummary: string | null
   aiConfidenceScore: number | null
@@ -86,7 +90,9 @@ export type MedicalReportCountAggregateOutputType = {
   rawMedicalNotes: number
   radiologyModality: number
   clinicalFindings: number
-  aiDiagnosis: number
+  aiSuggestedFindings: number
+  suggestedIcd10Codes: number
+  evidenceRef: number
   clinicalRecommendations: number
   patientFriendlySummary: number
   aiConfidenceScore: number
@@ -117,7 +123,9 @@ export type MedicalReportMinAggregateInputType = {
   rawMedicalNotes?: true
   radiologyModality?: true
   clinicalFindings?: true
-  aiDiagnosis?: true
+  aiSuggestedFindings?: true
+  suggestedIcd10Codes?: true
+  evidenceRef?: true
   clinicalRecommendations?: true
   patientFriendlySummary?: true
   aiConfidenceScore?: true
@@ -138,7 +146,9 @@ export type MedicalReportMaxAggregateInputType = {
   rawMedicalNotes?: true
   radiologyModality?: true
   clinicalFindings?: true
-  aiDiagnosis?: true
+  aiSuggestedFindings?: true
+  suggestedIcd10Codes?: true
+  evidenceRef?: true
   clinicalRecommendations?: true
   patientFriendlySummary?: true
   aiConfidenceScore?: true
@@ -159,7 +169,9 @@ export type MedicalReportCountAggregateInputType = {
   rawMedicalNotes?: true
   radiologyModality?: true
   clinicalFindings?: true
-  aiDiagnosis?: true
+  aiSuggestedFindings?: true
+  suggestedIcd10Codes?: true
+  evidenceRef?: true
   clinicalRecommendations?: true
   patientFriendlySummary?: true
   aiConfidenceScore?: true
@@ -267,7 +279,9 @@ export type MedicalReportGroupByOutputType = {
   rawMedicalNotes: string
   radiologyModality: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes: string | null
+  evidenceRef: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore: number | null
@@ -311,7 +325,9 @@ export type MedicalReportWhereInput = {
   rawMedicalNotes?: Prisma.StringFilter<"MedicalReport"> | string
   radiologyModality?: Prisma.StringNullableFilter<"MedicalReport"> | string | null
   clinicalFindings?: Prisma.StringFilter<"MedicalReport"> | string
-  aiDiagnosis?: Prisma.StringFilter<"MedicalReport"> | string
+  aiSuggestedFindings?: Prisma.StringFilter<"MedicalReport"> | string
+  suggestedIcd10Codes?: Prisma.StringNullableFilter<"MedicalReport"> | string | null
+  evidenceRef?: Prisma.StringNullableFilter<"MedicalReport"> | string | null
   clinicalRecommendations?: Prisma.StringFilter<"MedicalReport"> | string
   patientFriendlySummary?: Prisma.StringFilter<"MedicalReport"> | string
   aiConfidenceScore?: Prisma.FloatNullableFilter<"MedicalReport"> | number | null
@@ -323,6 +339,7 @@ export type MedicalReportWhereInput = {
   patient?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   doctor?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   organHighlights?: Prisma.ReportOrganHighlightListRelationFilter
+  transcripts?: Prisma.TranscriptListRelationFilter
   verificationRecord?: Prisma.XOR<Prisma.VerificationRecordNullableScalarRelationFilter, Prisma.VerificationRecordWhereInput> | null
   auditLogs?: Prisma.AuditLogListRelationFilter
 }
@@ -337,7 +354,9 @@ export type MedicalReportOrderByWithRelationInput = {
   rawMedicalNotes?: Prisma.SortOrder
   radiologyModality?: Prisma.SortOrderInput | Prisma.SortOrder
   clinicalFindings?: Prisma.SortOrder
-  aiDiagnosis?: Prisma.SortOrder
+  aiSuggestedFindings?: Prisma.SortOrder
+  suggestedIcd10Codes?: Prisma.SortOrderInput | Prisma.SortOrder
+  evidenceRef?: Prisma.SortOrderInput | Prisma.SortOrder
   clinicalRecommendations?: Prisma.SortOrder
   patientFriendlySummary?: Prisma.SortOrder
   aiConfidenceScore?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -349,6 +368,7 @@ export type MedicalReportOrderByWithRelationInput = {
   patient?: Prisma.UserOrderByWithRelationInput
   doctor?: Prisma.UserOrderByWithRelationInput
   organHighlights?: Prisma.ReportOrganHighlightOrderByRelationAggregateInput
+  transcripts?: Prisma.TranscriptOrderByRelationAggregateInput
   verificationRecord?: Prisma.VerificationRecordOrderByWithRelationInput
   auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
 }
@@ -366,7 +386,9 @@ export type MedicalReportWhereUniqueInput = Prisma.AtLeast<{
   rawMedicalNotes?: Prisma.StringFilter<"MedicalReport"> | string
   radiologyModality?: Prisma.StringNullableFilter<"MedicalReport"> | string | null
   clinicalFindings?: Prisma.StringFilter<"MedicalReport"> | string
-  aiDiagnosis?: Prisma.StringFilter<"MedicalReport"> | string
+  aiSuggestedFindings?: Prisma.StringFilter<"MedicalReport"> | string
+  suggestedIcd10Codes?: Prisma.StringNullableFilter<"MedicalReport"> | string | null
+  evidenceRef?: Prisma.StringNullableFilter<"MedicalReport"> | string | null
   clinicalRecommendations?: Prisma.StringFilter<"MedicalReport"> | string
   patientFriendlySummary?: Prisma.StringFilter<"MedicalReport"> | string
   aiConfidenceScore?: Prisma.FloatNullableFilter<"MedicalReport"> | number | null
@@ -378,6 +400,7 @@ export type MedicalReportWhereUniqueInput = Prisma.AtLeast<{
   patient?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   doctor?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
   organHighlights?: Prisma.ReportOrganHighlightListRelationFilter
+  transcripts?: Prisma.TranscriptListRelationFilter
   verificationRecord?: Prisma.XOR<Prisma.VerificationRecordNullableScalarRelationFilter, Prisma.VerificationRecordWhereInput> | null
   auditLogs?: Prisma.AuditLogListRelationFilter
 }, "id" | "reportNumber">
@@ -392,7 +415,9 @@ export type MedicalReportOrderByWithAggregationInput = {
   rawMedicalNotes?: Prisma.SortOrder
   radiologyModality?: Prisma.SortOrderInput | Prisma.SortOrder
   clinicalFindings?: Prisma.SortOrder
-  aiDiagnosis?: Prisma.SortOrder
+  aiSuggestedFindings?: Prisma.SortOrder
+  suggestedIcd10Codes?: Prisma.SortOrderInput | Prisma.SortOrder
+  evidenceRef?: Prisma.SortOrderInput | Prisma.SortOrder
   clinicalRecommendations?: Prisma.SortOrder
   patientFriendlySummary?: Prisma.SortOrder
   aiConfidenceScore?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -421,7 +446,9 @@ export type MedicalReportScalarWhereWithAggregatesInput = {
   rawMedicalNotes?: Prisma.StringWithAggregatesFilter<"MedicalReport"> | string
   radiologyModality?: Prisma.StringNullableWithAggregatesFilter<"MedicalReport"> | string | null
   clinicalFindings?: Prisma.StringWithAggregatesFilter<"MedicalReport"> | string
-  aiDiagnosis?: Prisma.StringWithAggregatesFilter<"MedicalReport"> | string
+  aiSuggestedFindings?: Prisma.StringWithAggregatesFilter<"MedicalReport"> | string
+  suggestedIcd10Codes?: Prisma.StringNullableWithAggregatesFilter<"MedicalReport"> | string | null
+  evidenceRef?: Prisma.StringNullableWithAggregatesFilter<"MedicalReport"> | string | null
   clinicalRecommendations?: Prisma.StringWithAggregatesFilter<"MedicalReport"> | string
   patientFriendlySummary?: Prisma.StringWithAggregatesFilter<"MedicalReport"> | string
   aiConfidenceScore?: Prisma.FloatNullableWithAggregatesFilter<"MedicalReport"> | number | null
@@ -440,7 +467,9 @@ export type MedicalReportCreateInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -452,6 +481,7 @@ export type MedicalReportCreateInput = {
   patient: Prisma.UserCreateNestedOneWithoutPatientReportsInput
   doctor?: Prisma.UserCreateNestedOneWithoutAuthoredReportsInput
   organHighlights?: Prisma.ReportOrganHighlightCreateNestedManyWithoutReportInput
+  transcripts?: Prisma.TranscriptCreateNestedManyWithoutReportInput
   verificationRecord?: Prisma.VerificationRecordCreateNestedOneWithoutReportInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutReportInput
 }
@@ -466,7 +496,9 @@ export type MedicalReportUncheckedCreateInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -476,6 +508,7 @@ export type MedicalReportUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   organHighlights?: Prisma.ReportOrganHighlightUncheckedCreateNestedManyWithoutReportInput
+  transcripts?: Prisma.TranscriptUncheckedCreateNestedManyWithoutReportInput
   verificationRecord?: Prisma.VerificationRecordUncheckedCreateNestedOneWithoutReportInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutReportInput
 }
@@ -488,7 +521,9 @@ export type MedicalReportUpdateInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -500,6 +535,7 @@ export type MedicalReportUpdateInput = {
   patient?: Prisma.UserUpdateOneRequiredWithoutPatientReportsNestedInput
   doctor?: Prisma.UserUpdateOneWithoutAuthoredReportsNestedInput
   organHighlights?: Prisma.ReportOrganHighlightUpdateManyWithoutReportNestedInput
+  transcripts?: Prisma.TranscriptUpdateManyWithoutReportNestedInput
   verificationRecord?: Prisma.VerificationRecordUpdateOneWithoutReportNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutReportNestedInput
 }
@@ -514,7 +550,9 @@ export type MedicalReportUncheckedUpdateInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -524,6 +562,7 @@ export type MedicalReportUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organHighlights?: Prisma.ReportOrganHighlightUncheckedUpdateManyWithoutReportNestedInput
+  transcripts?: Prisma.TranscriptUncheckedUpdateManyWithoutReportNestedInput
   verificationRecord?: Prisma.VerificationRecordUncheckedUpdateOneWithoutReportNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutReportNestedInput
 }
@@ -538,7 +577,9 @@ export type MedicalReportCreateManyInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -557,7 +598,9 @@ export type MedicalReportUpdateManyMutationInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -578,7 +621,9 @@ export type MedicalReportUncheckedUpdateManyInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -609,7 +654,9 @@ export type MedicalReportCountOrderByAggregateInput = {
   rawMedicalNotes?: Prisma.SortOrder
   radiologyModality?: Prisma.SortOrder
   clinicalFindings?: Prisma.SortOrder
-  aiDiagnosis?: Prisma.SortOrder
+  aiSuggestedFindings?: Prisma.SortOrder
+  suggestedIcd10Codes?: Prisma.SortOrder
+  evidenceRef?: Prisma.SortOrder
   clinicalRecommendations?: Prisma.SortOrder
   patientFriendlySummary?: Prisma.SortOrder
   aiConfidenceScore?: Prisma.SortOrder
@@ -634,7 +681,9 @@ export type MedicalReportMaxOrderByAggregateInput = {
   rawMedicalNotes?: Prisma.SortOrder
   radiologyModality?: Prisma.SortOrder
   clinicalFindings?: Prisma.SortOrder
-  aiDiagnosis?: Prisma.SortOrder
+  aiSuggestedFindings?: Prisma.SortOrder
+  suggestedIcd10Codes?: Prisma.SortOrder
+  evidenceRef?: Prisma.SortOrder
   clinicalRecommendations?: Prisma.SortOrder
   patientFriendlySummary?: Prisma.SortOrder
   aiConfidenceScore?: Prisma.SortOrder
@@ -655,7 +704,9 @@ export type MedicalReportMinOrderByAggregateInput = {
   rawMedicalNotes?: Prisma.SortOrder
   radiologyModality?: Prisma.SortOrder
   clinicalFindings?: Prisma.SortOrder
-  aiDiagnosis?: Prisma.SortOrder
+  aiSuggestedFindings?: Prisma.SortOrder
+  suggestedIcd10Codes?: Prisma.SortOrder
+  evidenceRef?: Prisma.SortOrder
   clinicalRecommendations?: Prisma.SortOrder
   patientFriendlySummary?: Prisma.SortOrder
   aiConfidenceScore?: Prisma.SortOrder
@@ -670,14 +721,14 @@ export type MedicalReportSumOrderByAggregateInput = {
   aiConfidenceScore?: Prisma.SortOrder
 }
 
-export type MedicalReportScalarRelationFilter = {
-  is?: Prisma.MedicalReportWhereInput
-  isNot?: Prisma.MedicalReportWhereInput
-}
-
 export type MedicalReportNullableScalarRelationFilter = {
   is?: Prisma.MedicalReportWhereInput | null
   isNot?: Prisma.MedicalReportWhereInput | null
+}
+
+export type MedicalReportScalarRelationFilter = {
+  is?: Prisma.MedicalReportWhereInput
+  isNot?: Prisma.MedicalReportWhereInput
 }
 
 export type MedicalReportCreateNestedManyWithoutDoctorInput = {
@@ -776,6 +827,22 @@ export type NullableFloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type MedicalReportCreateNestedOneWithoutTranscriptsInput = {
+  create?: Prisma.XOR<Prisma.MedicalReportCreateWithoutTranscriptsInput, Prisma.MedicalReportUncheckedCreateWithoutTranscriptsInput>
+  connectOrCreate?: Prisma.MedicalReportCreateOrConnectWithoutTranscriptsInput
+  connect?: Prisma.MedicalReportWhereUniqueInput
+}
+
+export type MedicalReportUpdateOneWithoutTranscriptsNestedInput = {
+  create?: Prisma.XOR<Prisma.MedicalReportCreateWithoutTranscriptsInput, Prisma.MedicalReportUncheckedCreateWithoutTranscriptsInput>
+  connectOrCreate?: Prisma.MedicalReportCreateOrConnectWithoutTranscriptsInput
+  upsert?: Prisma.MedicalReportUpsertWithoutTranscriptsInput
+  disconnect?: Prisma.MedicalReportWhereInput | boolean
+  delete?: Prisma.MedicalReportWhereInput | boolean
+  connect?: Prisma.MedicalReportWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.MedicalReportUpdateToOneWithWhereWithoutTranscriptsInput, Prisma.MedicalReportUpdateWithoutTranscriptsInput>, Prisma.MedicalReportUncheckedUpdateWithoutTranscriptsInput>
+}
+
 export type MedicalReportCreateNestedOneWithoutOrganHighlightsInput = {
   create?: Prisma.XOR<Prisma.MedicalReportCreateWithoutOrganHighlightsInput, Prisma.MedicalReportUncheckedCreateWithoutOrganHighlightsInput>
   connectOrCreate?: Prisma.MedicalReportCreateOrConnectWithoutOrganHighlightsInput
@@ -828,7 +895,9 @@ export type MedicalReportCreateWithoutDoctorInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -839,6 +908,7 @@ export type MedicalReportCreateWithoutDoctorInput = {
   updatedAt?: Date | string
   patient: Prisma.UserCreateNestedOneWithoutPatientReportsInput
   organHighlights?: Prisma.ReportOrganHighlightCreateNestedManyWithoutReportInput
+  transcripts?: Prisma.TranscriptCreateNestedManyWithoutReportInput
   verificationRecord?: Prisma.VerificationRecordCreateNestedOneWithoutReportInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutReportInput
 }
@@ -852,7 +922,9 @@ export type MedicalReportUncheckedCreateWithoutDoctorInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -862,6 +934,7 @@ export type MedicalReportUncheckedCreateWithoutDoctorInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   organHighlights?: Prisma.ReportOrganHighlightUncheckedCreateNestedManyWithoutReportInput
+  transcripts?: Prisma.TranscriptUncheckedCreateNestedManyWithoutReportInput
   verificationRecord?: Prisma.VerificationRecordUncheckedCreateNestedOneWithoutReportInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutReportInput
 }
@@ -884,7 +957,9 @@ export type MedicalReportCreateWithoutPatientInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -895,6 +970,7 @@ export type MedicalReportCreateWithoutPatientInput = {
   updatedAt?: Date | string
   doctor?: Prisma.UserCreateNestedOneWithoutAuthoredReportsInput
   organHighlights?: Prisma.ReportOrganHighlightCreateNestedManyWithoutReportInput
+  transcripts?: Prisma.TranscriptCreateNestedManyWithoutReportInput
   verificationRecord?: Prisma.VerificationRecordCreateNestedOneWithoutReportInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutReportInput
 }
@@ -908,7 +984,9 @@ export type MedicalReportUncheckedCreateWithoutPatientInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -918,6 +996,7 @@ export type MedicalReportUncheckedCreateWithoutPatientInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   organHighlights?: Prisma.ReportOrganHighlightUncheckedCreateNestedManyWithoutReportInput
+  transcripts?: Prisma.TranscriptUncheckedCreateNestedManyWithoutReportInput
   verificationRecord?: Prisma.VerificationRecordUncheckedCreateNestedOneWithoutReportInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutReportInput
 }
@@ -961,7 +1040,9 @@ export type MedicalReportScalarWhereInput = {
   rawMedicalNotes?: Prisma.StringFilter<"MedicalReport"> | string
   radiologyModality?: Prisma.StringNullableFilter<"MedicalReport"> | string | null
   clinicalFindings?: Prisma.StringFilter<"MedicalReport"> | string
-  aiDiagnosis?: Prisma.StringFilter<"MedicalReport"> | string
+  aiSuggestedFindings?: Prisma.StringFilter<"MedicalReport"> | string
+  suggestedIcd10Codes?: Prisma.StringNullableFilter<"MedicalReport"> | string | null
+  evidenceRef?: Prisma.StringNullableFilter<"MedicalReport"> | string | null
   clinicalRecommendations?: Prisma.StringFilter<"MedicalReport"> | string
   patientFriendlySummary?: Prisma.StringFilter<"MedicalReport"> | string
   aiConfidenceScore?: Prisma.FloatNullableFilter<"MedicalReport"> | number | null
@@ -988,7 +1069,7 @@ export type MedicalReportUpdateManyWithWhereWithoutPatientInput = {
   data: Prisma.XOR<Prisma.MedicalReportUpdateManyMutationInput, Prisma.MedicalReportUncheckedUpdateManyWithoutPatientInput>
 }
 
-export type MedicalReportCreateWithoutOrganHighlightsInput = {
+export type MedicalReportCreateWithoutTranscriptsInput = {
   id?: string
   reportNumber: string
   title: string
@@ -996,7 +1077,9 @@ export type MedicalReportCreateWithoutOrganHighlightsInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -1007,6 +1090,127 @@ export type MedicalReportCreateWithoutOrganHighlightsInput = {
   updatedAt?: Date | string
   patient: Prisma.UserCreateNestedOneWithoutPatientReportsInput
   doctor?: Prisma.UserCreateNestedOneWithoutAuthoredReportsInput
+  organHighlights?: Prisma.ReportOrganHighlightCreateNestedManyWithoutReportInput
+  verificationRecord?: Prisma.VerificationRecordCreateNestedOneWithoutReportInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutReportInput
+}
+
+export type MedicalReportUncheckedCreateWithoutTranscriptsInput = {
+  id?: string
+  reportNumber: string
+  title: string
+  status?: $Enums.ReportStatus
+  patientId: string
+  doctorId?: string | null
+  rawMedicalNotes: string
+  radiologyModality?: string | null
+  clinicalFindings: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
+  clinicalRecommendations: string
+  patientFriendlySummary: string
+  aiConfidenceScore?: number | null
+  disclaimerAccepted?: boolean
+  primaryOrgan?: string | null
+  verifiedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  organHighlights?: Prisma.ReportOrganHighlightUncheckedCreateNestedManyWithoutReportInput
+  verificationRecord?: Prisma.VerificationRecordUncheckedCreateNestedOneWithoutReportInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutReportInput
+}
+
+export type MedicalReportCreateOrConnectWithoutTranscriptsInput = {
+  where: Prisma.MedicalReportWhereUniqueInput
+  create: Prisma.XOR<Prisma.MedicalReportCreateWithoutTranscriptsInput, Prisma.MedicalReportUncheckedCreateWithoutTranscriptsInput>
+}
+
+export type MedicalReportUpsertWithoutTranscriptsInput = {
+  update: Prisma.XOR<Prisma.MedicalReportUpdateWithoutTranscriptsInput, Prisma.MedicalReportUncheckedUpdateWithoutTranscriptsInput>
+  create: Prisma.XOR<Prisma.MedicalReportCreateWithoutTranscriptsInput, Prisma.MedicalReportUncheckedCreateWithoutTranscriptsInput>
+  where?: Prisma.MedicalReportWhereInput
+}
+
+export type MedicalReportUpdateToOneWithWhereWithoutTranscriptsInput = {
+  where?: Prisma.MedicalReportWhereInput
+  data: Prisma.XOR<Prisma.MedicalReportUpdateWithoutTranscriptsInput, Prisma.MedicalReportUncheckedUpdateWithoutTranscriptsInput>
+}
+
+export type MedicalReportUpdateWithoutTranscriptsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  reportNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
+  radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
+  patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
+  aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  disclaimerAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  primaryOrgan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  patient?: Prisma.UserUpdateOneRequiredWithoutPatientReportsNestedInput
+  doctor?: Prisma.UserUpdateOneWithoutAuthoredReportsNestedInput
+  organHighlights?: Prisma.ReportOrganHighlightUpdateManyWithoutReportNestedInput
+  verificationRecord?: Prisma.VerificationRecordUpdateOneWithoutReportNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutReportNestedInput
+}
+
+export type MedicalReportUncheckedUpdateWithoutTranscriptsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  reportNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumReportStatusFieldUpdateOperationsInput | $Enums.ReportStatus
+  patientId?: Prisma.StringFieldUpdateOperationsInput | string
+  doctorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
+  radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
+  patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
+  aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
+  disclaimerAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  primaryOrgan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  organHighlights?: Prisma.ReportOrganHighlightUncheckedUpdateManyWithoutReportNestedInput
+  verificationRecord?: Prisma.VerificationRecordUncheckedUpdateOneWithoutReportNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutReportNestedInput
+}
+
+export type MedicalReportCreateWithoutOrganHighlightsInput = {
+  id?: string
+  reportNumber: string
+  title: string
+  status?: $Enums.ReportStatus
+  rawMedicalNotes: string
+  radiologyModality?: string | null
+  clinicalFindings: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
+  clinicalRecommendations: string
+  patientFriendlySummary: string
+  aiConfidenceScore?: number | null
+  disclaimerAccepted?: boolean
+  primaryOrgan?: string | null
+  verifiedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  patient: Prisma.UserCreateNestedOneWithoutPatientReportsInput
+  doctor?: Prisma.UserCreateNestedOneWithoutAuthoredReportsInput
+  transcripts?: Prisma.TranscriptCreateNestedManyWithoutReportInput
   verificationRecord?: Prisma.VerificationRecordCreateNestedOneWithoutReportInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutReportInput
 }
@@ -1021,7 +1225,9 @@ export type MedicalReportUncheckedCreateWithoutOrganHighlightsInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -1030,6 +1236,7 @@ export type MedicalReportUncheckedCreateWithoutOrganHighlightsInput = {
   verifiedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  transcripts?: Prisma.TranscriptUncheckedCreateNestedManyWithoutReportInput
   verificationRecord?: Prisma.VerificationRecordUncheckedCreateNestedOneWithoutReportInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutReportInput
 }
@@ -1058,7 +1265,9 @@ export type MedicalReportUpdateWithoutOrganHighlightsInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1069,6 +1278,7 @@ export type MedicalReportUpdateWithoutOrganHighlightsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   patient?: Prisma.UserUpdateOneRequiredWithoutPatientReportsNestedInput
   doctor?: Prisma.UserUpdateOneWithoutAuthoredReportsNestedInput
+  transcripts?: Prisma.TranscriptUpdateManyWithoutReportNestedInput
   verificationRecord?: Prisma.VerificationRecordUpdateOneWithoutReportNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutReportNestedInput
 }
@@ -1083,7 +1293,9 @@ export type MedicalReportUncheckedUpdateWithoutOrganHighlightsInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1092,6 +1304,7 @@ export type MedicalReportUncheckedUpdateWithoutOrganHighlightsInput = {
   verifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  transcripts?: Prisma.TranscriptUncheckedUpdateManyWithoutReportNestedInput
   verificationRecord?: Prisma.VerificationRecordUncheckedUpdateOneWithoutReportNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutReportNestedInput
 }
@@ -1104,7 +1317,9 @@ export type MedicalReportCreateWithoutVerificationRecordInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -1116,6 +1331,7 @@ export type MedicalReportCreateWithoutVerificationRecordInput = {
   patient: Prisma.UserCreateNestedOneWithoutPatientReportsInput
   doctor?: Prisma.UserCreateNestedOneWithoutAuthoredReportsInput
   organHighlights?: Prisma.ReportOrganHighlightCreateNestedManyWithoutReportInput
+  transcripts?: Prisma.TranscriptCreateNestedManyWithoutReportInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutReportInput
 }
 
@@ -1129,7 +1345,9 @@ export type MedicalReportUncheckedCreateWithoutVerificationRecordInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -1139,6 +1357,7 @@ export type MedicalReportUncheckedCreateWithoutVerificationRecordInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   organHighlights?: Prisma.ReportOrganHighlightUncheckedCreateNestedManyWithoutReportInput
+  transcripts?: Prisma.TranscriptUncheckedCreateNestedManyWithoutReportInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutReportInput
 }
 
@@ -1166,7 +1385,9 @@ export type MedicalReportUpdateWithoutVerificationRecordInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1178,6 +1399,7 @@ export type MedicalReportUpdateWithoutVerificationRecordInput = {
   patient?: Prisma.UserUpdateOneRequiredWithoutPatientReportsNestedInput
   doctor?: Prisma.UserUpdateOneWithoutAuthoredReportsNestedInput
   organHighlights?: Prisma.ReportOrganHighlightUpdateManyWithoutReportNestedInput
+  transcripts?: Prisma.TranscriptUpdateManyWithoutReportNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutReportNestedInput
 }
 
@@ -1191,7 +1413,9 @@ export type MedicalReportUncheckedUpdateWithoutVerificationRecordInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1201,6 +1425,7 @@ export type MedicalReportUncheckedUpdateWithoutVerificationRecordInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organHighlights?: Prisma.ReportOrganHighlightUncheckedUpdateManyWithoutReportNestedInput
+  transcripts?: Prisma.TranscriptUncheckedUpdateManyWithoutReportNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutReportNestedInput
 }
 
@@ -1212,7 +1437,9 @@ export type MedicalReportCreateWithoutAuditLogsInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -1224,6 +1451,7 @@ export type MedicalReportCreateWithoutAuditLogsInput = {
   patient: Prisma.UserCreateNestedOneWithoutPatientReportsInput
   doctor?: Prisma.UserCreateNestedOneWithoutAuthoredReportsInput
   organHighlights?: Prisma.ReportOrganHighlightCreateNestedManyWithoutReportInput
+  transcripts?: Prisma.TranscriptCreateNestedManyWithoutReportInput
   verificationRecord?: Prisma.VerificationRecordCreateNestedOneWithoutReportInput
 }
 
@@ -1237,7 +1465,9 @@ export type MedicalReportUncheckedCreateWithoutAuditLogsInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -1247,6 +1477,7 @@ export type MedicalReportUncheckedCreateWithoutAuditLogsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   organHighlights?: Prisma.ReportOrganHighlightUncheckedCreateNestedManyWithoutReportInput
+  transcripts?: Prisma.TranscriptUncheckedCreateNestedManyWithoutReportInput
   verificationRecord?: Prisma.VerificationRecordUncheckedCreateNestedOneWithoutReportInput
 }
 
@@ -1274,7 +1505,9 @@ export type MedicalReportUpdateWithoutAuditLogsInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1286,6 +1519,7 @@ export type MedicalReportUpdateWithoutAuditLogsInput = {
   patient?: Prisma.UserUpdateOneRequiredWithoutPatientReportsNestedInput
   doctor?: Prisma.UserUpdateOneWithoutAuthoredReportsNestedInput
   organHighlights?: Prisma.ReportOrganHighlightUpdateManyWithoutReportNestedInput
+  transcripts?: Prisma.TranscriptUpdateManyWithoutReportNestedInput
   verificationRecord?: Prisma.VerificationRecordUpdateOneWithoutReportNestedInput
 }
 
@@ -1299,7 +1533,9 @@ export type MedicalReportUncheckedUpdateWithoutAuditLogsInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1309,6 +1545,7 @@ export type MedicalReportUncheckedUpdateWithoutAuditLogsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organHighlights?: Prisma.ReportOrganHighlightUncheckedUpdateManyWithoutReportNestedInput
+  transcripts?: Prisma.TranscriptUncheckedUpdateManyWithoutReportNestedInput
   verificationRecord?: Prisma.VerificationRecordUncheckedUpdateOneWithoutReportNestedInput
 }
 
@@ -1321,7 +1558,9 @@ export type MedicalReportCreateManyDoctorInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -1341,7 +1580,9 @@ export type MedicalReportCreateManyPatientInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiDiagnosis: string
+  aiSuggestedFindings: string
+  suggestedIcd10Codes?: string | null
+  evidenceRef?: string | null
   clinicalRecommendations: string
   patientFriendlySummary: string
   aiConfidenceScore?: number | null
@@ -1360,7 +1601,9 @@ export type MedicalReportUpdateWithoutDoctorInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1371,6 +1614,7 @@ export type MedicalReportUpdateWithoutDoctorInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   patient?: Prisma.UserUpdateOneRequiredWithoutPatientReportsNestedInput
   organHighlights?: Prisma.ReportOrganHighlightUpdateManyWithoutReportNestedInput
+  transcripts?: Prisma.TranscriptUpdateManyWithoutReportNestedInput
   verificationRecord?: Prisma.VerificationRecordUpdateOneWithoutReportNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutReportNestedInput
 }
@@ -1384,7 +1628,9 @@ export type MedicalReportUncheckedUpdateWithoutDoctorInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1394,6 +1640,7 @@ export type MedicalReportUncheckedUpdateWithoutDoctorInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organHighlights?: Prisma.ReportOrganHighlightUncheckedUpdateManyWithoutReportNestedInput
+  transcripts?: Prisma.TranscriptUncheckedUpdateManyWithoutReportNestedInput
   verificationRecord?: Prisma.VerificationRecordUncheckedUpdateOneWithoutReportNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutReportNestedInput
 }
@@ -1407,7 +1654,9 @@ export type MedicalReportUncheckedUpdateManyWithoutDoctorInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1426,7 +1675,9 @@ export type MedicalReportUpdateWithoutPatientInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1437,6 +1688,7 @@ export type MedicalReportUpdateWithoutPatientInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   doctor?: Prisma.UserUpdateOneWithoutAuthoredReportsNestedInput
   organHighlights?: Prisma.ReportOrganHighlightUpdateManyWithoutReportNestedInput
+  transcripts?: Prisma.TranscriptUpdateManyWithoutReportNestedInput
   verificationRecord?: Prisma.VerificationRecordUpdateOneWithoutReportNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutReportNestedInput
 }
@@ -1450,7 +1702,9 @@ export type MedicalReportUncheckedUpdateWithoutPatientInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1460,6 +1714,7 @@ export type MedicalReportUncheckedUpdateWithoutPatientInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   organHighlights?: Prisma.ReportOrganHighlightUncheckedUpdateManyWithoutReportNestedInput
+  transcripts?: Prisma.TranscriptUncheckedUpdateManyWithoutReportNestedInput
   verificationRecord?: Prisma.VerificationRecordUncheckedUpdateOneWithoutReportNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutReportNestedInput
 }
@@ -1473,7 +1728,9 @@ export type MedicalReportUncheckedUpdateManyWithoutPatientInput = {
   rawMedicalNotes?: Prisma.StringFieldUpdateOperationsInput | string
   radiologyModality?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalFindings?: Prisma.StringFieldUpdateOperationsInput | string
-  aiDiagnosis?: Prisma.StringFieldUpdateOperationsInput | string
+  aiSuggestedFindings?: Prisma.StringFieldUpdateOperationsInput | string
+  suggestedIcd10Codes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  evidenceRef?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   clinicalRecommendations?: Prisma.StringFieldUpdateOperationsInput | string
   patientFriendlySummary?: Prisma.StringFieldUpdateOperationsInput | string
   aiConfidenceScore?: Prisma.NullableFloatFieldUpdateOperationsInput | number | null
@@ -1491,11 +1748,13 @@ export type MedicalReportUncheckedUpdateManyWithoutPatientInput = {
 
 export type MedicalReportCountOutputType = {
   organHighlights: number
+  transcripts: number
   auditLogs: number
 }
 
 export type MedicalReportCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   organHighlights?: boolean | MedicalReportCountOutputTypeCountOrganHighlightsArgs
+  transcripts?: boolean | MedicalReportCountOutputTypeCountTranscriptsArgs
   auditLogs?: boolean | MedicalReportCountOutputTypeCountAuditLogsArgs
 }
 
@@ -1519,6 +1778,13 @@ export type MedicalReportCountOutputTypeCountOrganHighlightsArgs<ExtArgs extends
 /**
  * MedicalReportCountOutputType without action
  */
+export type MedicalReportCountOutputTypeCountTranscriptsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TranscriptWhereInput
+}
+
+/**
+ * MedicalReportCountOutputType without action
+ */
 export type MedicalReportCountOutputTypeCountAuditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.AuditLogWhereInput
 }
@@ -1534,7 +1800,9 @@ export type MedicalReportSelect<ExtArgs extends runtime.Types.Extensions.Interna
   rawMedicalNotes?: boolean
   radiologyModality?: boolean
   clinicalFindings?: boolean
-  aiDiagnosis?: boolean
+  aiSuggestedFindings?: boolean
+  suggestedIcd10Codes?: boolean
+  evidenceRef?: boolean
   clinicalRecommendations?: boolean
   patientFriendlySummary?: boolean
   aiConfidenceScore?: boolean
@@ -1546,6 +1814,7 @@ export type MedicalReportSelect<ExtArgs extends runtime.Types.Extensions.Interna
   patient?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   doctor?: boolean | Prisma.MedicalReport$doctorArgs<ExtArgs>
   organHighlights?: boolean | Prisma.MedicalReport$organHighlightsArgs<ExtArgs>
+  transcripts?: boolean | Prisma.MedicalReport$transcriptsArgs<ExtArgs>
   verificationRecord?: boolean | Prisma.MedicalReport$verificationRecordArgs<ExtArgs>
   auditLogs?: boolean | Prisma.MedicalReport$auditLogsArgs<ExtArgs>
   _count?: boolean | Prisma.MedicalReportCountOutputTypeDefaultArgs<ExtArgs>
@@ -1561,7 +1830,9 @@ export type MedicalReportSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   rawMedicalNotes?: boolean
   radiologyModality?: boolean
   clinicalFindings?: boolean
-  aiDiagnosis?: boolean
+  aiSuggestedFindings?: boolean
+  suggestedIcd10Codes?: boolean
+  evidenceRef?: boolean
   clinicalRecommendations?: boolean
   patientFriendlySummary?: boolean
   aiConfidenceScore?: boolean
@@ -1584,7 +1855,9 @@ export type MedicalReportSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   rawMedicalNotes?: boolean
   radiologyModality?: boolean
   clinicalFindings?: boolean
-  aiDiagnosis?: boolean
+  aiSuggestedFindings?: boolean
+  suggestedIcd10Codes?: boolean
+  evidenceRef?: boolean
   clinicalRecommendations?: boolean
   patientFriendlySummary?: boolean
   aiConfidenceScore?: boolean
@@ -1607,7 +1880,9 @@ export type MedicalReportSelectScalar = {
   rawMedicalNotes?: boolean
   radiologyModality?: boolean
   clinicalFindings?: boolean
-  aiDiagnosis?: boolean
+  aiSuggestedFindings?: boolean
+  suggestedIcd10Codes?: boolean
+  evidenceRef?: boolean
   clinicalRecommendations?: boolean
   patientFriendlySummary?: boolean
   aiConfidenceScore?: boolean
@@ -1618,11 +1893,12 @@ export type MedicalReportSelectScalar = {
   updatedAt?: boolean
 }
 
-export type MedicalReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "reportNumber" | "title" | "status" | "patientId" | "doctorId" | "rawMedicalNotes" | "radiologyModality" | "clinicalFindings" | "aiDiagnosis" | "clinicalRecommendations" | "patientFriendlySummary" | "aiConfidenceScore" | "disclaimerAccepted" | "primaryOrgan" | "verifiedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["medicalReport"]>
+export type MedicalReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "reportNumber" | "title" | "status" | "patientId" | "doctorId" | "rawMedicalNotes" | "radiologyModality" | "clinicalFindings" | "aiSuggestedFindings" | "suggestedIcd10Codes" | "evidenceRef" | "clinicalRecommendations" | "patientFriendlySummary" | "aiConfidenceScore" | "disclaimerAccepted" | "primaryOrgan" | "verifiedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["medicalReport"]>
 export type MedicalReportInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   patient?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   doctor?: boolean | Prisma.MedicalReport$doctorArgs<ExtArgs>
   organHighlights?: boolean | Prisma.MedicalReport$organHighlightsArgs<ExtArgs>
+  transcripts?: boolean | Prisma.MedicalReport$transcriptsArgs<ExtArgs>
   verificationRecord?: boolean | Prisma.MedicalReport$verificationRecordArgs<ExtArgs>
   auditLogs?: boolean | Prisma.MedicalReport$auditLogsArgs<ExtArgs>
   _count?: boolean | Prisma.MedicalReportCountOutputTypeDefaultArgs<ExtArgs>
@@ -1642,6 +1918,7 @@ export type $MedicalReportPayload<ExtArgs extends runtime.Types.Extensions.Inter
     patient: Prisma.$UserPayload<ExtArgs>
     doctor: Prisma.$UserPayload<ExtArgs> | null
     organHighlights: Prisma.$ReportOrganHighlightPayload<ExtArgs>[]
+    transcripts: Prisma.$TranscriptPayload<ExtArgs>[]
     verificationRecord: Prisma.$VerificationRecordPayload<ExtArgs> | null
     auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
   }
@@ -1655,7 +1932,9 @@ export type $MedicalReportPayload<ExtArgs extends runtime.Types.Extensions.Inter
     rawMedicalNotes: string
     radiologyModality: string | null
     clinicalFindings: string
-    aiDiagnosis: string
+    aiSuggestedFindings: string
+    suggestedIcd10Codes: string | null
+    evidenceRef: string | null
     clinicalRecommendations: string
     patientFriendlySummary: string
     aiConfidenceScore: number | null
@@ -2061,6 +2340,7 @@ export interface Prisma__MedicalReportClient<T, Null = never, ExtArgs extends ru
   patient<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   doctor<T extends Prisma.MedicalReport$doctorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MedicalReport$doctorArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   organHighlights<T extends Prisma.MedicalReport$organHighlightsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MedicalReport$organHighlightsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReportOrganHighlightPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  transcripts<T extends Prisma.MedicalReport$transcriptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MedicalReport$transcriptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TranscriptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   verificationRecord<T extends Prisma.MedicalReport$verificationRecordArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MedicalReport$verificationRecordArgs<ExtArgs>>): Prisma.Prisma__VerificationRecordClient<runtime.Types.Result.GetResult<Prisma.$VerificationRecordPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   auditLogs<T extends Prisma.MedicalReport$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.MedicalReport$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -2101,7 +2381,9 @@ export interface MedicalReportFieldRefs {
   readonly rawMedicalNotes: Prisma.FieldRef<"MedicalReport", 'String'>
   readonly radiologyModality: Prisma.FieldRef<"MedicalReport", 'String'>
   readonly clinicalFindings: Prisma.FieldRef<"MedicalReport", 'String'>
-  readonly aiDiagnosis: Prisma.FieldRef<"MedicalReport", 'String'>
+  readonly aiSuggestedFindings: Prisma.FieldRef<"MedicalReport", 'String'>
+  readonly suggestedIcd10Codes: Prisma.FieldRef<"MedicalReport", 'String'>
+  readonly evidenceRef: Prisma.FieldRef<"MedicalReport", 'String'>
   readonly clinicalRecommendations: Prisma.FieldRef<"MedicalReport", 'String'>
   readonly patientFriendlySummary: Prisma.FieldRef<"MedicalReport", 'String'>
   readonly aiConfidenceScore: Prisma.FieldRef<"MedicalReport", 'Float'>
@@ -2551,6 +2833,30 @@ export type MedicalReport$organHighlightsArgs<ExtArgs extends runtime.Types.Exte
   take?: number
   skip?: number
   distinct?: Prisma.ReportOrganHighlightScalarFieldEnum | Prisma.ReportOrganHighlightScalarFieldEnum[]
+}
+
+/**
+ * MedicalReport.transcripts
+ */
+export type MedicalReport$transcriptsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Transcript
+   */
+  select?: Prisma.TranscriptSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Transcript
+   */
+  omit?: Prisma.TranscriptOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TranscriptInclude<ExtArgs> | null
+  where?: Prisma.TranscriptWhereInput
+  orderBy?: Prisma.TranscriptOrderByWithRelationInput | Prisma.TranscriptOrderByWithRelationInput[]
+  cursor?: Prisma.TranscriptWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TranscriptScalarFieldEnum | Prisma.TranscriptScalarFieldEnum[]
 }
 
 /**
