@@ -95,7 +95,7 @@ model MedicalReport {
   rawMedicalNotes        String                 @db.Text
   radiologyModality      String?                // "CT Scan", "MRI", "X-Ray", "EKG", "Echocardiogram"
   clinicalFindings       String                 @db.Text
-  aiSuggestedFindings    String                 @db.Text
+  aiSuggestedFindings    String                 @default("") @db.Text
   suggestedIcd10Codes    String?                @db.Text // JSON or comma-separated candidate ICD-10 suggestions
   evidenceRef            String?                @db.Text // Reference link to speech audio segment
   clinicalRecommendations String                @db.Text

@@ -467,7 +467,7 @@ export type MedicalReportCreateInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -496,7 +496,7 @@ export type MedicalReportUncheckedCreateInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -577,7 +577,7 @@ export type MedicalReportCreateManyInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -895,7 +895,7 @@ export type MedicalReportCreateWithoutDoctorInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -922,7 +922,7 @@ export type MedicalReportUncheckedCreateWithoutDoctorInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -957,7 +957,7 @@ export type MedicalReportCreateWithoutPatientInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -984,7 +984,7 @@ export type MedicalReportUncheckedCreateWithoutPatientInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -1077,7 +1077,7 @@ export type MedicalReportCreateWithoutTranscriptsInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -1105,7 +1105,7 @@ export type MedicalReportUncheckedCreateWithoutTranscriptsInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -1197,7 +1197,7 @@ export type MedicalReportCreateWithoutOrganHighlightsInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -1225,7 +1225,7 @@ export type MedicalReportUncheckedCreateWithoutOrganHighlightsInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -1317,7 +1317,7 @@ export type MedicalReportCreateWithoutVerificationRecordInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -1345,7 +1345,7 @@ export type MedicalReportUncheckedCreateWithoutVerificationRecordInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -1437,7 +1437,7 @@ export type MedicalReportCreateWithoutAuditLogsInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -1465,7 +1465,7 @@ export type MedicalReportUncheckedCreateWithoutAuditLogsInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -1558,7 +1558,7 @@ export type MedicalReportCreateManyDoctorInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
@@ -1580,7 +1580,7 @@ export type MedicalReportCreateManyPatientInput = {
   rawMedicalNotes: string
   radiologyModality?: string | null
   clinicalFindings: string
-  aiSuggestedFindings: string
+  aiSuggestedFindings?: string
   suggestedIcd10Codes?: string | null
   evidenceRef?: string | null
   clinicalRecommendations: string
