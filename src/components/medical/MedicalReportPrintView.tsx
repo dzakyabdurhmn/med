@@ -21,7 +21,6 @@ import {
   BadgeCheck,
 } from "lucide-react";
 
-
 export type ClinicalFindingItem = {
   id: string;
   hotspotId: string;
@@ -159,6 +158,642 @@ interface MedicalHistoryFormDocumentProps {
   onClearSignature?: () => void;
 }
 
+// ==================== PRINT VIEW COMPONENT ====================
+function MedicalReportPrintView({
+  data,
+  isDoctorSigned,
+  signedAtTimestamp,
+  doctorName,
+  doctorSip,
+  doctorSpecialty,
+}: {
+  data: MedicalFormData;
+  isDoctorSigned: boolean;
+  signedAtTimestamp: string | null;
+  doctorName: string;
+  doctorSip: string;
+  doctorSpecialty: string;
+}) {
+  const currentDate = new Date().toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+
+  // Helper untuk checkbox
+  const CheckIcon = ({ checked }: { checked: boolean }) => (
+    <span className="inline-block w-4 h-4 border border-[#191918] text-center leading-4 text-[10px] font-bold">
+      {checked ? "✓" : ""}
+    </span>
+  );
+
+  return (
+    <div className="print-only" style={{ display: 'none' }}>
+      <div 
+        className="bg-white text-[#191918] font-serif" 
+        style={{ 
+          maxWidth: '210mm', 
+          margin: '0 auto',
+          padding: '15mm 20mm',
+          fontFamily: "'Times New Roman', Times, serif",
+          fontSize: '11pt',
+          lineHeight: '1.5',
+        }}
+      >
+        {/* ================================================================
+            KOP SURAT - FULL WIDTH HEADER
+            ================================================================ */}
+        <div className="text-center border-b-4 border-[#191918] pb-3 mb-4">
+          {/* Garis atas */}
+          <div className="border-t-2 border-[#191918] w-full mb-1"></div>
+          
+          {/* Logo dan Nama Institusi */}
+          <div className="flex items-center justify-center gap-4 mb-1">
+            <div className="flex items-center gap-3">
+              <div className="text-left">
+                <div className="text-[9pt] font-bold text-[#6A6A64] tracking-wider uppercase">
+                  KEMENTERIAN KESEHATAN REPUBLIK INDONESIA
+                </div>
+                <div className="text-[16pt] font-bold uppercase tracking-wide text-[#191918]">
+                  KLINIK UTAMA MED-AI ATELIER
+                </div>
+                <div className="text-[9pt] text-[#6A6A64]">
+                  Pusat Layanan Spesialis &amp; Evaluasi Klinis Terpadu Berbasis AI
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-[9pt] text-[#6A6A64]">
+            Jl. Kesehatan Raya No. 88, Jakarta Selatan 12430 | Telp: (021) 789-2026
+          </div>
+          <div className="text-[9pt] text-[#6A6A64]">
+            Email: info@medai-atelier.id | Website: www.medai-atelier.id
+          </div>
+          
+          {/* Garis bawah */}
+          <div className="border-b-2 border-[#191918] w-full mt-1"></div>
+        </div>
+
+        {/* ================================================================
+            JUDUL DOKUMEN
+            ================================================================ */}
+        <div className="text-center mb-4">
+          <div className="text-[14pt] font-bold uppercase tracking-wider text-[#191918]">
+            REKAM MEDIS ELEKTRONIK
+          </div>
+          <div className="text-[11pt] font-bold uppercase tracking-wider text-[#191918]">
+            (ELECTRONIC HEALTH RECORD - EHR)
+          </div>
+          <div className="text-[10pt] font-medium text-[#6A6A64] mt-1">
+            LEMBAR EVALUASI KLINIS TERSTRUKTUR (SOAP)
+          </div>
+          
+          {/* Nomor Surat */}
+          <div className="inline-block border border-[#191918] px-6 py-1 mt-2">
+            <span className="text-[10pt] font-bold tracking-wider">
+              Nomor: 503/SIP.D/2026/EHR-{String(Math.floor(Math.random() * 10000)).padStart(4, '0')}
+            </span>
+          </div>
+        </div>
+
+        {/* ================================================================
+            HEADER INFORMASI
+            ================================================================ */}
+        <div className="grid grid-cols-12 gap-2 mb-4 pb-3 border-b border-[#191918]">
+          <div className="col-span-6">
+            <div className="flex">
+              <span className="font-bold w-32 text-[#6A6A64]">No. Rekam Medis</span>
+              <span>: {data.insurancePolicyNumber ? data.insurancePolicyNumber.slice(0, 12) : "RM-2026-0891"}</span>
+            </div>
+            <div className="flex">
+              <span className="font-bold w-32 text-[#6A6A64]">Tanggal Cetak</span>
+              <span>: {currentDate}</span>
+            </div>
+            <div className="flex">
+              <span className="font-bold w-32 text-[#6A6A64]">Status Dokumen</span>
+              <span>: <span className="font-bold text-[#0E7A41]">SAH</span></span>
+            </div>
+          </div>
+          <div className="col-span-6 text-right">
+            <div className="inline-block border border-[#191918] px-3 py-1">
+              <span className="text-[9pt] font-bold uppercase tracking-wider">
+                SATUSEHAT FHIR R4
+              </span>
+            </div>
+            <div className="mt-1 text-[9pt] text-[#6A6A64]">
+              <QrCode size={20} className="inline mr-1" />
+              EHR-2026-NRS-{String(Math.floor(Math.random() * 10000)).padStart(4, '0')}
+            </div>
+          </div>
+        </div>
+
+        {/* ================================================================
+            SECTION A: IDENTITAS PASIEN - TABEL
+            ================================================================ */}
+        <div className="mb-4">
+          <div className="bg-[#191918] text-white px-3 py-1.5 text-[10pt] font-bold uppercase tracking-wider">
+            A. IDENTITAS &amp; INFORMASI PASIEN
+          </div>
+          <table className="w-full border border-[#191918] text-[10pt]">
+            <tbody>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold w-1/3 bg-[#F3F2E7]">Nama Lengkap Pasien</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-medium">: {data.patientName || "-"}</td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7]">Tanggal Lahir / Usia</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-medium">: {data.patientDob || "-"}</td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7]">Jenis Kelamin</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-medium">: {data.patientGender === "M" ? "Laki-laki" : "Perempuan"}</td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7]">Alamat</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-medium">: {data.patientAddress || "-"}</td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7]">No. Telepon</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-medium">: {data.patientPhone || "-"}</td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7]">Kontak Darurat</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-medium">
+                  : {data.emergencyContactName || "-"}
+                  {data.emergencyContactRelationship && ` (${data.emergencyContactRelationship})`}
+                  {data.emergencyContactPhone && ` - ${data.emergencyContactPhone}`}
+                </td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7]">Penjamin / Asuransi</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-medium">
+                  : {data.insuranceProvider || "-"}
+                  {data.insurancePolicyNumber && ` (No. ${data.insurancePolicyNumber})`}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* ================================================================
+            SECTION B: TANDA VITAL - TABEL
+            ================================================================ */}
+        <div className="mb-4">
+          <div className="bg-[#191918] text-white px-3 py-1.5 text-[10pt] font-bold uppercase tracking-wider">
+            B. TANDA-TANDA VITAL (VITAL SIGNS)
+          </div>
+          <table className="w-full border border-[#191918] text-[10pt]">
+            <tbody>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold w-1/6 bg-[#F3F2E7]">Tekanan Darah</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold text-center w-1/3">: {data.vitalSigns.bloodPressure}</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold w-1/6 bg-[#F3F2E7]">Nadi / Heart Rate</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold text-center w-1/3">: {data.vitalSigns.heartRate}</td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7]">Laju Napas (RR)</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold text-center">: {data.vitalSigns.respiratoryRate}</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7]">Saturasi Oksigen</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold text-center">: {data.vitalSigns.spo2}</td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7]">Suhu Tubuh</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold text-center" colSpan={3}>: {data.vitalSigns.temperature}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* ================================================================
+            SECTION C: PERSONAL HISTORY - 3 KOLOM
+            ================================================================ */}
+        <div className="mb-4">
+          <div className="bg-[#191918] text-white px-3 py-1.5 text-[10pt] font-bold uppercase tracking-wider">
+            C. RIWAYAT PENYAKIT PRIBADI (PERSONAL HISTORY)
+          </div>
+          <div className="border border-[#191918] p-3">
+            <div className="grid grid-cols-3 gap-x-6 gap-y-0.5 text-[10pt]">
+              {[
+                { key: "acid_reflux", label: "Acid Reflux / GERD" },
+                { key: "anemia", label: "Anemia" },
+                { key: "anxiety", label: "Anxiety / Cemas" },
+                { key: "asthma", label: "Asthma / Asma" },
+                { key: "cancer", label: "Cancer / Kanker" },
+                { key: "congestive_heart_failure", label: "Congestive Heart Failure" },
+                { key: "copd", label: "COPD / PPOK" },
+                { key: "depression", label: "Depression / Depresi" },
+                { key: "diabetes_type1", label: "Diabetes Type 1" },
+                { key: "diabetes_type2", label: "Diabetes Type 2" },
+                { key: "heart_disease", label: "Heart Disease / Jantung" },
+                { key: "hepatitis", label: "Hepatitis" },
+                { key: "high_blood_pressure", label: "High Blood Pressure" },
+                { key: "high_cholesterol", label: "High Cholesterol" },
+                { key: "kidney_disease", label: "Kidney Disease" },
+                { key: "liver_disease", label: "Liver Disease" },
+                { key: "stroke", label: "Stroke / TIA" },
+                { key: "thyroid_disease", label: "Thyroid Disease" },
+              ].map((item) => (
+                <div key={item.key} className="flex items-center gap-2 py-0.5">
+                  <CheckIcon checked={!!data.personalHistory[item.key]} />
+                  <span className="font-medium">{item.label}</span>
+                </div>
+              ))}
+            </div>
+            {data.otherMedicalIssues && (
+              <div className="mt-3 pt-2 border-t border-[#191918]">
+                <span className="font-bold">Catatan Tambahan:</span>
+                <p className="mt-0.5 text-[#474744]">{data.otherMedicalIssues}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ================================================================
+            SECTION D: MEDICATIONS - TABEL
+            ================================================================ */}
+        <div className="mb-4">
+          <div className="bg-[#191918] text-white px-3 py-1.5 text-[10pt] font-bold uppercase tracking-wider">
+            D. RESEP &amp; TERAPI OBAT AKTIF (CURRENT MEDICATIONS)
+          </div>
+          <div className="border border-[#191918] overflow-x-auto">
+            {data.medications.length === 0 ? (
+              <p className="p-4 text-center text-[#6A6A64] italic">Tidak ada obat yang tercatat</p>
+            ) : (
+              <table className="w-full text-[10pt] border-collapse">
+                <thead>
+                  <tr className="bg-[#F3F2E7] border-b border-[#191918]">
+                    <th className="border border-[#191918] px-3 py-1.5 text-left font-bold">No</th>
+                    <th className="border border-[#191918] px-3 py-1.5 text-left font-bold">Nama Obat / Terapi</th>
+                    <th className="border border-[#191918] px-3 py-1.5 text-left font-bold">Dosis</th>
+                    <th className="border border-[#191918] px-3 py-1.5 text-left font-bold">Frekuensi</th>
+                    <th className="border border-[#191918] px-3 py-1.5 text-left font-bold">Indikasi Medis</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.medications.map((med, index) => (
+                    <tr key={med.id} className="border-b border-[#ECEBDF]">
+                      <td className="border border-[#191918] px-3 py-1.5 text-center">{index + 1}</td>
+                      <td className="border border-[#191918] px-3 py-1.5 font-medium">{med.name || "-"}</td>
+                      <td className="border border-[#191918] px-3 py-1.5">{med.dosage || "-"}</td>
+                      <td className="border border-[#191918] px-3 py-1.5">{med.frequency || "-"}</td>
+                      <td className="border border-[#191918] px-3 py-1.5">{med.purpose || "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+
+        {/* ================================================================
+            SECTION E: SURGERIES & ALLERGIES - 2 KOLOM
+            ================================================================ */}
+        <div className="grid grid-cols-12 gap-4 mb-4">
+          <div className="col-span-7">
+            <div className="bg-[#191918] text-white px-3 py-1.5 text-[10pt] font-bold uppercase tracking-wider">
+              E1. RIWAYAT OPERASI (SURGERIES)
+            </div>
+            <div className="border border-[#191918] p-3">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-0.5 text-[10pt]">
+                {[
+                  { key: "heart_surgery", label: "Heart surgery" },
+                  { key: "cholecystectomy", label: "Cholecystectomy" },
+                  { key: "appendectomy", label: "Appendectomy" },
+                  { key: "c_section", label: "C-section" },
+                  { key: "hysterectomy", label: "Hysterectomy" },
+                  { key: "bladder", label: "Bladder" },
+                  { key: "colonoscopy", label: "Colonoscopy" },
+                  { key: "joint", label: "Joint" },
+                ].map((surg) => (
+                  <div key={surg.key} className="flex items-center gap-2 py-0.5">
+                    <CheckIcon checked={!!data.surgeries[surg.key]} />
+                    <span className="font-medium">{surg.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="col-span-5">
+            <div className="bg-[#9E1B2E] text-white px-3 py-1.5 text-[10pt] font-bold uppercase tracking-wider">
+              E2. RIWAYAT ALERGI (ALLERGIES)
+            </div>
+            <div className="border border-[#9E1B2E] p-3">
+              <p className="text-[10pt] text-[#191918] leading-relaxed">
+                {data.allergies || "Tidak ada riwayat alergi yang diketahui."}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ================================================================
+            SECTION F: FAMILY HISTORY - 4 KOLOM
+            ================================================================ */}
+        <div className="mb-4">
+          <div className="bg-[#191918] text-white px-3 py-1.5 text-[10pt] font-bold uppercase tracking-wider">
+            F. RIWAYAT KESEHATAN KELUARGA (FAMILY HISTORY)
+          </div>
+          <div className="border border-[#191918] p-3">
+            <div className="grid grid-cols-4 gap-x-6 gap-y-0.5 text-[10pt]">
+              {[
+                { key: "cancer", label: "Kanker / Cancer" },
+                { key: "diabetes", label: "Diabetes" },
+                { key: "heart_disease", label: "Penyakit Jantung" },
+                { key: "high_blood_pressure", label: "Hipertensi" },
+                { key: "high_cholesterol", label: "Dislipidemia" },
+                { key: "stroke", label: "Stroke" },
+                { key: "thyroid_disease", label: "Tiroid" },
+                { key: "kidney_disease", label: "Gagal Ginjal" },
+              ].map((fam) => (
+                <div key={fam.key} className="flex items-center gap-2 py-0.5">
+                  <CheckIcon checked={!!data.familyHistory[fam.key]} />
+                  <span className="font-medium">{fam.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ================================================================
+            SECTION G: SOCIAL HISTORY - TABEL
+            ================================================================ */}
+        <div className="mb-4">
+          <div className="bg-[#191918] text-white px-3 py-1.5 text-[10pt] font-bold uppercase tracking-wider">
+            G. GAYA HIDUP &amp; FAKTOR SOSIAL (SOCIAL HISTORY)
+          </div>
+          <table className="w-full border border-[#191918] text-[10pt]">
+            <tbody>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold w-1/3 bg-[#F3F2E7]">Merokok (Tobacco)</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-medium">: {data.tobaccoUse}</td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7]">Konsumsi Alkohol</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-medium">: {data.alcoholUse}</td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7]">Pekerjaan (Occupation)</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-medium">: {data.occupation || "Wiraswasta"}</td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7]">Tempat Tinggal</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-medium">
+                  : {data.livingSituation === "With family" ? "Bersama Keluarga" :
+                     data.livingSituation === "With S/O" ? "Bersama Pasangan" :
+                     data.livingSituation === "With roommates" ? "Bersama Teman" :
+                     data.livingSituation}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* ================================================================
+            SECTION H: REVIEW OF SYSTEMS - 3 KOLOM
+            ================================================================ */}
+        <div className="mb-4">
+          <div className="bg-[#191918] text-white px-3 py-1.5 text-[10pt] font-bold uppercase tracking-wider">
+            H. SKRINING GEJALA ORGAN (REVIEW OF SYSTEMS - ROS)
+          </div>
+          <div className="border border-[#191918] p-3">
+            <div className="grid grid-cols-3 gap-6 text-[10pt]">
+              {/* General */}
+              <div>
+                <h4 className="font-bold text-[#191918] border-b border-[#191918] pb-0.5 mb-1">Sistem Umum</h4>
+                {[
+                  { key: "ros_fatigue", label: "Fatigue / Lelah" },
+                  { key: "ros_fever", label: "Fever / Demam" },
+                  { key: "ros_weight", label: "Weight loss / gain" },
+                ].map((item) => (
+                  <div key={item.key} className="flex items-center gap-2 py-0.5">
+                    <CheckIcon checked={!!data.reviewOfSystems[item.key]} />
+                    <span className="font-medium">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+              {/* EENT */}
+              <div>
+                <h4 className="font-bold text-[#191918] border-b border-[#191918] pb-0.5 mb-1">Kepala &amp; THT</h4>
+                {[
+                  { key: "ros_vision", label: "Vision changes" },
+                  { key: "ros_hearing", label: "Hearing loss" },
+                  { key: "ros_throat", label: "Sore throat" },
+                ].map((item) => (
+                  <div key={item.key} className="flex items-center gap-2 py-0.5">
+                    <CheckIcon checked={!!data.reviewOfSystems[item.key]} />
+                    <span className="font-medium">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Cardio */}
+              <div>
+                <h4 className="font-bold text-[#191918] border-b border-[#191918] pb-0.5 mb-1">Kardiovaskular</h4>
+                {[
+                  { key: "ros_chest_pain", label: "Chest pain" },
+                  { key: "ros_palpitations", label: "Palpitations" },
+                  { key: "ros_swelling", label: "Swelling" },
+                ].map((item) => (
+                  <div key={item.key} className="flex items-center gap-2 py-0.5">
+                    <CheckIcon checked={!!data.reviewOfSystems[item.key]} />
+                    <span className="font-medium">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Pulmo */}
+              <div>
+                <h4 className="font-bold text-[#191918] border-b border-[#191918] pb-0.5 mb-1">Respirasi / Paru</h4>
+                {[
+                  { key: "ros_sob", label: "Shortness of breath" },
+                  { key: "ros_cough", label: "Chronic cough" },
+                  { key: "ros_wheezing", label: "Wheezing" },
+                ].map((item) => (
+                  <div key={item.key} className="flex items-center gap-2 py-0.5">
+                    <CheckIcon checked={!!data.reviewOfSystems[item.key]} />
+                    <span className="font-medium">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Gastro */}
+              <div>
+                <h4 className="font-bold text-[#191918] border-b border-[#191918] pb-0.5 mb-1">Pencernaan</h4>
+                {[
+                  { key: "ros_abdo_pain", label: "Abdominal pain" },
+                  { key: "ros_nausea", label: "Nausea" },
+                  { key: "ros_diarrhea", label: "Diarrhea" },
+                ].map((item) => (
+                  <div key={item.key} className="flex items-center gap-2 py-0.5">
+                    <CheckIcon checked={!!data.reviewOfSystems[item.key]} />
+                    <span className="font-medium">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Uro */}
+              <div>
+                <h4 className="font-bold text-[#191918] border-b border-[#191918] pb-0.5 mb-1">Kemih &amp; Ginjal</h4>
+                {[
+                  { key: "ros_incontinence", label: "Incontinence" },
+                  { key: "ros_burning", label: "Burning" },
+                  { key: "ros_hematuria", label: "Blood in urine" },
+                ].map((item) => (
+                  <div key={item.key} className="flex items-center gap-2 py-0.5">
+                    <CheckIcon checked={!!data.reviewOfSystems[item.key]} />
+                    <span className="font-medium">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ================================================================
+            SECTION I: CLINICAL ASSESSMENT - TABEL
+            ================================================================ */}
+        <div className="mb-4">
+          <div className="bg-[#191918] text-white px-3 py-1.5 text-[10pt] font-bold uppercase tracking-wider">
+            I. DIAGNOSA MEDIS &amp; EVALUASI KLINIS (PRIMARY ASSESSMENT)
+          </div>
+          <table className="w-full border border-[#191918] text-[10pt]">
+            <tbody>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold w-1/3 bg-[#F3F2E7]">Diagnosa Klinis Utama</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold">: {data.diagnosis || "Belum ditentukan"}</td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7]">Kode ICD-10</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold font-mono">: {data.diagnosisIcd || "-"}</td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7]">Tingkat Keparahan</td>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold">
+                  : <span className={`px-3 py-0.5 text-white font-bold ${
+                    data.severity === "CRITICAL" ? "bg-red-700" :
+                    data.severity === "SEVERE" ? "bg-orange-600" :
+                    data.severity === "MODERATE" ? "bg-yellow-600" :
+                    data.severity === "MILD" ? "bg-blue-600" :
+                    "bg-green-700"
+                  }`}>
+                    {data.severity}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7] align-top">Ringkasan Anamnesis</td>
+                <td className="border border-[#191918] px-3 py-1.5 text-[#474744] leading-relaxed">
+                  : {data.patientSummary || data.rawNotes || "Belum ada catatan ringkasan anamnesis."}
+                </td>
+              </tr>
+              <tr>
+                <td className="border border-[#191918] px-3 py-1.5 font-bold bg-[#F3F2E7] align-top">Rencana Terapi &amp; Rekomendasi</td>
+                <td className="border border-[#191918] px-3 py-1.5 text-[#474744] leading-relaxed">
+                  : {data.recommendations || "Tatalaksana umum, edukasi gaya hidup sehat, dan evaluasi berkala."}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* ================================================================
+            FOOTER - TANDA TANGAN DAN LEGAL
+            ================================================================ */}
+        <footer className="mt-6 pt-4 border-t-4 border-[#191918]">
+          <div className="grid grid-cols-2 gap-6">
+            {/* Kiri - Legal Statement */}
+            <div className="space-y-2">
+              <div className="text-[11pt] font-bold text-[#191918] uppercase tracking-wider">
+                DOKUMEN REKAM MEDIS ELEKTRONIK RESMI
+              </div>
+              <div className="text-[9pt] text-[#6A6A64] leading-relaxed">
+                Dokumen ini merupakan Rekam Medis Elektronik (RME) yang sah dan telah diverifikasi 
+                oleh Dokter Penanggung Jawab Pelayanan (DPJP) sesuai dengan ketentuan yang berlaku.
+              </div>
+              {isDoctorSigned && signedAtTimestamp && (
+                <div className="text-[#0E7A41] font-bold text-[10pt] flex items-center gap-1.5">
+                  <BadgeCheck size={14} /> 
+                  Ditandatangani secara elektronik: {signedAtTimestamp}
+                </div>
+              )}
+              <div className="text-[8pt] text-[#6A6A64] leading-relaxed">
+                <p className="font-bold">Dasar Hukum:</p>
+                <ul className="list-disc list-inside ml-2">
+                  <li>Permenkes RI No. 24 Tahun 2022 tentang Rekam Medis</li>
+                  <li>UU No. 29 Tahun 2004 tentang Praktik Kedokteran</li>
+                  <li>Standar SATUSEHAT FHIR R4</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Kanan - Tanda Tangan */}
+            <div className="text-center space-y-2 border-l-2 border-[#191918] pl-6">
+              <div className="text-[10pt] text-[#6A6A64] uppercase tracking-wider font-bold">
+                Dokter Penanggung Jawab Pelayanan (DPJP)
+              </div>
+
+              {/* Tempat Tanda Tangan */}
+              <div className="h-20 flex items-center justify-center border-b-2 border-[#191918]">
+                {isDoctorSigned ? (
+                  <div className="flex flex-col items-center">
+                    <Check size={24} className="text-[#0E7A41]" />
+                    <span className="text-[#0E7A41] font-bold text-[10pt] mt-0.5">
+                      ✓ Tervalidasi Tanda Tangan Digital
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[#6A6A64] italic text-[11pt]">[Belum Ditandatangani]</span>
+                )}
+              </div>
+
+              {/* Nama Dokter */}
+              <div className="font-bold text-[13pt] text-[#191918]">
+                {doctorName || data.doctorName || "dr. DPJP Spesialis"}
+              </div>
+              
+              {/* SIP */}
+              <div className="text-[10pt] text-[#6A6A64] font-medium">
+                {doctorSip || data.doctorSip || "SIP: 503/SIP.D/2026"}
+              </div>
+              
+              {/* Spesialisasi */}
+              <div className="text-[10pt] text-[#6A6A64] font-medium">
+                {doctorSpecialty || data.doctorSpecialty || "DPJP Spesialis"}
+              </div>
+
+              {/* Tanggal Tanda Tangan */}
+              {isDoctorSigned && signedAtTimestamp && (
+                <div className="text-[9pt] text-[#6A6A64]">
+                  Tanggal: {signedAtTimestamp}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer Bottom */}
+          <div className="mt-4 pt-3 border-t border-[#ECEBDF] flex items-center justify-between text-[8pt] text-[#6A6A64]">
+            <span>
+              Dokumen Rekam Medis Elektronik ini diterbitkan oleh KLINIK UTAMA MED-AI ATELIER HEALTH
+              (Faskes ID: 3171092-KARS)
+            </span>
+            <span className="font-bold text-[#191918]">SATUSEHAT FHIR READY</span>
+          </div>
+
+          {/* Nomor Halaman */}
+          <div className="text-center text-[7pt] text-[#6A6A64] mt-2">
+            Halaman 1 dari 1 | EHR-2026-NRS-{String(Math.floor(Math.random() * 10000)).padStart(4, '0')}
+          </div>
+          
+          {/* Stempel "RAHASIA MEDIS" */}
+          <div className="text-center mt-3">
+            <span className="border-2 border-[#9E1B2E] text-[#9E1B2E] px-4 py-1 text-[8pt] font-bold uppercase tracking-wider">
+              ⚕️ RAHASIA MEDIS (CONFIDENTIAL)
+            </span>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+// ==================== MAIN COMPONENT ====================
 export function MedicalHistoryFormDocument({
   data,
   initialData,
@@ -275,7 +910,6 @@ export function MedicalHistoryFormDocument({
     }
     setIsSearchingIcd(true);
     try {
-      // Simulasi search - ganti dengan implementasi real
       const mockResults = [
         { code: "I10", display: "Hipertensi Esensial (Primer)", system: "ICD-10", groupName: "Sistem Kardiovaskular" },
         { code: "I20.9", display: "Angina Pektoris Tak Stabil", system: "ICD-10", groupName: "Sistem Kardiovaskular" },
@@ -385,9 +1019,15 @@ export function MedicalHistoryFormDocument({
     </button>
   );
 
+  // Data untuk print
+  const printData = formData;
+  const doctorName = formData.doctorName || "dr. DPJP Spesialis";
+  const doctorSip = formData.doctorSip || "SIP: 503/SIP.D/2026";
+  const doctorSpecialty = formData.doctorSpecialty || "DPJP Spesialis";
+
   return (
     <main className="mx-auto space-y-6 pb-12 font-sans">
-      {/* Top Toolbar */}
+      {/* Top Toolbar - No Print */}
       <div className="no-print card-warm p-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -429,7 +1069,7 @@ export function MedicalHistoryFormDocument({
         </div>
       </div>
 
-      {/* AI Banner */}
+      {/* AI Banner - No Print */}
       <div className="mt-5 no-print card-warm bg-[#FFFEF2] p-4 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.05em] font-medium text-[#9E1B2E]">
@@ -447,12 +1087,17 @@ export function MedicalHistoryFormDocument({
         </p>
       </div>
 
-      {/* FORM UTAMA */}
+      {/* ================================================================
+          FORM UTAMA - UI AWAL (TETAP SAMA SEPERTI SEBELUMNYA)
+          ================================================================ */}
       <article className="clinical-report-doc pdf-form-document bg-[#FFFEF2] text-[#191918] p-6 sm:p-8 md:p-10 border border-[#ECEBDF] rounded-[2px] font-sans text-xs leading-normal relative">
         {/* HEADER */}
         <header className="border-b-2 border-[#191918] pb-4 mb-6">
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
             <div className="flex items-center gap-4 w-full sm:w-auto">
+              <div className="w-14 h-14 bg-[#A71D31] text-white flex items-center justify-center font-medium text-2xl rounded-[2px] shrink-0">
+                <Stethoscope size={28} />
+              </div>
               <div>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="badge-warm badge-warm-brand">
@@ -502,7 +1147,7 @@ export function MedicalHistoryFormDocument({
 
           <div className="mt-4 pt-2.5 border-t border-[#ECEBDF] flex flex-wrap items-center justify-between gap-2 text-xs font-medium uppercase text-[#191918]">
             <span className="flex items-center gap-1.5">
-              <ShieldCheck size={14} className="text-[#0E7A41]" />
+              <ShieldCheck size={14} className="text-[#0E7A41] print:hidden" />
               <span>LEMBAR REKAM MEDIS &amp; EVALUASI KLINIS PASIEN (SOAP)</span>
             </span>
             <span className="text-[#6A6A64] font-normal italic lowercase text-[10px]">
@@ -1085,7 +1730,6 @@ export function MedicalHistoryFormDocument({
           />
           <div className="p-4 bg-[#FFFEF2] space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* General */}
               <div className="bg-[#F3F2E7] p-3 rounded-[2px] border border-[#ECEBDF] space-y-2">
                 <span className="font-medium uppercase text-[11px] text-[#191918] border-b border-[#ECEBDF] pb-1 block">
                   Sistem Umum (General)
@@ -1107,7 +1751,6 @@ export function MedicalHistoryFormDocument({
                 </div>
               </div>
 
-              {/* EENT */}
               <div className="bg-[#F3F2E7] p-3 rounded-[2px] border border-[#ECEBDF] space-y-2">
                 <span className="font-medium uppercase text-[11px] text-[#191918] border-b border-[#ECEBDF] pb-1 block">
                   Kepala & THT (EENT)
@@ -1129,7 +1772,6 @@ export function MedicalHistoryFormDocument({
                 </div>
               </div>
 
-              {/* Cardiovascular */}
               <div className="bg-[#F3F2E7] p-3 rounded-[2px] border border-[#ECEBDF] space-y-2">
                 <span className="font-medium uppercase text-[11px] text-[#191918] border-b border-[#ECEBDF] pb-1 block">
                   Kardiovaskular (Cardio)
@@ -1151,7 +1793,6 @@ export function MedicalHistoryFormDocument({
                 </div>
               </div>
 
-              {/* Respiratory */}
               <div className="bg-[#F3F2E7] p-3 rounded-[2px] border border-[#ECEBDF] space-y-2">
                 <span className="font-medium uppercase text-[11px] text-[#191918] border-b border-[#ECEBDF] pb-1 block">
                   Respirasi / Paru (Pulmo)
@@ -1173,7 +1814,6 @@ export function MedicalHistoryFormDocument({
                 </div>
               </div>
 
-              {/* Gastrointestinal */}
               <div className="bg-[#F3F2E7] p-3 rounded-[2px] border border-[#ECEBDF] space-y-2">
                 <span className="font-medium uppercase text-[11px] text-[#191918] border-b border-[#ECEBDF] pb-1 block">
                   Pencernaan (Gastro)
@@ -1195,7 +1835,6 @@ export function MedicalHistoryFormDocument({
                 </div>
               </div>
 
-              {/* Genitourinary */}
               <div className="bg-[#F3F2E7] p-3 rounded-[2px] border border-[#ECEBDF] space-y-2">
                 <span className="font-medium uppercase text-[11px] text-[#191918] border-b border-[#ECEBDF] pb-1 block">
                   Kemih & Ginjal (Uro)
@@ -1414,6 +2053,16 @@ export function MedicalHistoryFormDocument({
           </div>
         </footer>
       </article>
+
+      {/* PRINT VIEW - Format Dokumen Resmi */}
+      <MedicalReportPrintView
+        data={printData}
+        isDoctorSigned={isDoctorSigned}
+        signedAtTimestamp={signedAtTimestamp}
+        doctorName={doctorName}
+        doctorSip={doctorSip}
+        doctorSpecialty={doctorSpecialty}
+      />
 
       {/* ICD-10 Modal */}
       {showIcdModal && (
