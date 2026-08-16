@@ -11,6 +11,7 @@ import {
   FilePlus2,
   Check,
   Sparkles,
+  Loader2,
   X,
 } from "lucide-react";
 import { useMedicalStore } from "../store/medical-store";
@@ -36,6 +37,7 @@ function ReportPage() {
     saveNowToDb,
     isDoctorRegistered,
     doctorProfile,
+    signatureDataUrl,
   } = useMedicalStore();
 
   const [isHydrated, setIsHydrated] = useState(false);
@@ -47,6 +49,7 @@ function ReportPage() {
 
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [signatureName, setSignatureName] = useState(
     medicalFormData.doctorName || doctorProfile?.name || "dr. DPJP Spesialis"
   );
@@ -147,8 +150,37 @@ function ReportPage() {
     setShowSignatureModal(false);
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    if (isGeneratingPdf) return;
+    setIsGeneratingPdf(true);
+    try {
+      const res = await fetch("/api/report-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formData: medicalFormData,
+          isDoctorSigned,
+          signedAtTimestamp,
+          signatureDataUrl,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const fileName =
+        res.headers.get("Content-Disposition")?.match(/filename="?([^";]+)"?/)?.[1] ?? "RekamMedis-EHR.pdf";
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.warn("PDF generation error:", e);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   // SSR Hydration Guard
@@ -255,7 +287,11 @@ function ReportPage() {
             disabled={isGeneratingAi}
             className="btn-warm btn-warm-primary btn-warm-sm shrink-0"
           >
-            <Sparkles size={14} className={isGeneratingAi ? "animate-spin text-white" : "text-white"} />
+            {isGeneratingAi ? (
+              <Loader2 size={14} className="animate-spin text-white" />
+            ) : (
+              <Sparkles size={14} className="text-white" />
+            )}
             <span>{isGeneratingAi ? "Memproses AI..." : "Generate AI Sekarang"}</span>
           </button>
         </div>
@@ -293,7 +329,11 @@ function ReportPage() {
             disabled={isGeneratingAi}
             className="btn-warm btn-warm-primary btn-warm-sm justify-center"
           >
-            <Sparkles size={14} className={isGeneratingAi ? "animate-spin text-white" : "text-white"} />
+            {isGeneratingAi ? (
+              <Loader2 size={14} className="animate-spin text-white" />
+            ) : (
+              <Sparkles size={14} className="text-white" />
+            )}
             <span>{isGeneratingAi ? "Menyusun AI..." : "Ekstraksi AI"}</span>
           </button>
 
@@ -320,10 +360,11 @@ function ReportPage() {
           <button
             type="button"
             onClick={handlePrint}
+            disabled={isGeneratingPdf}
             className="btn-warm btn-warm-primary btn-warm-sm justify-center col-span-2 sm:col-span-1"
           >
-            <Printer size={14} />
-            <span>Cetak PDF</span>
+            <Printer size={14} className={isGeneratingPdf ? "animate-pulse" : ""} />
+            <span>{isGeneratingPdf ? "Membuat PDF..." : "Cetak PDF Resmi"}</span>
           </button>
         </div>
       </section>
