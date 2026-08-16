@@ -801,8 +801,6 @@ export function MedicalHistoryFormDocument({
   onNewRecording = () => {},
   isDoctorSigned = false,
   signedAtTimestamp = null,
-  onSignComplete,
-  onClearSignature,
 }: MedicalHistoryFormDocumentProps) {
   const activeIncomingData = data || initialData || DEFAULT_FORM_DATA;
   const [formData, setFormData] = useState<MedicalFormData>(activeIncomingData);
@@ -1902,7 +1900,7 @@ export function MedicalHistoryFormDocument({
                       updateField("diagnosisIcd", preset.code);
                       updateField("diagnosis", preset.name);
                     }}
-                    className="px-2 py-0.5 rounded bg-[#191918] text-[#0E7A41] font-medium hover:bg-[#2A2A28] transition whitespace-nowrap text-[10px]"
+                    className="px-2 py-0.5 rounded bg-[#191918] text-white font-medium hover:bg-[#2A2A28] transition whitespace-nowrap text-[10px]"
                   >
                     {preset.code} ({preset.label})
                   </button>

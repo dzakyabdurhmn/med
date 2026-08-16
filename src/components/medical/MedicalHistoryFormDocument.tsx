@@ -2,15 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Printer,
   Sparkles,
-  RotateCcw,
   QrCode,
-  Edit3,
   Check,
-  ChevronRight,
-  Save,
-  Stethoscope,
   ShieldCheck,
   Plus,
   Trash2,
@@ -152,7 +146,6 @@ interface MedicalHistoryFormDocumentProps {
   data?: MedicalFormData;
   initialData?: MedicalFormData;
   onChange?: (data: MedicalFormData) => void;
-  onNewRecording?: () => void;
   isDoctorSigned?: boolean;
   signedAtTimestamp?: string | null;
   onSignComplete?: (dataUrl: string) => void;
@@ -163,15 +156,12 @@ export function MedicalHistoryFormDocument({
   data,
   initialData,
   onChange,
-  onNewRecording = () => {},
   isDoctorSigned = false,
   signedAtTimestamp = null,
-  onSignComplete,
-  onClearSignature,
 }: MedicalHistoryFormDocumentProps) {
   const activeIncomingData = data || initialData || DEFAULT_FORM_DATA;
   const [formData, setFormData] = useState<MedicalFormData>(activeIncomingData);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const [showIcdModal, setShowIcdModal] = useState(false);
   const [icdSearchQuery, setIcdSearchQuery] = useState("");
@@ -387,48 +377,6 @@ export function MedicalHistoryFormDocument({
 
   return (
     <main className="mx-auto space-y-6 pb-12 font-sans">
-      {/* Top Toolbar */}
-      <div className="no-print card-warm p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={onNewRecording}
-            className="btn-warm btn-warm-outline btn-warm-sm"
-          >
-            <RotateCcw size={13} />
-            <span>Mulai Kasus Baru</span>
-          </button>
-          <span className="badge-warm badge-warm-success">
-            <Check size={12} /> Konsultasi Suara
-          </span>
-          <ChevronRight size={14} className="text-[#6A6A64] hidden sm:block" />
-          <span className="badge-warm badge-warm-brand">
-            ★ Medical History Form (EHR)
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs w-full sm:w-auto justify-end">
-          <button
-            type="button"
-            onClick={() => setIsEditing(!isEditing)}
-            className={`btn-warm btn-warm-sm flex-1 sm:flex-none justify-center ${
-              isEditing ? "btn-warm-primary" : "btn-warm-outline"
-            }`}
-          >
-            {isEditing ? <Save size={13} /> : <Edit3 size={13} />}
-            <span>{isEditing ? "Simpan Edit" : "Mode Edit"}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="btn-warm btn-warm-primary btn-warm-sm flex-1 sm:flex-none justify-center"
-          >
-            <Printer size={14} />
-            <span>Cetak PDF</span>
-          </button>
-        </div>
-      </div>
-
       {/* AI Banner */}
       <div className="mt-5 no-print card-warm bg-[#FFFEF2] p-4 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1263,7 +1211,7 @@ export function MedicalHistoryFormDocument({
                       updateField("diagnosisIcd", preset.code);
                       updateField("diagnosis", preset.name);
                     }}
-                    className="px-2 py-0.5 rounded bg-[#191918] text-[#0E7A41] font-medium hover:bg-[#2A2A28] transition whitespace-nowrap text-[10px]"
+                    className="px-2 py-0.5 rounded bg-[#191918] text-white font-medium hover:bg-[#2A2A28] transition whitespace-nowrap text-[10px]"
                   >
                     {preset.code} ({preset.label})
                   </button>
