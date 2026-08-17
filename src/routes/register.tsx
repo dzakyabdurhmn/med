@@ -12,7 +12,9 @@ import {
   Mail,
   FileBadge,
 } from "lucide-react";
-import { useMedicalStore, type DoctorSpecialtyKey, type DoctorProfile } from "../store/medical-store";
+import { useMedicalStore } from "../store/medical-store";
+import type { DoctorSpecialtyKey, DoctorProfile } from "../store/medical-store";
+import { registerDoctorUser } from "../server/medical-db";
 
 export const Route = createFileRoute("/register")({
   component: DoctorRegisterPage,
@@ -33,7 +35,7 @@ const SPECIALTY_OPTIONS: {
 
 function DoctorRegisterPage() {
   const navigate = useNavigate();
-  const { setDoctorProfile, saveNowToDb } = useMedicalStore();
+  const { setDoctorProfile, loadDoctorCasesFromDb } = useMedicalStore();
 
   const [name, setName] = useState("");
   const [specialtyKey, setSpecialtyKey] = useState<DoctorSpecialtyKey>("cardio");
@@ -44,20 +46,49 @@ function DoctorRegisterPage() {
   const [phone] = useState("081234567890");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const chosenSpec = SPECIALTY_OPTIONS.find((s) => s.key === specialtyKey);
+  const registeredName = name.trim()
+    ? `dr. ${name.trim().replace(/^dr\.?\s*/i, "")}, ${chosenSpec?.badge || "Sp"}`
+    : "";
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !licenseNumber.trim() || !institution.trim() || !email.trim()) {
+    setErrorMsg("");
+    if (!name.trim() || !licenseNumber.trim() || !institution.trim() || !email.trim() || !password.trim()) {
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const chosenSpec = SPECIALTY_OPTIONS.find((s) => s.key === specialtyKey);
+      // Persist account to PostgreSQL (User table) so login can find it
+      const regRes = (await registerDoctorUser({
+        data: {
+          name: registeredName,
+          email: email.trim(),
+          password: password.trim(),
+          licenseNumber: licenseNumber.trim(),
+          specialization: chosenSpec?.label || "Dokter Penanggung Jawab Pelayanan",
+          institution: institution.trim(),
+          signaturePin: "123456",
+        },
+      })) as {
+        success?: boolean;
+        user?: { id: string };
+        error?: string;
+      };
+
+      if (!regRes.success || !regRes.user) {
+        setErrorMsg(regRes.error || "Pendaftaran gagal disimpan ke database. Coba lagi.");
+        return;
+      }
+
+      const dbUser = regRes.user;
       const updatedProfile: DoctorProfile = {
-        id: "doc-" + Date.now(),
-        name: name.trim(),
+        id: dbUser.id,
+        name: registeredName,
         specialization: chosenSpec?.label || "Dokter Penanggung Jawab Pelayanan",
         specialtyKey,
         licenseNumber: licenseNumber.trim(),
@@ -70,7 +101,7 @@ function DoctorRegisterPage() {
       };
 
       setDoctorProfile(updatedProfile);
-      await saveNowToDb();
+      await loadDoctorCasesFromDb(updatedProfile.id, updatedProfile);
 
       setIsSuccess(true);
       setTimeout(() => {
@@ -108,12 +139,20 @@ function DoctorRegisterPage() {
           </div>
         )}
 
+        {/* Error Alert */}
+        {errorMsg && (
+          <div className="p-4 bg-[#FBEBEB] border border-[#F5DBDB] text-xs text-[#C73737] rounded-[2px] flex items-center gap-2">
+            <ShieldCheck size={16} className="shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
         {/* Registration Form */}
         <form onSubmit={handleRegister} className="space-y-4 text-xs">
           {/* Doctor Name */}
           <div className="space-y-1">
             <label className="uppercase tracking-[0.05em] text-[#474744] block font-medium">
-              Nama Lengkap Dokter &amp; Gelar Medis *
+              Nama Dokter *
             </label>
             <div className="relative flex items-center">
               <Stethoscope size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6A6A64] pointer-events-none shrink-0" />
@@ -122,11 +161,20 @@ function DoctorRegisterPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="contoh: dr. Budi Santoso, Sp.JP, FIHA"
+                placeholder="contoh: Budi Santoso"
                 className="input-warm"
                 style={{ paddingLeft: "42px" }}
               />
             </div>
+            <p className="text-[11px] text-[#6A6A64]">
+              Cukup nama saja — gelar &quot;dr.&quot; dan spesialisasi otomatis ditambahkan.
+            </p>
+            {registeredName && (
+              <div className="input-warm bg-[#F3F2E7] border-dashed text-[#9E1B2E] flex items-center gap-2">
+                <CheckCircle2 size={14} />
+                <span>Nama terdaftar: <strong>{registeredName}</strong></span>
+              </div>
+            )}
           </div>
 
           {/* Specialty & License */}

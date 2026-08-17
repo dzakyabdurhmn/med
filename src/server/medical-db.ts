@@ -185,6 +185,36 @@ export const getActiveReportFromDb = createServerFn({
 });
 
 /**
+ * Get all Medical Reports authored by a specific doctor (by DB user id)
+ */
+export const getDoctorReportsFromDb = createServerFn({
+  method: "GET",
+})
+  .validator((input: { doctorId: string }) => input)
+  .handler(async ({ data }) => {
+    const { doctorId } = data;
+    try {
+      const { prisma } = await import("../db");
+      const reports = await prisma.medicalReport.findMany({
+        where: { doctorId },
+        orderBy: { updatedAt: "desc" },
+        include: {
+          patient: { include: { patientProfile: true } },
+          doctor: true,
+          organHighlights: true,
+          transcripts: { include: { segments: true } },
+          verificationRecord: true,
+        },
+      });
+
+      return { success: true, reports: reports as any, source: "database" as const };
+    } catch (error: any) {
+      console.error("Database query error in getDoctorReportsFromDb:", error);
+      return { success: false, error: error.message, source: "fallback" as const };
+    }
+  });
+
+/**
  * Save / Upsert Medical Report to PostgreSQL DB
  */
 export const saveReportToDb = createServerFn({
@@ -196,25 +226,32 @@ export const saveReportToDb = createServerFn({
       organId?: string;
       isSigned: boolean;
       signatureDataUrl: string | null;
+      doctorId?: string;
       dialogueLines?: { speaker: string; speakerName: string; text: string; time: string }[];
     }) => input
   )
   .handler(async ({ data }) => {
     const { prisma } = await import("../db");
-    const { formData, organId, isSigned, signatureDataUrl, dialogueLines } = data;
+    const { formData, organId, isSigned, signatureDataUrl, doctorId, dialogueLines } = data;
 
     try {
       if (!formData.patientName) {
         return { success: true, message: "Empty patient form skipped" };
       }
 
-      // 1. Find or create Doctor User
-      let doctor = await prisma.user.findFirst({
-        where: {
-          name: formData.doctorName || "dr. Dokter Spesialis",
-          role: "DOCTOR",
-        },
-      });
+      // 1. Find or Create Doctor User — prefer the signed-in doctor's DB id
+      let doctor = doctorId
+        ? await prisma.user.findUnique({ where: { id: doctorId } })
+        : null;
+
+      if (!doctor) {
+        doctor = await prisma.user.findFirst({
+          where: {
+            name: formData.doctorName || "dr. Dokter Spesialis",
+            role: "DOCTOR",
+          },
+        });
+      }
 
       if (!doctor) {
         doctor = await prisma.user.create({

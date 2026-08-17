@@ -4,7 +4,7 @@ import type {
   MedicationItem,
   ClinicalFindingItem,
 } from "../components/medical/MedicalHistoryFormDocument";
-import { saveReportToDb } from "../server/medical-db";
+import { saveReportToDb, getDoctorReportsFromDb } from "../server/medical-db";
 import type { EvidenceLinkedItem } from "../server/ai-extract";
 
 export type DialogueItem = {
@@ -257,7 +257,9 @@ let globalState: StoreState = {
   lastDbSavedTime: "Tersimpan Otomatis & Aman",
 };
 
-// Load saved state in browser if available
+// Load saved session in browser if available — but NEVER trust persisted cases.
+// Cases are always re-loaded from the DB for the signed-in doctor, so data can't
+// leak between doctors or sessions.
 if (typeof window !== "undefined") {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -269,7 +271,13 @@ if (typeof window !== "undefined") {
       }
       globalState = {
         ...globalState,
-        ...parsed,
+        doctorProfile: parsed.doctorProfile ?? null,
+        cases: [],
+        activeCaseId: null,
+        medicalFormData: createBlankMedicalFormData(parsed.doctorProfile || undefined),
+        isDoctorSigned: false,
+        signatureDataUrl: null,
+        signedAtTimestamp: null,
         dbSyncStatus: "saved",
       };
     }
@@ -281,8 +289,130 @@ if (typeof window !== "undefined") {
 type Listener = () => void;
 const listeners = new Set<Listener>();
 
+/**
+ * Map a MedicalReport row (with patient / transcripts / doctor includes) into a
+ * client-side CasePreset so a doctor's persisted DB reports reappear as cases.
+ */
+type DbReportRow = {
+  id: string;
+  reportNumber: string;
+  title: string;
+  status: string;
+  patientId: string;
+  doctorId: string;
+  rawMedicalNotes: string | null;
+  radiologyModality: string | null;
+  clinicalFindings: string | null;
+  aiSuggestedFindings: string | null;
+  suggestedIcd10Codes: string | null;
+  clinicalRecommendations: string | null;
+  patientFriendlySummary: string | null;
+  primaryOrgan: string | null;
+  verifiedAt: Date | string | null;
+  createdAt: Date | string | null;
+  updatedAt: Date | string | null;
+  patient?: {
+    id: string;
+    name: string;
+    email?: string;
+    patientProfile?: {
+      mrn?: string;
+      nik?: string | null;
+      dateOfBirth?: Date | string | null;
+      gender?: string;
+    } | null;
+  } | null;
+  doctor?: {
+    id: string;
+    name: string;
+    specialization?: string | null;
+    licenseNumber?: string | null;
+  } | null;
+  transcripts?: {
+    segments: {
+      id?: string;
+      speaker: string;
+      text: string;
+    }[];
+  }[];
+  organHighlights?: {
+    organId?: string;
+    hotspotId?: string | null;
+    label?: string;
+    severity?: string;
+    clinicalFinding?: string | null;
+    laymanExplanation?: string | null;
+  }[];
+};
+
+export function reportRowToCase(report: DbReportRow): CasePreset {
+  const dialogue: DialogueItem[] = (report.transcripts?.[0]?.segments || []).map((s, i) => ({
+    speaker: s.speaker === "Dokter" ? "doctor" : "patient",
+    speakerName: s.speaker === "Dokter" ? "Dokter" : "Pasien",
+    time: String(i + 1).padStart(2, "0") + ":00",
+    text: s.text,
+  }));
+
+  const parsedFindings: ClinicalFindingItem[] = (() => {
+    try {
+      const parsed = JSON.parse(report.clinicalFindings || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  })();
+
+  const affectedHotspots = (report.organHighlights || [])
+    .map((h) => h.hotspotId)
+    .filter((x): x is string => !!x);
+
+  const dobRaw = report.patient?.patientProfile?.dateOfBirth;
+  const dobStr =
+    dobRaw instanceof Date
+      ? dobRaw.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+      : dobRaw
+        ? String(dobRaw).slice(0, 10)
+        : "";
+
+  return {
+    id: "report-" + report.id,
+    title: report.title,
+    organId: report.primaryOrgan || "general",
+    patientName: report.patient?.name || "Pasien",
+    patientAge: "",
+    patientGender: report.patient?.patientProfile?.gender === "FEMALE" ? "Perempuan" : "Laki-laki",
+    patientMrn: report.patient?.patientProfile?.mrn || report.reportNumber,
+    patientNik: report.patient?.patientProfile?.nik || "",
+    patientDob: dobStr,
+    doctorName: report.doctor?.name || "dr. Dokter Spesialis",
+    doctorSpecialty: report.doctor?.specialization || "DPJP Spesialis",
+    doctorSip: report.doctor?.licenseNumber || "SIP: 503/SIP.D/2026",
+    modality: report.radiologyModality || "Pemeriksaan & Anamnesis Klinis",
+    vitalSigns: {
+      bloodPressure: "120/80 mmHg",
+      heartRate: "75 bpm",
+      respiratoryRate: "18 x/mnt",
+      spo2: "99%",
+      temperature: "36.5 °C",
+    },
+    dialogue,
+    rawNotes: report.rawMedicalNotes || "",
+    diagnosisIcd: report.suggestedIcd10Codes || "",
+    diagnosis: report.aiSuggestedFindings || "",
+    severity: "NORMAL",
+    findings: parsedFindings,
+    rxPrescriptions: [],
+    recommendations: report.clinicalRecommendations || "",
+    patientSummary: report.patientFriendlySummary || "",
+    affectedHotspots,
+    createdAt: report.createdAt ? String(report.createdAt) : new Date().toISOString(),
+    isAiGenerated: !!report.aiSuggestedFindings,
+  };
+}
+
 let dbSaveDebounceTimer: number | null = null;
 let isDbSyncing = false;
+let lastLoadedDoctorId: string | null = null;
 
 function triggerDbSync() {
   if (typeof window === "undefined") return;
@@ -305,6 +435,7 @@ function triggerDbSync() {
           organId: globalState.selectedOrganId,
           isSigned: globalState.isDoctorSigned,
           signatureDataUrl: globalState.signatureDataUrl,
+          doctorId: globalState.doctorProfile?.id || undefined,
         },
       });
 
@@ -350,6 +481,16 @@ export function useMedicalStore() {
     };
   }, []);
 
+  // On page refresh (still logged in), reload that doctor's cases from the DB so
+  // the dashboard never shows stale/foreign data. Login/register already load,
+  // guarded by lastLoadedDoctorId.
+  useEffect(() => {
+    const doctorId = globalState.doctorProfile?.id;
+    if (doctorId && lastLoadedDoctorId !== doctorId) {
+      loadDoctorCasesFromDb(doctorId, globalState.doctorProfile);
+    }
+  }, []);
+
   // Set / Register Doctor Profile
   const setDoctorProfile = (profile: DoctorProfile) => {
     globalState.doctorProfile = profile;
@@ -360,6 +501,63 @@ export function useMedicalStore() {
       doctorSpecialty: profile.specialization,
       doctorSip: profile.licenseNumber,
     };
+    notify(true);
+  };
+  const loadDoctorCasesFromDb = async (doctorId: string, doctor?: DoctorProfile | null) => {
+    globalState.dbSyncStatus = "saving";
+    notify(false);
+    try {
+      const res = await getDoctorReportsFromDb({ data: { doctorId } });
+      if (Array.isArray((res as { reports?: unknown }).reports)) {
+        const mapped = ((res as { reports?: unknown }).reports as DbReportRow[]).map((r) => reportRowToCase(r));
+        globalState.cases = mapped;
+        globalState.activeCaseId = mapped[0]?.id || null;
+        if (mapped[0]) {
+          globalState.selectedOrganId = mapped[0].organId || "general";
+          globalState.selectedHotspotId = mapped[0].affectedHotspots[0] || null;
+          globalState.activeFindingId = mapped[0].findings[0]?.id || null;
+          globalState.medicalFormData = {
+            ...createBlankMedicalFormData(doctor || undefined, mapped[0].patientName),
+            patientDob: mapped[0].patientDob,
+            patientGender: mapped[0].patientGender.toLowerCase().includes("perempuan") ? "F" : "M",
+            diagnosis: mapped[0].diagnosis,
+            diagnosisIcd: mapped[0].diagnosisIcd,
+            severity: mapped[0].severity,
+            vitalSigns: mapped[0].vitalSigns,
+            rawNotes: mapped[0].rawNotes,
+            recommendations: mapped[0].recommendations,
+            patientSummary: mapped[0].patientSummary,
+            findings: mapped[0].findings,
+            doctorName: mapped[0].doctorName,
+            doctorSpecialty: mapped[0].doctorSpecialty,
+            doctorSip: mapped[0].doctorSip,
+            modality: mapped[0].modality,
+          };
+        } else {
+          globalState.medicalFormData = createBlankMedicalFormData(doctor || undefined);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load doctor cases from DB:", e);
+    } finally {
+      lastLoadedDoctorId = doctorId;
+      globalState.dbSyncStatus = "saved";
+      notify(false);
+    }
+  };
+
+  // Clear the full session (used on logout so the next doctor starts clean)
+  const clearDoctorSession = () => {
+    globalState.doctorProfile = null;
+    globalState.cases = [];
+    globalState.activeCaseId = null;
+    globalState.medicalFormData = createBlankMedicalFormData();
+    globalState.isDoctorSigned = false;
+    globalState.signatureDataUrl = null;
+    globalState.signedAtTimestamp = null;
+    globalState.selectedOrganId = "lungs";
+    globalState.selectedHotspotId = null;
+    globalState.activeFindingId = null;
     notify(true);
   };
 
@@ -683,6 +881,7 @@ export function useMedicalStore() {
           organId: globalState.selectedOrganId,
           isSigned: globalState.isDoctorSigned,
           signatureDataUrl: globalState.signatureDataUrl,
+          doctorId: globalState.doctorProfile?.id || undefined,
           dialogueLines: currentActiveCase?.dialogue || [],
         },
       });
@@ -708,6 +907,8 @@ export function useMedicalStore() {
     doctorProfile: state.doctorProfile,
     isDoctorRegistered: !!state.doctorProfile?.isRegistered,
     setDoctorProfile,
+    loadDoctorCasesFromDb,
+    clearDoctorSession,
 
     cases: state.cases,
     activeCaseId: state.activeCaseId,

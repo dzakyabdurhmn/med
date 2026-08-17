@@ -16,7 +16,7 @@ export const Route = createFileRoute("/login")({
 
 function DoctorLoginPage() {
   const navigate = useNavigate();
-  const { setDoctorProfile, saveNowToDb } = useMedicalStore();
+  const { setDoctorProfile, loadDoctorCasesFromDb } = useMedicalStore();
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -64,36 +64,18 @@ function DoctorLoginPage() {
             registeredAt: user.createdAt ? new Date(user.createdAt).toISOString() : new Date().toISOString(),
           });
 
-          await saveNowToDb();
+          await loadDoctorCasesFromDb(user.id);
           navigate({ to: "/consultation" });
           return;
         }
+
+        setErrorMsg(res.message || "Login gagal. Periksa kembali Email / NIK dan kata sandi Anda.");
+        return;
       } catch (err: any) {
         console.warn("DB login check notice:", err.message);
+        setErrorMsg("Terjadi kesalahan saat memverifikasi kredensial. Coba lagi beberapa saat.");
+        return;
       }
-
-      // Seamless login fallback (Allow fast login for any doctor credential)
-      const isEmail = identifier.includes("@");
-      const doctorName = isEmail 
-        ? `dr. ${identifier.split("@")[0].toUpperCase()}, Sp.JP` 
-        : `dr. Dokter DPJP (${identifier})`;
-
-      setDoctorProfile({
-        id: "doc-" + Date.now(),
-        name: doctorName,
-        specialization: "Spesialis Penanggung Jawab Pelayanan (DPJP)",
-        specialtyKey: "cardio",
-        licenseNumber: "503/482/SIP.D/2026",
-        institution: "RS Pusat / Klinik Utama",
-        email: isEmail ? identifier.trim() : "dokter@kemenkes.go.id",
-        phone: "081234567890",
-        nik: !isEmail ? identifier.trim() : "3171012304850001",
-        isRegistered: true,
-        registeredAt: new Date().toISOString(),
-      });
-
-      await saveNowToDb();
-      navigate({ to: "/consultation" });
     } finally {
       setIsLoading(false);
     }

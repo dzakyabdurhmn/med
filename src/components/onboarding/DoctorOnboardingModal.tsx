@@ -106,7 +106,7 @@ export default function DoctorOnboardingModal({
   onClose,
   onComplete,
 }: DoctorOnboardingModalProps) {
-  const { doctorProfile, setDoctorProfile, saveNowToDb } = useMedicalStore();
+  const { doctorProfile, setDoctorProfile } = useMedicalStore();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
   const [formData, setFormData] = useState({
@@ -219,7 +219,6 @@ export default function DoctorOnboardingModal({
     };
 
     setDoctorProfile(updatedProfile);
-    await saveNowToDb();
 
     if (onComplete) onComplete();
     onClose();

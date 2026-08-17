@@ -184,7 +184,7 @@ function MedicalDashboardPage() {
           <div>
             <span className="eyebrow-warm">Rekam Medis Pasien</span>
             <h2 className="text-2xl font-medium text-[#191918] tracking-tight">
-              Daftar Pasien Aktif ({cases.length})
+              Daftar Pasien Aktif ({isHydrated ? cases.length : 0})
             </h2>
           </div>
           <button
@@ -197,7 +197,11 @@ function MedicalDashboardPage() {
           </button>
         </div>
 
-        {cases.length === 0 ? (
+        {!isHydrated ? (
+          <div className="card-warm p-12 text-center space-y-4">
+            <p className="text-base text-[#474744] font-medium">Memuat daftar kasus pasien...</p>
+          </div>
+        ) : cases.length === 0 ? (
           <div className="card-warm p-12 text-center space-y-4">
             <p className="text-base text-[#474744] font-medium">Belum ada kasus pasien terdaftar.</p>
             <button
