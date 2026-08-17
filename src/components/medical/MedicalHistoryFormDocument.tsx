@@ -411,10 +411,10 @@ export function MedicalHistoryFormDocument({
                   </span>
                 </div>
                 <h1 className="text-xl sm:text-2xl font-medium text-[#191918] uppercase tracking-tight mt-1 leading-tight">
-                  KLINIK UTAMA MED-AI ATELIER
+                  PUSKESMAS/KLINIK PRATAMA
                 </h1>
                 <p className="text-xs text-[#6A6A64] font-medium leading-tight">
-                  Pusat Layanan Spesialis &amp; Evaluasi Klinis Terpadu Berbasis AI
+                  Pencatatan Konsultasi Rawat Jalan Berbasis AI
                 </p>
                 <p className="text-[10px] text-[#6A6A64] mt-0.5">
                   Jl. Kesehatan Raya No. 88, Jakarta Selatan 12430 | Telp: (021) 789-2026

@@ -427,9 +427,9 @@ export async function buildOfficialReportPdf(input: {
   b.y -= 18;
   centeredText(b, "KEMENTERIAN KESEHATAN REPUBLIK INDONESIA", b.y, b.fonts.bold, 7.5, GRAY);
   b.y -= 13;
-  centeredText(b, "KLINIK UTAMA MED-AI ATELIER", b.y, b.fonts.bold, 18, INK);
+  centeredText(b, "PUSKESMAS/KLINIK PRATAMA", b.y, b.fonts.bold, 18, INK);
   b.y -= 14;
-  centeredText(b, "Pusat Layanan Spesialis & Evaluasi Klinis Terpadu Berbasis AI", b.y, b.fonts.reg, 9, GRAY);
+  centeredText(b, " Pencatatan Konsultasi Rawat Jalan Berbasis AI", b.y, b.fonts.reg, 9, GRAY);
   b.y -= 12;
   centeredText(
     b,

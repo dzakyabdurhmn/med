@@ -215,10 +215,10 @@ function MedicalReportPrintView({
                   KEMENTERIAN KESEHATAN REPUBLIK INDONESIA
                 </div>
                 <div className="text-[16pt] font-bold uppercase tracking-wide text-[#191918]">
-                  KLINIK UTAMA MED-AI ATELIER
+                  PUSKESMAS/KLINIK PRATAMA
                 </div>
                 <div className="text-[9pt] text-[#6A6A64]">
-                  Pusat Layanan Spesialis &amp; Evaluasi Klinis Terpadu Berbasis AI
+                  Pencatatan Konsultasi Rawat Jalan Berbasis AI
                 </div>
               </div>
             </div>
@@ -770,7 +770,7 @@ function MedicalReportPrintView({
           {/* Footer Bottom */}
           <div className="mt-4 pt-3 border-t border-[#ECEBDF] flex items-center justify-between text-[8pt] text-[#6A6A64]">
             <span>
-              Dokumen Rekam Medis Elektronik ini diterbitkan oleh KLINIK UTAMA MED-AI ATELIER HEALTH
+              Dokumen Rekam Medis Elektronik ini diterbitkan oleh PUSKESMAS/KLINIK PRATAMA
               (Faskes ID: 3171092-KARS)
             </span>
             <span className="font-bold text-[#191918]">SATUSEHAT FHIR READY</span>
@@ -1106,10 +1106,10 @@ export function MedicalHistoryFormDocument({
                   </span>
                 </div>
                 <h1 className="text-xl sm:text-2xl font-medium text-[#191918] uppercase tracking-tight mt-1 leading-tight">
-                  KLINIK UTAMA MED-AI ATELIER
+                  PUSKESMAS/KLINIK PRATAMA
                 </h1>
                 <p className="text-xs text-[#6A6A64] font-medium leading-tight">
-                  Pusat Layanan Spesialis &amp; Evaluasi Klinis Terpadu Berbasis AI
+                  Pencatatan Konsultasi Rawat Jalan Berbasis AI
                 </p>
                 <p className="text-[10px] text-[#6A6A64] mt-0.5">
                   Jl. Kesehatan Raya No. 88, Jakarta Selatan 12430 | Telp: (021) 789-2026
