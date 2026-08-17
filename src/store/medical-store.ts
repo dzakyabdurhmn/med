@@ -242,18 +242,7 @@ type StoreState = {
 
 // Clean initial state (NO DUMMY FAKE PATIENTS OR DUMMY DATA)
 let globalState: StoreState = {
-  doctorProfile: {
-    id: "doc-default",
-    name: "dr. Dokter Spesialis",
-    specialization: "DPJP Spesialis",
-    specialtyKey: "general",
-    licenseNumber: "503/482/SIP.D/2026",
-    institution: "Rumah Sakit / Klinik Utama",
-    email: "dokter@kemenkes.go.id",
-    phone: "081234567890",
-    isRegistered: true,
-    registeredAt: "2026-01-01T00:00:00.000Z",
-  },
+  doctorProfile: null,
   cases: [],
   activeCaseId: null,
   medicalFormData: createBlankMedicalFormData(),
@@ -274,6 +263,10 @@ if (typeof window !== "undefined") {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
+      const doctor = parsed.doctorProfile as StoreState["doctorProfile"];
+      if (doctor && doctor.id === "doc-default" && !doctor.email) {
+        parsed.doctorProfile = null;
+      }
       globalState = {
         ...globalState,
         ...parsed,

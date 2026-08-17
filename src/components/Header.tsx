@@ -7,7 +7,6 @@ import {
   UserCheck,
   ShieldCheck,
   LogOut,
-  Stethoscope,
   LogIn,
 } from 'lucide-react'
 import { useMedicalStore } from '../store/medical-store'
@@ -153,11 +152,11 @@ export default function Header() {
               </div>
             ) : (
               <Link
-                to="/register"
+                to="/login"
                 className="btn-warm btn-warm-primary btn-warm-sm"
               >
-                <Stethoscope size={14} />
-                <span>Verifikasi</span>
+                <LogIn size={14} />
+                <span>Login</span>
               </Link>
             )}
           </div>
